@@ -29,7 +29,6 @@ def walk(name, graph):
 	print
 	print 'Walk %s' % name
 	this = load_assembly(name)
-
 	graph[name] = '1'
 
 	for dependency in get(this, 'build-depends'):
@@ -39,15 +38,16 @@ def walk(name, graph):
 
 	for content in get(this, 'contents'):
 		print '%s contains %s, check for build-dependencies:' % (name, get(content, 'name'))
-		graph[get(content, 'name')] = '1'
+		name = get(content, 'name').split('|')[0]
+		graph[name] = '1'
 		print '-- %s' % get(content, 'build-depends')
 		for dep in get(content, 'build-depends'):
-		    graph[dep] = '1'
+		    graph[name] = '1'
 		if load_assembly(get(content, 'name')):
 		    walk(get(content, 'name'), graph)
 
 graph = {}
-walk('fourth-set', graph)
+walk('fifth-set', graph)
 
 print graph
 
