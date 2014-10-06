@@ -1,7 +1,7 @@
 import yaml
 
-def load_assembly(foo):
-  filename = "./sets/" + foo + ".def"
+def load_def(name):
+  filename = "./sets/" + name + ".def"
 
   assembly = []
 
@@ -35,7 +35,7 @@ def walk(name, graph):
 	print
 	print
 	print 'Walk %s' % name
-	this = load_assembly(name)
+	this = load_def(name)
 	graph_count(name)
 
 	for dependency in get(this, 'build-depends'):
@@ -50,11 +50,11 @@ def walk(name, graph):
 		print '-- %s' % get(content, 'build-depends')
 		for dep in get(content, 'build-depends'):
 		    graph_count(dep)
-		if load_assembly(get(content, 'name')):
+		if load_def(get(content, 'name')):
 		    walk(get(content, 'name'), graph)
 
 graph = {}
-walk('first-set', graph)
+walk('fourth-set', graph)
 
 print graph
 
