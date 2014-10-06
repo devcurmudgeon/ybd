@@ -24,21 +24,31 @@ def get(thing, value):
 		pass
 	return val
 
-def walk(name):
+def walk(name, graph):
 	print
 	print
 	print 'Walk %s' % name
 	this = load_assembly(name)
 
+	graph[name] = '1'
+
 	for dependency in get(this, 'build-depends'):
 	    print '%s build-dependency is %s' % (get(this, 'name'), dependency)
-	    walk(dependency)
+	    graph[dependency] = '1'
+	    walk(dependency, graph)
 
 	for content in get(this, 'contents'):
 		print '%s contains %s, check for build-dependencies:' % (name, get(content, 'name'))
+		graph[get(content, 'name')] = '1'
 		print '-- %s' % get(content, 'build-depends')
+		for dep in get(content, 'build-depends'):
+		    graph[dep] = '1'
 		if load_assembly(get(content, 'name')):
-		    walk(get(content, 'name'))
+		    walk(get(content, 'name'), graph)
 
-walk('fifth-set')
+graph = {}
+walk('fourth-set', graph)
+
+print graph
+
 
