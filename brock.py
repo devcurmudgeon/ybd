@@ -3,16 +3,17 @@ import yaml
 def load_assembly(foo):
   filename = "./sets/" + foo + ".def"
 
-  text = ""
+  assembly = []
 
   try:
     with open(filename) as f:
        text = f.read()
+  
+    assembly = yaml.safe_load(text)
 
   except:
-	pass
+	return None
 
-  assembly = yaml.safe_load(text)
   return assembly
 
 def get(thing, value):
@@ -24,17 +25,17 @@ def get(thing, value):
 	return val
 
 def walk(name):
+	print 'Walk %s' % name
 	this = load_assembly(name)
-	print this['name']
 	for dependency in get(this, 'depends'):
-
-	    print '%s dependency is' % get(this, 'name')
+	    print '%s dependency, depends on' % get(this, 'name')
 	    walk(dependency)
 
-	print '%s has chunks:' % get(this, 'name')
 	for chunk in get(this, 'chunks'):
-		print '%s with dependencies:' % get(chunk, 'name')
+		print '%s chunk with dependencies:' % get(chunk, 'name')
 		print get(chunk, 'depends')
+		if load_assembly(get(chunk, 'name')):
+		    walk(get(chunk, 'name'))
 
-walk('third-set')
+walk('fourth-set')
 
