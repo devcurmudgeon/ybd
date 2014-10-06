@@ -27,13 +27,13 @@ def get(thing, value):
 def walk(name):
 	print 'Walk %s' % name
 	this = load_assembly(name)
-	for dependency in get(this, 'depends'):
-	    print '%s dependency, depends on' % get(this, 'name')
+	for dependency in get(this, 'build-depends'):
+	    print '%s build-dependency is %s' % (get(this, 'name'), dependency)
 	    walk(dependency)
 
 	for chunk in get(this, 'chunks'):
-		print '%s chunk with dependencies:' % get(chunk, 'name')
-		print get(chunk, 'depends')
+		print '%s contains %s which has build-dependencies:' % (get(this, 'name'), get(chunk, 'name'))
+		print '-- %s' % get(chunk, 'build-depends')
 		if load_assembly(get(chunk, 'name')):
 		    walk(get(chunk, 'name'))
 
