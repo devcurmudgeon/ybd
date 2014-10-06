@@ -25,17 +25,20 @@ def get(thing, value):
 	return val
 
 def walk(name):
+	print
+	print
 	print 'Walk %s' % name
 	this = load_assembly(name)
+
 	for dependency in get(this, 'build-depends'):
 	    print '%s build-dependency is %s' % (get(this, 'name'), dependency)
 	    walk(dependency)
 
 	for content in get(this, 'contents'):
-		print '%s contains %s, check for build-dependencies:' % (get(this, 'name'), get(content, 'name'))
+		print '%s contains %s, check for build-dependencies:' % (name, get(content, 'name'))
 		print '-- %s' % get(content, 'build-depends')
 		if load_assembly(get(content, 'name')):
 		    walk(get(content, 'name'))
 
-walk('fourth-set')
+walk('fifth-set')
 
