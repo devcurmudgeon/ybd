@@ -32,26 +32,25 @@ def graph_count(name):
 	    graph[name] = 0
 
 def walk(name, graph):
-#	print
-#	print
-#	print 'Walk %s' % name
 	this = load_def(name)
 	graph_count(name)
 
+	needs = 0
 	for dependency in get(this, 'build-depends'):
-#	    print '%s build-dependency is %s' % (get(this, 'name'), dependency)
+	    needs = needs + 1
 	    graph_count(dependency)
 	    walk(dependency, graph)
 
 	for content in get(this, 'contents'):
-#		print '%s contains %s, check for build-dependencies:' % (name, get(content, 'name'))
-		name = get(content, 'name').split('|')[0]
-		graph_count(name)
-#		print '-- %s' % get(content, 'build-depends')
+		cname = get(content, 'name').split('|')[0]
+		graph_count(cname)
 		for dep in get(content, 'build-depends'):
 		    graph_count(dep)
 		if load_def(get(content, 'name')):
+		    needs = needs + 1
 		    walk(get(content, 'name'), graph)
+
+	print '%s needs %s others' % (name, needs)
 
 graph = {}
 defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set']
