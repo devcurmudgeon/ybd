@@ -31,11 +31,11 @@ def walk(name):
 	    print '%s build-dependency is %s' % (get(this, 'name'), dependency)
 	    walk(dependency)
 
-	for chunk in get(this, 'chunks'):
-		print '%s contains %s which has build-dependencies:' % (get(this, 'name'), get(chunk, 'name'))
-		print '-- %s' % get(chunk, 'build-depends')
-		if load_assembly(get(chunk, 'name')):
-		    walk(get(chunk, 'name'))
+	for content in get(this, 'contents'):
+		print '%s contains %s, check for build-dependencies:' % (get(this, 'name'), get(content, 'name'))
+		print '-- %s' % get(content, 'build-depends')
+		if load_assembly(get(content, 'name')):
+		    walk(get(content, 'name'))
 
 walk('fourth-set')
 
