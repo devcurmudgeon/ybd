@@ -1,15 +1,24 @@
 import yaml
 
-with open("./sets/second-set.def") as f:
+def load_assembly(foo):
+  filename = "./sets/" + foo + ".def"
+  print filename
+
+  with open(filename) as f:
     text = f.read()
 
-obj = yaml.safe_load(text)
-# print obj
+  assembly = yaml.safe_load(text)
+  return assembly
 
-for iter in obj['chunks']:
-  print iter['lookup']
-  print '****'
-  print iter['depends']
+obj = load_assembly("second-set")
 
-print '----------------'
-print obj['depends']
+for iter in obj['depends']:
+  assembly = load_assembly(iter)
+
+  print assembly['depends']
+  print '----------------'
+  for chunk in assembly['chunks']:
+    print chunk['lookup']
+    print '****' 
+    print chunk['depends']
+
