@@ -3,18 +3,18 @@ import yaml
 def load_def(name):
   filename = "./sets/" + name + ".def"
 
-  assembly = []
+  definition = []
 
   try:
     with open(filename) as f:
        text = f.read()
   
-    assembly = yaml.safe_load(text)
+    definition = yaml.safe_load(text)
 
   except:
 	return None
 
-  return assembly
+  return definition
 
 def get(thing, value):
 	val = []
@@ -53,7 +53,7 @@ def walk(name, graph):
 	print '%s needs %s others' % (name, needs)
 
 graph = {}
-defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set']
+defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set', 'sixth-set']
 for i in defs:
     walk(i, graph)
     print graph
