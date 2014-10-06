@@ -27,15 +27,14 @@ def walk(name):
 	this = load_assembly(name)
 	print this['name']
 	for dependency in get(this, 'depends'):
-	    print 'dependency is'
+
+	    print '%s dependency is' % get(this, 'name')
 	    walk(dependency)
 
-	print 'has chunks:'
+	print '%s has chunks:' % get(this, 'name')
 	for chunk in get(this, 'chunks'):
-		print 'chunk is:'
-		print get(chunk, 'name')
-		print 'chunk dependencies:'
+		print '%s with dependencies:' % get(chunk, 'name')
 		print get(chunk, 'depends')
 
-walk('second-set')
+walk('third-set')
 
