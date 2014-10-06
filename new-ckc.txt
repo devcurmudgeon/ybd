@@ -34,7 +34,7 @@ Now what about when user makes a change? Which subset of artifacts can be assume
 - if chunk or dependencies have been modified locally, we need to build
 - if chunk or any dependency ref: has changed, we need to build
 
-- lookup: <chunk>|<ref>
+- name: <chunk>|<ref>
 
 - for new user DTR vs a set of cache DTRs
   - walk build graph in build order

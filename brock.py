@@ -3,29 +3,39 @@ import yaml
 def load_assembly(foo):
   filename = "./sets/" + foo + ".def"
 
-  with open(filename) as f:
-    text = f.read()
+  text = ""
+
+  try:
+    with open(filename) as f:
+       text = f.read()
+
+  except:
+	pass
 
   assembly = yaml.safe_load(text)
   return assembly
 
-obj = load_assembly("third-set")
-
-def get_dependencies(foo):
-	depends = []
+def get(thing, value):
+	val = []
 	try:
-		depends = foo['depends']
+		val = thing[value]
 	except:
 		pass
-	return depends
+	return val
 
-for iter in get_dependencies(obj):
-  this = load_assembly(iter)
-  print '----------------'
-  print this['assembly']
-  print get_dependencies(this)
-  for chunk in this['chunks']:
-    print chunk['lookup']
-    print 'Dependencies:'
-    print get_dependencies(chunk)
+def walk(name):
+	this = load_assembly(name)
+	print this['name']
+	for dependency in get(this, 'depends'):
+	    print 'dependency is'
+	    walk(dependency)
+
+	print 'has chunks:'
+	for chunk in get(this, 'chunks'):
+		print 'chunk is:'
+		print get(chunk, 'name')
+		print 'chunk dependencies:'
+		print get(chunk, 'depends')
+
+walk('second-set')
 
