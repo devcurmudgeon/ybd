@@ -11,13 +11,21 @@ def load_assembly(foo):
 
 obj = load_assembly("third-set")
 
-for iter in obj['depends']:
-  assembly = load_assembly(iter)
-  print assembly['assembly']
+def get_dependencies(foo):
+	depends = []
+	try:
+		depends = foo['depends']
+	except:
+		pass
+	return depends
+
+for iter in get_dependencies(obj):
+  this = load_assembly(iter)
   print '----------------'
-  print assembly['depends']
-  for chunk in assembly['chunks']:
+  print this['assembly']
+  print get_dependencies(this)
+  for chunk in this['chunks']:
     print chunk['lookup']
-    print '===='
-    print chunk['depends']
+    print 'Dependencies:'
+    print get_dependencies(chunk)
 
