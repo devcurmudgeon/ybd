@@ -1,8 +1,8 @@
 import yaml
+import os
 
 def load_def(name):
   filename = "./sets/" + name + ".def"
-
   definition = []
 
   try:
@@ -24,38 +24,41 @@ def get(thing, value):
 		pass
 	return val
 
-def graph_count(name):
-	try:
-	    graph[name] = graph[name] + 1
+def assemble(name):
+	print 'assemble %s' % name
 
-	except:
-	    graph[name] = 0
+def touch(pathname):
+    with open(pathname, 'w'):
+        pass
 
-def walk(name, graph):
+def cache(name):
+	print 'cache %s' % name
+	filename = "./cache/" + name + ".cache"
+	touch(filename)
+
+def is_cached(name):
+	filename = "./cache/" + name + ".cache"
+	return os.path.exists(filename)
+
+def build(name):
 	this = load_def(name)
-	graph_count(name)
+	if is_cached(name):
+		print '%s is cached' % name
+		return
 
-	needs = 0
 	for dependency in get(this, 'build-depends'):
-	    needs = needs + 1
-	    graph_count(dependency)
-	    walk(dependency, graph)
+		build(dependency)
 
 	for content in get(this, 'contents'):
 		cname = get(content, 'name').split('|')[0]
-		graph_count(cname)
-		for dep in get(content, 'build-depends'):
-		    graph_count(dep)
-		if load_def(get(content, 'name')):
-		    needs = needs + 1
-		    walk(get(content, 'name'), graph)
+		build(cname)
 
-	print '%s needs %s others' % (name, needs)
+	assemble(name)
+	cache(name)
 
-graph = {}
 defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set', 'sixth-set']
 for i in defs:
-    walk(i, graph)
-    print graph
-
-
+	print '------------------------'
+	print 'Running on %s' % i
+	print '------------------------'
+	build(i)
