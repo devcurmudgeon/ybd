@@ -5,6 +5,9 @@ build-depends:
 - first-set|v1.0
 contents:
 - name: phip
+  repo: upstream:phip
 - name: phroog
+  repo: upstream:phip
 - name: phrapple
+  repo: upstream:phip
 - name: third-set
