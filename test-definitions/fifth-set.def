@@ -1,0 +1,8 @@
+build-depends:
+- third-set
+- fourth-set
+contents:
+- name: phip
+- name: phroog
+- name: phrapple
+- name: third-set

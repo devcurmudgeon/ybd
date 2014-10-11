@@ -1,0 +1,13 @@
+name: third-set
+build-depends:
+- first-set
+- second-set
+contents:
+- name: thup|v3.17
+  build-depends: []
+- name: tharp|v50
+  build-depends: []
+- name: thringle|a5242345634ddddddd
+  build-depends:
+  - thup
+  - tharp

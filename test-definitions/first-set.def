@@ -1,0 +1,15 @@
+name: first-set|v1.0
+contents:
+- name: foo|v3.17
+- name: far|v50
+  build-depends:
+  - foo|v2.8
+- name: fuppet|a5242345634ddddddd
+  build-depends:
+  - foo|v4.99
+  - far
+- name: flax
+- name: ferbur
+- name: feggle|3535fff
+  build-depends:
+  - ferbur

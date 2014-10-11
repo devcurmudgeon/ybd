@@ -1,0 +1,12 @@
+name: second-set
+build-depends:
+- first-set
+contents:
+- name: soo|v3.17
+- name: sorp|v50
+  build-depends:
+  - zoo
+- name: slange|a5242345634ddddddd
+  build-depends:
+  - zoo
+  - gorp
