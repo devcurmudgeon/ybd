@@ -1,17 +1,19 @@
 import yaml
 import os
 import sys
-
-DTR = 'DTR'
+import hashlib
 
 def load_def(path, name):
-	definition = []
+	global DTR
+	definition = {}
 	try:
-		with open(path + "/" + name + ".def") as f:
+		with open(path + "/" + name) as f:
 			text = f.read()
 
 		definition = yaml.safe_load(text)
-	
+		DTR = hashlib.sha256(path + "/" + name).hexdigest()[:8]
+		definition['hash'] = DTR
+
 	except:
 		return None
 
@@ -36,7 +38,11 @@ def cache_key(this):
 	if type(this) is str:
 		return path + "/cache/" + this + "|" + DTR + ".cache"
 
-	return path + "/cache/" + get(this, 'name') + "|" + DTR + ".cache"
+	try:
+		return path + "/cache/" + this['name'] + "|" + this['hash'] + ".cache"
+
+	except:
+		return path + "/cache/" + this['name'] + "|" + DTR + ".cache"
 
 def cache(this):
 	print 'cache %s' % this
@@ -52,7 +58,7 @@ def is_cached(this):
 		ref = get_ref(cache)
 		diff = git_diff(DTR, ref)
 		if diff:
-			for dependency in get(this, 'build-depends'):
+			for dependency in this['build-depends']:
 				return
 
 def build(this):
