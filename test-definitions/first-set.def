@@ -1,16 +1,34 @@
 name: first-set|v1.0
+build-depends:
+- name: foo|v2.8
+  repo: upstream:foo
+  ref: v.2.8
 contents:
 - name: foo|v3.17
+  repo: upstream:foo
+  ref: master
 - name: far|v50
+  repo: upstream:far
+  ref: v1.2.3
   build-depends:
   - foo|v2.8
 - name: fuppet|a5242345634ddddddd
+  repo: upstream:fuppet
+  ref: v99
   build-depends:
-  - foo|v4.99
+  - foo
   - far
 - name: flax
-- name: ferbur
+  repo: upstream:flax
+  ref: master
 - name: feggle|3535fff
+  repo: upstream:feggle
+  ref: v1.0
+- name: flint
+  repo: upstream:flint
+  ref: master
+- name: ferbur
+  repo: upstream:ferbur
+  ref: invalid
   build-depends:
-  - ferbur
   - flint
