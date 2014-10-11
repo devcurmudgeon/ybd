@@ -7,19 +7,29 @@ def load_defs(path, definitions):
 	for dirname, dirnames, filenames in os.walk("."):
 		# print path to all subdirectories first.
 		for filename in filenames:
-			if filename.endswith('.def'):
-				definition = load_def(dirname, filename)
-				if get(definition, 'name') != []:
-					definitions.append(definition)
-					for dependency in get(definition, 'build-depends'):
-						# print 'dependency is %s' % dependency
-						if get(dependency, 'repo') != []:
-							dependency['hash'] = definition['hash']
-							definitions.append(dependency)
+			if not filename.endswith('.def'):
+				continue
 
-					for content in get(definition, 'contents'):
-						# print 'content is %s' % content
-						content['hash'] = definition['hash']
+			this = load_def(dirname, filename)
+			name = get(this, 'name')
+			if name != []:
+				for i, definition in enumerate(definitions):
+					if definition['name'] == this['name']:
+						definitions[i] = this
+
+				if get(definitions, 'name') == []:
+					definitions.append(this)
+
+				for dependency in get(this, 'build-depends'):
+					# print 'dependency is %s' % dependency
+					if get(dependency, 'repo') != []:
+						dependency['hash'] = this['hash']
+						definitions.append(dependency)
+
+				for content in get(this, 'contents'):
+					# print 'content is %s' % content
+					if get(content, 'repo') != []:
+						content['hash'] = this['hash']
 						definitions.append(content)
 
 		if '.git' in dirnames:
@@ -53,7 +63,13 @@ def get_definition(definitions, this):
 		if definition['name'].split('|')[0] == this:
 			return definition
 
-	print "Oh dear, where is the definition of %s?" % get(this, 'name')
+		if definition['name'] == get(this, 'name'):
+			return definition
+
+		if definition['name'].split('|')[0] == get(this, 'name'):
+			return definition
+
+	print "Oh dear, where is the definition of %s, %s?" % (this, get(this, 'name'))
 	raise SystemExit
 
 def get(thing, value):
