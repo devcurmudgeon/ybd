@@ -1,13 +1,7 @@
 import yaml
 import os
-from celery import Celery
-
-app = Celery('tasks', 'redis://localhost:6379/0')
 
 DTR = 'DTR'
-@app.task
-def add(x, y):
-    return x + y
 
 def load_def(name):
   filename = "./test-definitions/" + name + ".def"
