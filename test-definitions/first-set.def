@@ -13,3 +13,4 @@ contents:
 - name: feggle|3535fff
   build-depends:
   - ferbur
+  - flint

@@ -26,40 +26,42 @@ def get(thing, value):
 		pass
 	return val
 
-def assemble(name):
-	print 'assemble %s' % name
+def assemble(this):
+	print 'assemble %s' % this
 
 def touch(pathname):
     with open(pathname, 'w'):
         pass
 
-def cache_key(name):
-	return "./cache/" + name + "|" + DTR + ".cache"
+def cache_key(this):
+	if type(this) is str:
+		return "./cache/" + this + "|" + DTR + ".cache"
 
-def cache(name):
-	print 'cache %s' % name
-	touch(cache_key(name))
+	return "./cache/" + get(this, 'name') + "|" + DTR + ".cache"
 
-def is_cached(name):
-	return False
+def cache(this):
+	print 'cache %s' % this
+	touch(cache_key(this))
 
-	if os.path.exists(cache_key(filename)):
+def is_cached(this):
+	if os.path.exists(cache_key(this)):
 		return True
 
-	for cache in maybe_caches(name):
+	return False
+
+	for cache in maybe_caches(this):
 		ref = get_ref(cache)
 		diff = git_diff(DTR, ref)
 		if diff:
-			for dependency in get(name, 'build-depends'):
+			for dependency in get(this, 'build-depends'):
 				return
 
-
-def build(name):
-	if is_cached(name):
-		print '%s is cached' % name
+def build(this):
+	print 'build %s' % this
+	if is_cached(this):
+		print '%s is cached' % this
 		return
 
-	this = load_def(name)
 	for dependency in get(this, 'build-depends'):
 		build(dependency)
 
@@ -67,11 +69,11 @@ def build(name):
 	# how do we know what thata happens?
 
 	for content in get(this, 'contents'):
-		cname = get(content, 'name')
-		build(cname)
+		print 'content: %s' % get (content, 'name')
+		build(content)
 
-	assemble(name)
-	cache(name)
+	assemble(this)
+	cache(this)
 
 defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set', 'sixth-set']
 defs = ['first-set']
@@ -80,4 +82,4 @@ for i in defs:
 	print '------------------------'
 	print 'Running on %s' % i
 	print '------------------------'
-	build(i)
+	build(load_def(i))
