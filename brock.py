@@ -1,22 +1,21 @@
 import yaml
 import os
+import sys
 
 DTR = 'DTR'
 
-def load_def(name):
-  filename = "./test-definitions/" + name + ".def"
-  definition = []
+def load_def(path, name):
+	definition = []
+	try:
+		with open(path + "/" + name + ".def") as f:
+			text = f.read()
 
-  try:
-    with open(filename) as f:
-       text = f.read()
-  
-    definition = yaml.safe_load(text)
+		definition = yaml.safe_load(text)
+	
+	except:
+		return None
 
-  except:
-	return None
-
-  return definition
+	return definition
 
 def get(thing, value):
 	val = []
@@ -35,9 +34,9 @@ def touch(pathname):
 
 def cache_key(this):
 	if type(this) is str:
-		return "./cache/" + this + "|" + DTR + ".cache"
+		return path + "/cache/" + this + "|" + DTR + ".cache"
 
-	return "./cache/" + get(this, 'name') + "|" + DTR + ".cache"
+	return path + "/cache/" + get(this, 'name') + "|" + DTR + ".cache"
 
 def cache(this):
 	print 'cache %s' % this
@@ -66,20 +65,13 @@ def build(this):
 		build(dependency)
 
 	# wait here for all the dependencies to complete 
-	# how do we know what thata happens?
+	# how do we know when that happens?
 
 	for content in get(this, 'contents'):
-		print 'content: %s' % get (content, 'name')
 		build(content)
 
 	assemble(this)
 	cache(this)
 
-defs = ['first-set', 'second-set', 'third-set', 'fourth-set', 'fifth-set', 'sixth-set']
-defs = ['first-set']
-
-for i in defs:
-	print '------------------------'
-	print 'Running on %s' % i
-	print '------------------------'
-	build(load_def(i))
+path, target = os.path.split(sys.argv[1])
+build(load_def(path, target))

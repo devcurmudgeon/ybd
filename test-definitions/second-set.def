@@ -1,6 +1,6 @@
 name: second-set
 build-depends:
-- first-set
+- first-set|v1.0
 contents:
 - name: soo|v3.17
 - name: sorp|v50
