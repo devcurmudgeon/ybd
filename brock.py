@@ -5,7 +5,6 @@ import hashlib
 
 def load_defs(path, definitions):
 	for dirname, dirnames, filenames in os.walk("."):
-		# print path to all subdirectories first.
 		for filename in filenames:
 			if not filename.endswith('.def'):
 				continue
@@ -47,8 +46,8 @@ def load_def(path, name):
 		definition = yaml.safe_load(text)
 		definition['hash'] = hashlib.sha256(path + "/" + name).hexdigest()[:8]
 
-	except:
-		return None
+	except ValueError:
+		print 'Oops, problem loading %s' % (path + "/" + name)
 
 	return definition
 
