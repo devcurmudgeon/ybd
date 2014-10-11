@@ -1,0 +1,6 @@
+name: slange|a5242345634ddddddd
+repo: upstream:slange
+ref: master
+build-depends:
+- zoo
+- gorp

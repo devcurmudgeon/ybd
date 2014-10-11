@@ -4,8 +4,11 @@ build-depends:
 - second-set
 contents:
 - name: thup|v3.17
-  build-depends: []
+  repo: upstream:thup
+  ref: fidget
+  - build-depends: []
 - name: tharp|v50
+  repo: upstream: tharp
   build-depends: []
 - name: thringle|a5242345634ddddddd
   build-depends:
