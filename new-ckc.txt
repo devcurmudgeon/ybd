@@ -1,3 +1,26 @@
+# Brock
+
+Brock aims to build on what we've learned from Morph. As a result we can
+hope for the following advantages:
+- the words morphology and stratum can disappear from the Baserock lexicon
+- no need for workspaces
+- aim for Brock to run on non-Linux environments (eg Mac OS)
+- support for nested components
+- support for definitions without code
+- straightforward to have multiple versions of a component
+  - foo|aa and foo|bb installed
+  - foo|cc and foo|dd used as build-dependencies by other components
+- user can understand and diagnose the cache naming scheme
+- smaller, simpler codebase
+- more permissive, but still with traceability and reproducibility
+- much faster calculation of build-order, cache-keys
+- use of proven software for distbuild queues (celery?)
+
+- the initial scope is only brock build, to replace morph build/distbuild
+- then follow on with brock deploy
+
+# Some design notes
+
 From a given tree ref (full SHA1) for definitions.git (DTR) we know quite a lot:
 
 - it identifies a ref: value for every content that we care about
