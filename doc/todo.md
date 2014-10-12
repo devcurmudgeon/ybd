@@ -1,6 +1,4 @@
 TODO
-- converter script for morph definitions to brock format
-- test brock on real definitions
 - logging
 - config
 - arch handling
