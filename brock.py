@@ -97,13 +97,13 @@ def touch(pathname):
 def cache_key(definitions, this):
     definition = get_definition(definitions, this)
     # print 'cache_key %s' % definition
-    return path + "/cache/" + definition['name'] + "|" + \
-        definition['hash'] + ".cache"
+    return (definition['name'] + "|" +
+            definition['hash'] + ".cache")
 
 
 def cache(definitions, this):
     # print 'cache %s' % this
-    touch(cache_key(definitions, this))
+    touch('test-definitions/cache/' + cache_key(definitions, this))
 
 
 def is_cached(definitions, this):
