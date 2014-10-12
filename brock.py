@@ -7,7 +7,8 @@ import hashlib
 def load_defs(path, definitions):
     for dirname, dirnames, filenames in os.walk("."):
         for filename in filenames:
-            if not filename.endswith('.def'):
+            if not (filename.endswith('.def') or
+                    filename.endswith('.morph')):
                 continue
 
             this = load_def(dirname, filename)
@@ -35,9 +36,9 @@ def load_defs(path, definitions):
         if '.git' in dirnames:
             dirnames.remove('.git')
 
-#   for i in definitions:
-#       print
-#       print i
+    for i in definitions:
+        print
+        print i
 
 
 def load_def(path, name):
@@ -107,7 +108,7 @@ def cache(definitions, this):
 
 
 def is_cached(definitions, this):
-    if os.path.exists(cache_key(definitions, this)):
+    if os.path.exists('test-definitions/cache/' + cache_key(definitions, this)):
         return True
 
     return False
@@ -145,4 +146,5 @@ definitions = []
 path, target = os.path.split(sys.argv[1])
 load_defs(path, definitions)
 target = target.replace('.def', '')
+target = target.replace('.morph', '')
 build(definitions, target)
