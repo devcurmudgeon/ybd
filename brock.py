@@ -79,16 +79,10 @@ def get_definition(definitions, this):
         return this
 
     for definition in definitions:
-        if definition['name'] == this:
-            return definition
-
-        if definition['name'].split('|')[0] == this:
-            return definition
-
-        if definition['name'] == get(this, 'name'):
-            return definition
-
-        if definition['name'].split('|')[0] == get(this, 'name'):
+        if (definition['name'] == this
+        or definition['name'].split('|')[0] == this
+        or definition['name'] == get(this, 'name')
+        or definition['name'].split('|')[0] == get(this, 'name')):
             return definition
 
     print "Oh dear, where is %s, %s?" % (this, get(this, 'name'))
