@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 import hashlib
+import datetime
 
 
 def load_defs(path, definitions):
@@ -87,12 +88,17 @@ def get(thing, value):
 
 
 def assemble(definitions, this):
-    print 'assemble %s' % get(this, 'name')
+    log('assemble', get(this, 'name'))
 
 
 def touch(pathname):
     with open(pathname, 'w'):
         pass
+
+
+def log(message, component='', data=''):
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print '%s [%s] %s %s' % (timestamp, component, message, data)
 
 
 def cache_key(definitions, this):
@@ -103,12 +109,13 @@ def cache_key(definitions, this):
 
 
 def cache(definitions, this):
-    # print 'cache %s' % this
+    log('is cached at', get(this, 'name'), 'test-definitions/cache/'
+        + cache_key(definitions, this))
     touch('test-definitions/cache/' + cache_key(definitions, this))
 
 
-def is_cached(definitions, this):
-    if os.path.exists('test-definitions/cache/' + cache_key(definitions, this)):
+def is_cached(defs, this):
+    if os.path.exists('test-definitions/cache/' + cache_key(defs, this)):
         return True
 
     return False
@@ -122,9 +129,9 @@ def is_cached(definitions, this):
 
 
 def build(definitions, target):
-    print 'build %s' % target
+    log('starting build', get(target, 'name'))
     if is_cached(definitions, target):
-        print '%s is cached' % target
+        log('is already cached', get(target, 'name'))
         return
 
     this = get_definition(definitions, target)
