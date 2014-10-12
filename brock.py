@@ -21,6 +21,26 @@ import sys
 import hashlib
 import datetime
 
+config = {
+    'repo-alias': [
+        ('upstream='
+            'git://git.baserock.org/%s#'
+            'ssh://git.baserock.org/%s'),
+        ('freedesktop='
+            'git://anongit.freedesktop.org/#'
+            'ssh://git.freedesktop.org/'),
+        ('gnome='
+            'git://git.gnome.org/%s#'
+            'ssh://git.gnome.org/git/%s'),
+        ('github='
+            'git://github.com/%s#'
+            'ssh://git@github.com/%s'),
+    ],
+    'cachedir': os.path.expanduser('~/.brock/cache/'),
+    'gitdir': os.path.expanduser('~/.brock/gits/'),
+    'staging': os.path.expanduser('~/.brock/staging/')
+}
+
 
 def load_defs(path, definitions):
     for dirname, dirnames, filenames in os.walk("."):
@@ -30,7 +50,7 @@ def load_defs(path, definitions):
                 continue
 
             this = load_def(dirname, filename)
-            log('loading definition', this)
+#            log('loading definition', this)
             name = get(this, 'name')
             if name != []:
                 for i, definition in enumerate(definitions):
@@ -81,12 +101,12 @@ def get_definition(definitions, this):
 
     for definition in definitions:
         if (definition['name'] == this
-        or definition['name'].split('|')[0] == this
-        or definition['name'] == get(this, 'name')
-        or definition['name'].split('|')[0] == get(this, 'name')):
+            or definition['name'].split('|')[0] == this
+            or definition['name'] == get(this, 'name') or
+                definition['name'].split('|')[0] == get(this, 'name')):
             return definition
 
-    print "Oh dear, where is %s, %s?" % (this, get(this, 'name'))
+    print "Oops, where is %s, %s?" % (this, get(this, 'name'))
     raise SystemExit
 
 
@@ -119,35 +139,27 @@ def log(message, component='', data=''):
 
 def cache_key(definitions, this):
     definition = get_definition(definitions, this)
-    # print 'cache_key %s' % definition
     return (definition['name'] + "|" +
             definition['hash'] + ".cache")
 
 
 def cache(definitions, this):
-    log('is cached at', this, 'test-definitions/cache/'
+    touch(config['cachedir'] + cache_key(definitions, this))
+    log('is now cached at', this, config['cachedir']
         + cache_key(definitions, this))
-    touch('test-definitions/cache/' + cache_key(definitions, this))
 
 
 def is_cached(defs, this):
-    if os.path.exists('test-definitions/cache/' + cache_key(defs, this)):
-        return True
+    if os.path.exists(config['cachedir'] + cache_key(defs, this)):
+        return cache_key(defs, this)
 
     return False
-
-    for cache in maybe_caches(this):
-        ref = get_ref(cache)
-        diff = git_diff(DTR, ref)
-        if diff:
-            for dependency in this['build-depends']:
-                return
 
 
 def build(definitions, target):
     log('starting build', target)
     if is_cached(definitions, target):
-        log('is already cached', target)
+        log('is already cached as', target, is_cached(definitions, target))
         return
 
     this = get_definition(definitions, target)
