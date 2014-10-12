@@ -30,6 +30,7 @@ def load_defs(path, definitions):
                 continue
 
             this = load_def(dirname, filename)
+            log('loading definition', this)
             name = get(this, 'name')
             if name != []:
                 for i, definition in enumerate(definitions):
@@ -54,9 +55,9 @@ def load_defs(path, definitions):
         if '.git' in dirnames:
             dirnames.remove('.git')
 
-    for i in definitions:
-        print
-        print i
+#    for i in definitions:
+#        print
+#        print i
 
 
 def load_def(path, name):
@@ -99,7 +100,7 @@ def get(thing, value):
 
 
 def assemble(definitions, this):
-    log('assemble', get(this, 'name'))
+    log('assemble', this)
 
 
 def touch(pathname):
@@ -108,8 +109,12 @@ def touch(pathname):
 
 
 def log(message, component='', data=''):
+    name = get(component, 'name')
+    if name == []:
+        name = component
+
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print '%s [%s] %s %s' % (timestamp, component, message, data)
+    print '%s [%s] %s %s' % (timestamp, name, message, data)
 
 
 def cache_key(definitions, this):
@@ -120,7 +125,7 @@ def cache_key(definitions, this):
 
 
 def cache(definitions, this):
-    log('is cached at', get(this, 'name'), 'test-definitions/cache/'
+    log('is cached at', this, 'test-definitions/cache/'
         + cache_key(definitions, this))
     touch('test-definitions/cache/' + cache_key(definitions, this))
 
@@ -140,9 +145,9 @@ def is_cached(defs, this):
 
 
 def build(definitions, target):
-    log('starting build', get(target, 'name'))
+    log('starting build', target)
     if is_cached(definitions, target):
-        log('is already cached', get(target, 'name'))
+        log('is already cached', target)
         return
 
     this = get_definition(definitions, target)

@@ -1,5 +1,4 @@
 TODO
-- logging
 - config
 - arch handling
 - add distbuild queuing
