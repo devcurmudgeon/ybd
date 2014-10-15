@@ -142,9 +142,9 @@ def cache(definitions, this):
         + cache_key(definitions, this))
 
 
-def is_cached(defs, this):
-    if os.path.exists(config['cachedir'] + cache_key(defs, this)):
-        return cache_key(defs, this)
+def is_cached(definitions, this):
+    if os.path.exists(config['cachedir'] + cache_key(definitions, this)):
+        return cache_key(definitions, this)
 
     return False
 
