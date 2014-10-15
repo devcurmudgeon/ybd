@@ -130,9 +130,18 @@ def assemble(definitions, this):
     # make staging area for this assembly
     # symlink all dependencies
     # checkout the required version of this from git
+
     # run the configure-commands
+    log('configure-commands', this)
+    # print get(this,'configure-commands')
+
     # run the build-commands
+    log('build-commands', this)
+    # print get(this,'build-commands')
+
     # run the install-commands
+    log('install-commands', this)
+    # print get(this,'install-commands')
 
     # cache the result
     cache(definitions, this)
@@ -182,7 +191,7 @@ def is_cached(definitions, this):
 
 def build(definitions, target):
     ''' Build dependencies and content recursively until target is cached. '''
-    log('starting build', target)
+#    log('starting build', target)
     if is_cached(definitions, target):
         log('is already cached as', target, is_cached(definitions, target))
         return
