@@ -21,25 +21,18 @@ import sys
 import hashlib
 import datetime
 
-config = {
-    'repo-alias': [
-        ('upstream='
-            'git://git.baserock.org/%s#'
-            'ssh://git.baserock.org/%s'),
-        ('freedesktop='
-            'git://anongit.freedesktop.org/#'
-            'ssh://git.freedesktop.org/'),
-        ('gnome='
-            'git://git.gnome.org/%s#'
-            'ssh://git.gnome.org/git/%s'),
-        ('github='
-            'git://github.com/%s#'
-            'ssh://git@github.com/%s'),
-    ],
-    'cachedir': os.path.expanduser('~/.brock/cache/'),
-    'gitdir': os.path.expanduser('~/.brock/gits/'),
-    'staging': os.path.expanduser('~/.brock/staging/')
-}
+config = {}
+definitions = []
+
+
+def setup():
+    config['brockdir'] = os.path.expanduser('~/.brock/')
+    config['cachedir'] = config['brockdir'] + 'cache/'
+    config['gitdir'] = config['brockdir'] + 'gits/'
+    config['staging'] = config['brockdir'] + 'staging/'
+    for directory in ['brockdir', 'cachedir', 'gitdir', 'staging']:
+        if not os.path.exists(config[directory]):
+            os.mkdir(config[directory])
 
 
 def load_defs(path, definitions):
@@ -176,8 +169,7 @@ def build(definitions, target):
     assemble(definitions, this)
     cache(definitions, this)
 
-
-definitions = []
+setup()
 path, target = os.path.split(sys.argv[1])
 load_defs(path, definitions)
 target = target.replace('.def', '')
