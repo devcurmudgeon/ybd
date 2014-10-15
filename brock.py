@@ -24,6 +24,8 @@ import os
 import sys
 import hashlib
 import datetime
+import tempfile
+from subprocess import call
 
 config = {}
 definitions = []
@@ -32,12 +34,21 @@ definitions = []
 def setup():
     ''' Global setup for a run of brock. '''
     config['brockdir'] = os.path.expanduser('~/.brock/')
-    config['cachedir'] = config['brockdir'] + 'cache/'
-    config['gitdir'] = config['brockdir'] + 'gits/'
-    config['staging'] = config['brockdir'] + 'staging/'
-    for directory in ['brockdir', 'cachedir', 'gitdir', 'staging']:
+    config['cachedir'] = os.path.join(config['brockdir'], 'cache')
+    config['gitdir'] = os.path.join(config['brockdir'], 'gits')
+    config['staging'] = os.path.join(config['brockdir'], 'staging')
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    config['assembly'] = os.path.join(config['staging'],
+                                      timestamp + '-' + target)
+
+    for directory in ['brockdir', 'cachedir', 'gitdir', 'staging', 'assembly']:
         if not os.path.exists(config[directory]):
             os.mkdir(config[directory])
+
+
+def teardown():
+    #  assuming success, we can remove the 'assembly' directory
+    pass
 
 
 def load_defs(path, definitions):
@@ -78,7 +89,8 @@ def load_defs(path, definitions):
 def load_def(path, name):
     ''' Load a single definition file, and create a hash for it. '''
     try:
-        with open(path + "/" + name) as f:
+        filename = os.path.join(path, name)
+        with open(filename) as f:
             text = f.read()
 
         definition = yaml.safe_load(text)
@@ -127,10 +139,8 @@ def assemble(definitions, this):
 
     '''
     log('assemble', this)
-    # make staging area for this assembly
     # symlink all dependencies
     # checkout the required version of this from git
-
     # run the configure-commands
     log('configure-commands', this)
     # print get(this,'configure-commands')
@@ -145,8 +155,6 @@ def assemble(definitions, this):
 
     # cache the result
     cache(definitions, this)
-
-    # teardown the staging area
 
 
 def touch(pathname):
@@ -176,15 +184,16 @@ def cache_key(definitions, this):
 
 def cache(definitions, this):
     ''' Just create an empty file for now. '''
-    touch(config['cachedir'] + cache_key(definitions, this))
-    log('is now cached at', this, config['cachedir']
-        + cache_key(definitions, this))
+    cachefile = os.path.join(config['cachedir'], cache_key(definitions, this))
+    touch(cachefile)
+    log('is now cached at', this, cachefile)
 
 
 def is_cached(definitions, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
-    if os.path.exists(config['cachedir'] + cache_key(definitions, this)):
-        return cache_key(definitions, this)
+    cachefile = os.path.join(config['cachedir'], cache_key(definitions, this))
+    if os.path.exists(cachefile):
+        return cachefile
 
     return False
 
@@ -209,9 +218,10 @@ def build(definitions, target):
 
     assemble(definitions, this)
 
-setup()
 path, target = os.path.split(sys.argv[1])
-load_defs(path, definitions)
 target = target.replace('.def', '')
 target = target.replace('.morph', '')
+setup()
+load_defs(path, definitions)
 build(definitions, target)
+teardown()
