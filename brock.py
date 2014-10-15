@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# =*= License: GPL-2 =*=
+
+'''A module to build a definition.'''
 
 import yaml
 import os
@@ -26,6 +30,7 @@ definitions = []
 
 
 def setup():
+    ''' Global setup for a run of brock. '''
     config['brockdir'] = os.path.expanduser('~/.brock/')
     config['cachedir'] = config['brockdir'] + 'cache/'
     config['gitdir'] = config['brockdir'] + 'gits/'
@@ -36,6 +41,7 @@ def setup():
 
 
 def load_defs(path, definitions):
+    ''' Load all definitions from `cwd` tree. '''
     for dirname, dirnames, filenames in os.walk("."):
         for filename in filenames:
             if not (filename.endswith('.def') or
@@ -68,12 +74,9 @@ def load_defs(path, definitions):
         if '.git' in dirnames:
             dirnames.remove('.git')
 
-#    for i in definitions:
-#        print
-#        print i
-
 
 def load_def(path, name):
+    ''' Load a single definition file, and create a hash for it. '''
     try:
         with open(path + "/" + name) as f:
             text = f.read()
@@ -88,6 +91,11 @@ def load_def(path, name):
 
 
 def get_definition(definitions, this):
+    ''' Load in the actual definition for a given named component.
+
+    We may need to loop through the whole list to find the right entry.
+
+    '''
     if (get(this, 'contents') != [] or get(this, 'repo') != []):
         return this
 
@@ -103,6 +111,7 @@ def get_definition(definitions, this):
 
 
 def get(thing, value):
+    ''' Look up value from thing, return thing if none. '''
     val = []
     try:
         val = thing[value]
@@ -112,15 +121,33 @@ def get(thing, value):
 
 
 def assemble(definitions, this):
+    ''' Do the actual creation of an artifact.
+
+    By the time we get here, all dependencies for 'this' have been assembled.
+
+    '''
     log('assemble', this)
+    # make staging area for this assembly
+    # symlink all dependencies
+    # checkout the required version of this from git
+    # run the configure-commands
+    # run the build-commands
+    # run the install-commands
+
+    # cache the result
+    cache(definitions, this)
+
+    # teardown the staging area
 
 
 def touch(pathname):
+    ''' Create an empty file if pathname does not exist already. '''
     with open(pathname, 'w'):
         pass
 
 
 def log(message, component='', data=''):
+    ''' Print a timestamped log. '''
     name = get(component, 'name')
     if name == []:
         name = component
@@ -130,18 +157,23 @@ def log(message, component='', data=''):
 
 
 def cache_key(definitions, this):
+    ''' A simple cache key. May not be safe, yet. '''
+    # what about architecture?
+
     definition = get_definition(definitions, this)
     return (definition['name'] + "|" +
             definition['hash'] + ".cache")
 
 
 def cache(definitions, this):
+    ''' Just create an empty file for now. '''
     touch(config['cachedir'] + cache_key(definitions, this))
     log('is now cached at', this, config['cachedir']
         + cache_key(definitions, this))
 
 
 def is_cached(definitions, this):
+    ''' Check if a cached artifact exists for the hashed version of this. '''
     if os.path.exists(config['cachedir'] + cache_key(definitions, this)):
         return cache_key(definitions, this)
 
@@ -149,6 +181,7 @@ def is_cached(definitions, this):
 
 
 def build(definitions, target):
+    ''' Build dependencies and content recursively until target is cached. '''
     log('starting build', target)
     if is_cached(definitions, target):
         log('is already cached as', target, is_cached(definitions, target))
@@ -166,7 +199,6 @@ def build(definitions, target):
         build(definitions, content)
 
     assemble(definitions, this)
-    cache(definitions, this)
 
 setup()
 path, target = os.path.split(sys.argv[1])
