@@ -88,8 +88,7 @@ def load_def(path, name):
 
 
 def get_definition(definitions, this):
-    if (get(this, 'contents') != [] or get(this, 'repo') != [] and
-            get(this, 'ref') != []):
+    if (get(this, 'contents') != [] or get(this, 'repo') != []):
         return this
 
     for definition in definitions:
