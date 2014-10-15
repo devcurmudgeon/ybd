@@ -1,25 +1,39 @@
-# Brock
+# brock
 
-Brock aims to build on what we've learned from Morph. As a result we can
-hope for the following advantages:
-- the words morphology and stratum can disappear from the Baserock lexicon
-- no need for workspaces
-- aim for Brock to run on non-Linux environments (eg Mac OS)
-- support for nested components
-- support for definitions without code
-- straightforward to have multiple versions of a component
-  - foo|aa and foo|bb installed
-  - foo|cc and foo|dd used as build-dependencies by other components
-- user can understand and diagnose the cache naming scheme
-- smaller, simpler codebase
-- more permissive, but still with traceability and reproducibility
+brock is an attempt to build on what we've learned from Morph, seeking
+the following advantages:
+- less functionality (just build, cache, deploy, trove)
+  - drop morph branch|checkout|edit|merge
+- drop workspaces
 - much faster calculation of build-order, cache-keys
-- use of proven software for distbuild queues (celery?)
+- aim to run on non-Linux environments (eg Mac OS)
+- the words morphology, stratum, chunk disappear from the Baserock vocabulary
+- instead we just deal with content
+  - a content definition may have contents and build-dependencies
+  - contents is just a list of content
+  - build-dependencies is just a list of content too
+  - support for nested content
+  - content may contain no code (could be just videos for example)
+  - content can be a tarball
+  - can have multiple versions of a piece of content, eg
+    - foo|aa and foo|bb installed
+    - foo|cc and foo|dd used as build-dependencies by other content
+- ability to build and deploy any level of content
+  - an individual software component (what we've called chunks til now)
+  - a logically-coupled set of components (what we've called strata)
+  - a bootable collection of sets of components (what we've called systems)
+- users can understand and diagnose the cache naming scheme
+- be permissive and fast for day-to-day engineering, but still guarantee traceability and reproducibility
+- a much smaller, much simpler codebase than we have with morph
+- use existing software for the hard parts of distbuild (celery?)
 
-- the initial scope is only brock build, to replace morph build/distbuild
+- the initial idea is `brock build` replaces `morph build`
+- then extend it to deal with multi-worker builds
 - then follow on with brock deploy
 
-# Some design notes
+## Some design notes
+
+- for cache safety, we need to get to tree refs, ignore commit refs, tags, branches
 
 From a given tree ref (full SHA1) for definitions.git (DTR) we know quite a lot:
 
@@ -75,8 +89,8 @@ Now what about when user makes a change? Which subset of artifacts can be assume
 - caches whose DTR doesn't exist can be deleted
 
 - clearly changing baserock tools should not lead to rebuilds of non-baserock contents
-  - so we need a separate assembly/stratum for morph, tbdiff, system-version-manager
-  - add git to that, and ssh, and any other devtools
+  - so we need a separate assembly for morph, tbdiff, system-version-manager
+  - add git to that, and ssh, and any other devtools?
 
 
       
