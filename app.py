@@ -25,15 +25,15 @@ config = {}
 
 
 def setup(target):
-    config['brockdir'] = os.path.expanduser('~/.brock/')
-    config['cachedir'] = os.path.join(config['brockdir'], 'cache')
-    config['gitdir'] = os.path.join(config['brockdir'], 'gits')
-    config['staging'] = os.path.join(config['brockdir'], 'staging')
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    config['base'] = os.path.expanduser('~/.brock/')
+    config['caches'] = os.path.join(config['base'], 'caches')
+    config['gits'] = os.path.join(config['base'], 'gits')
+    config['staging'] = os.path.join(config['base'], 'staging')
+    timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     config['assembly'] = os.path.join(config['staging'],
                                       target + '-' + timestamp)
 
-    for directory in ['brockdir', 'cachedir', 'gitdir', 'staging', 'assembly']:
+    for directory in ['base', 'caches', 'gits', 'staging', 'assembly']:
         if not os.path.exists(config[directory]):
             os.mkdir(config[directory])
 

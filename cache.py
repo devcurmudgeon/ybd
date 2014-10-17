@@ -21,6 +21,7 @@ import os
 import app
 import defs
 from subprocess import call
+from subprocess import check_output
 
 
 def cache_key(definitions, this):
@@ -34,7 +35,7 @@ def cache_key(definitions, this):
 
 def cache(definitions, this):
     ''' Just create an empty file for now. '''
-    cachefile = os.path.join(app.config['cachedir'],
+    cachefile = os.path.join(app.config['caches'],
                              cache_key(definitions, this))
     touch(cachefile)
     app.log('is now cached at', this, cachefile)
@@ -42,7 +43,7 @@ def cache(definitions, this):
 
 def is_cached(definitions, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
-    cachefile = os.path.join(app.config['cachedir'],
+    cachefile = os.path.join(app.config['caches'],
                              cache_key(definitions, this))
     if os.path.exists(cachefile):
         return cachefile
@@ -50,36 +51,68 @@ def is_cached(definitions, this):
     return False
 
 
-def git_tree(repo, ref):
+def get_sha(this):
+    if defs.version(this):
+        ref = defs.version(this)
+
+    if this['ref']:
+        ref = this['ref']
+
+    os.chdir(this['git'])
+    sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
+
+    return sha1
+
+
+def get_tree(this):
+
     try:
-        tree = call(['git', 'rev-parse', ref + '^{tree}'])
-        print tree
+        os.chdir(this['git'])
+        call(['pwd'])
+        app.log('ref is', this, get_ref(this))
+        tree = check_output(['git', 'rev-parse', get_ref(this) + '^{tree}'])[0:-1]
+        app.log('tree is', this, tree)
+
     except:
-        # either ref is not unique, or does not exist
-        pass
+        app.log('something went wrong', this, get_ref(this))
+        raise SystemExit
+        # either we don't have a git dir, or ref is not unique, or does not exist
+        try:
+            refs = call(['git', 'rev-list', '--all'])
+            print refs[-1]
+
+        except:
+            pass
 
     return tree
 
 
 def checkout(this):
     # checkout the required version of this from git
-    assemblydir = os.path.join(app.config['assembly'], this['name'])
-    gitdir = os.path.join(app.config['gitdir'], this['name'])
     if this['repo']:
-        if not os.path.exists(gitdir):
-            call(['git', 'clone', this['repo'], gitdir])
+        repo = this['repo'].replace('upstream:','')
+        this['git'] = os.path.join(app.config['gits'], repo)
+        if not os.path.exists(this['git']):
+            # TODO - try tarball first
+            call(['git', 'clone', 'git://git.baserock.org/delta/' + repo + '.git', this['git']])
+
+        app.log('git repo is mirrored at', this, this['git'])
+
         # if we don't have the required ref, try to fetch it?
+        builddir = os.path.join(app.config['assembly'], this['name'] +'.build')
+        call(['git', 'clone', this['git'], builddir])
+        os.chdir(builddir)
+        sha = get_sha(this)
+        if call(['git', 'checkout', sha]) != 0:
+            app.log('Oops, git checkout failed for ', this, get_sha(this))
+            raise SystemExit
 
-        call(['git', 'clone', gitdir, assemblydir])
-        if defs.version(this):
-            call(['git', 'checkout', defs.version(this)])
-        if this['ref']:
-            call(['git', 'checkout', this('ref')])
-    else:
-        # this may be a tarball
-        pass
+#    else:
+#        # this may be a tarball
+#        app.log('No repo specified for', this)
+#        raise SystemExit
 
-    return assemblydir
+    return builddir
 
 
 def touch(pathname):

@@ -46,8 +46,9 @@ def assemble(definitions, this):
 
     '''
     app.log('assemble', this)
-#    os.chdir(cache.checkout(this))
+    cache.checkout(this)
 
+    os.chdir(app.config['assembly'])
     # run the configure-commands
     app.log('configure-commands', this)
     # print get(this,'configure-commands')
@@ -61,6 +62,7 @@ def assemble(definitions, this):
     # print get(this,'install-commands')
 
     # cache the result
+    app.log('cache', this)
     cache.cache(definitions, this)
 
 
@@ -84,6 +86,7 @@ def build(definitions, target):
         build(definitions, content)
 
     assemble(definitions, this)
+
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')

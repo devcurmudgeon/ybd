@@ -46,7 +46,8 @@ def load_defs(path, definitions):
             if name != []:
                 for i, definition in enumerate(definitions):
                     if definition['name'] == this['name']:
-                        definitions[i] = this
+                        for key in this:
+                            definitions[i][key] = this[key]
 
                 if get(definitions, 'name') == []:
                     definitions.append(this)
