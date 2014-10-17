@@ -132,6 +132,34 @@ def get(thing, value):
     return val
 
 
+def version(this):
+    try:
+        return this['name'].split('|')[1]
+    except:
+        return False
+
+
+def checkout(this):
+    # checkout the required version of this from git
+    assemblydir = os.path.join(config['assembly'], this['name'])
+    gitdir = os.path.join(config['gitdir'], this['name'])
+    if this['repo']:
+        if not os.path.exists(gitdir):
+            call(['git', 'clone', this['repo'], gitdir])
+        # if we don't have the required ref, try to fetch it?
+
+        call(['git', 'clone', gitdir, assemblydir])
+        if version(this):
+            call(['git', 'checkout', version(this)])
+        if this('ref'):
+            call(['git', 'checkout', this('ref')])
+    else:
+        # this may be a tarball
+        pass
+
+    return assemblydir
+
+
 def assemble(definitions, this):
     ''' Do the actual creation of an artifact.
 
@@ -139,8 +167,8 @@ def assemble(definitions, this):
 
     '''
     log('assemble', this)
-    # symlink all dependencies
-    # checkout the required version of this from git
+    os.chdir(checkout(this))
+
     # run the configure-commands
     log('configure-commands', this)
     # print get(this,'configure-commands')
@@ -171,6 +199,15 @@ def log(message, component='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print '%s [%s] %s %s' % (timestamp, name, message, data)
+
+
+def git_tree(repo, ref):
+    try:
+        tree = call(['git', 'rev-parse', ref + '^{tree}'])
+        print tree
+    except:
+        # either ref is not unique, or does not exist
+        pass
 
 
 def cache_key(definitions, this):
