@@ -31,7 +31,7 @@ def setup(target):
     config['staging'] = os.path.join(config['brockdir'], 'staging')
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     config['assembly'] = os.path.join(config['staging'],
-                                      timestamp + '-' + target)
+                                      target + '-' + timestamp)
 
     for directory in ['brockdir', 'cachedir', 'gitdir', 'staging', 'assembly']:
         if not os.path.exists(config[directory]):
