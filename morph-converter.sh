@@ -12,7 +12,7 @@ find . -name *morph | xargs sed -i -e "/morph: /d"
 find . -name *morph | xargs sed -i -e "/build-depends: \[\]/d"
 
 # add target field for arm-specific chunks
-# find . -name *morph | xargs sed -i -e 's/^\(- name:.*-\)\(armv7.*\)$/\1\2!  target: \2/'
+find . -name *morph | xargs sed -i -e 's/^\(- name:.*\)-\(armv7.*\)$/\1-\2!  target: \2/'
 
 # add target field for x86-specific chunks
-# find . -name *morph | xargs sed -i -e 's/^\(- name:.*-\)\(x86.*\)$/\1\2!  target: \2/'
+find . -name *morph | xargs sed -i -e 's/^\(- name:.*\)-\(x86.*\)$/\1-\2!  target: \2/'
