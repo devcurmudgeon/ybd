@@ -45,24 +45,24 @@ def assemble(definitions, this):
     By the time we get here, all dependencies for 'this' have been assembled.
 
     '''
-    app.log('assemble', this)
+    app.log(this, 'assemble')
     cache.checkout(this)
 
     os.chdir(app.config['assembly'])
     # run the configure-commands
-    app.log('configure-commands', this)
+    app.log(this, 'configure-commands')
     # print get(this,'configure-commands')
 
     # run the build-commands
-    app.log('build-commands', this)
+    app.log(this, 'build-commands')
     # print get(this,'build-commands')
 
     # run the install-commands
-    app.log('install-commands', this)
+    app.log(this, 'install-commands')
     # print get(this,'install-commands')
 
     # cache the result
-    app.log('cache', this)
+    app.log(this, 'cache')
     cache.cache(definitions, this)
 
 
@@ -70,7 +70,7 @@ def build(definitions, target):
     ''' Build dependencies and content recursively until target is cached. '''
 #    app.log('starting build', target)
     if cache.is_cached(definitions, target):
-        app.log('is already cached as', target,
+        app.log(target, 'is already cached as',
                 cache.is_cached(definitions, target))
         return
 

@@ -20,7 +20,7 @@
 import yaml
 import os
 import hashlib
-
+import app
 
 def get(thing, value):
     ''' Look up value from thing, return thing if none. '''
@@ -41,7 +41,7 @@ def load_defs(path, definitions):
                 continue
 
             this = load_def(dirname, filename)
-#            log('loading definition', this)
+#            log(this, 'loading definition')
             name = get(this, 'name')
             if name != []:
                 for i, definition in enumerate(definitions):
@@ -76,10 +76,10 @@ def load_def(path, name):
             text = f.read()
 
         definition = yaml.safe_load(text)
-        definition['hash'] = hashlib.sha256(path + "/" + name).hexdigest()[:8]
+        definition['hash'] = hashlib.sha256(filename).hexdigest()[:8]
 
     except ValueError:
-        print 'Oops, problem loading %s' % (path + "/" + name)
+        app.log(this, 'Oops, problem loading', filename)
 
     return definition
 
@@ -100,7 +100,7 @@ def get_def(definitions, this):
                 definition['name'].split('|')[0] == get(this, 'name')):
             return definition
 
-    print "Oops, where is %s, %s?" % (this, get(this, 'name'))
+    app.log(this, 'Oops, where is', get(this, 'name'))
     raise SystemExit
 
 

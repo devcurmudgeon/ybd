@@ -38,7 +38,7 @@ def cache(definitions, this):
     cachefile = os.path.join(app.config['caches'],
                              cache_key(definitions, this))
     touch(cachefile)
-    app.log('is now cached at', this, cachefile)
+    app.log(this, 'is now cached at', cachefile)
 
 
 def is_cached(definitions, this):
@@ -69,9 +69,9 @@ def get_tree(this):
     try:
         os.chdir(this['git'])
         call(['pwd'])
-        app.log('ref is', this, get_ref(this))
+        app.log(this, 'ref is', get_ref(this))
         tree = check_output(['git', 'rev-parse', get_ref(this) + '^{tree}'])[0:-1]
-        app.log('tree is', this, tree)
+        app.log(this, 'tree is', tree)
 
     except:
         app.log('something went wrong', this, get_ref(this))
@@ -96,7 +96,7 @@ def checkout(this):
             # TODO - try tarball first
             call(['git', 'clone', 'git://git.baserock.org/delta/' + repo + '.git', this['git']])
 
-        app.log('git repo is mirrored at', this, this['git'])
+        app.log(this, 'git repo is mirrored at', this['git'])
 
         # if we don't have the required ref, try to fetch it?
         builddir = os.path.join(app.config['assembly'], this['name'] +'.build')
@@ -104,13 +104,13 @@ def checkout(this):
         os.chdir(builddir)
         sha = get_sha(this)
         if call(['git', 'checkout', sha]) != 0:
-            app.log('Oops, git checkout failed for ', this, get_sha(this))
+            app.log(this, 'Oops, git checkout failed for', get_sha(this))
             raise SystemExit
 
-#    else:
-#        # this may be a tarball
-#        app.log('No repo specified for', this)
-#        raise SystemExit
+    else:
+        # this may be a tarball
+        app.log(this, 'No repo specified')
+        raise SystemExit
 
     return builddir
 

@@ -38,7 +38,7 @@ def setup(target):
             os.mkdir(config[directory])
 
 
-def log(message, component='', data=''):
+def log(component, message, data=''):
     ''' Print a timestamped log. '''
     name = defs.get(component, 'name')
     if name == []:
