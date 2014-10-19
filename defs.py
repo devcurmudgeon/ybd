@@ -33,7 +33,7 @@ def get(thing, value):
     return val
 
 
-def load_defs(path, definitions):
+def load_defs(definitions):
     ''' Load all definitions from `cwd` tree. '''
     for dirname, dirnames, filenames in os.walk("."):
         for filename in filenames:
