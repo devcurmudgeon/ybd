@@ -130,16 +130,31 @@ def copy_repo(repo, destdir):
     call(['git', 'remote', 'update', 'origin', '--prune'])
 
 
+def get_repo_url(this):
+    url = this['repo']
+    url = url.replace('upstream:', 'git://git.baserock.org/delta/')
+    url = url.replace('baserock:baserock/',
+                      'git://git.baserock.org/baserock/baserock/')
+    url = url + '.git'
+    return url
+
+
+def get_repo_name(this):
+    repo = this['repo']
+    repo = repo.replace('upstream:', '')
+    repo = repo.replace('baserock:baserock/', '')
+    return repo
+
+
 def checkout(this):
     # checkout the required version of this from git
-    if this['repo']:
-        repo = this['repo'].replace('upstream: ', '')
-        repourl = 'git://git.baserock.org/delta/' + repo + '.git'
-        this['git'] = os.path.join(app.config['gits'], repo)
+    if defs.get(this, 'repo'):
+        this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
         if not os.path.exists(this['git']):
             # TODO - try tarball first
 
-            call(['git', 'clone', '--mirror', '-n', repourl, this['git']])
+            call(['git', 'clone', '--mirror', '-n',
+                  get_repo_url(this), this['git']])
 
         app.log(this, 'git repo is mirrored at', this['git'])
 
@@ -156,10 +171,9 @@ def checkout(this):
                 raise SystemExit
 
     else:
-        # this may be a tarball?
+        # this may be a tarball, or a collection
 
         app.log(this, 'No repo specified')
-        raise SystemExit
 
 
 def touch(pathname):
