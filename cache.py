@@ -31,7 +31,6 @@ def cache_key(definitions, this):
 
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
-    app.log(this, 'safename', safename)
     return (safename + "|" +
             definition['hash'] + ".cache")
 
@@ -94,7 +93,7 @@ def get_tree(this):
             app.log('Oops, could not find tree for', this, ref)
             raise SystemExit
             try:
-                refs = call(['git', 'rev-list', '--all'])
+                refs = call(['git', 'rev-list', '--all'], stdout=subprocess.PIPE)
                 print refs[-1]
 
             except:

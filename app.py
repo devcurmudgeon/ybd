@@ -26,7 +26,7 @@ config = {}
 
 
 def setup(target):
-    config['base'] = os.path.expanduser('~/.brock/')
+    config['base'] = os.path.expanduser('~/.ybd/')
     config['caches'] = os.path.join(config['base'], 'caches')
     config['gits'] = os.path.join(config['base'], 'gits')
     config['staging'] = os.path.join(config['base'], 'staging')

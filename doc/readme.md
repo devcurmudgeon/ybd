@@ -35,20 +35,14 @@ Most of these ideas have been discussed in public and/or at Codethink and/or wit
 
 Being on the road for the last couple of weeks, and seeing how long it was taking to build the various dependencies for some of the GENIVI work, I found time to do some exploratory hacking, and offer the following starter code for consideration.
 
-http://github.com/devcurmudgeon/brock/brock.py
+http://github.com/devcurmudgeon/ybd/ybd.py
 
-Depending on reactions, I hope that it'll either inspire morph wizards to fix some of the above in morph, or maybe we could bring the hard stuff from morph into brock? I'd prefer the latter, as I think it would help us to lose some of the cruft we've acquired, but I'm sure others will disagree. 
+Depending on reactions, I hope that it'll either inspire morph wizards to fix some of the above in morph, or maybe we could bring the hard stuff from morph into ybd? I'd prefer the latter, as I think it would help us to lose some of the cruft we've acquired, but I'm sure others will disagree. 
 
 Anyways, I'm out of the office for a while, so I won't hear any of the cries, whether they be joy or rage :)
 
 Notes:
 - definitions.git are tweaked to drop strata, systems, chunks etc. The script I'm using for the tweaking is morph-converter.sh
-- brock.py parses all of the definitions directories and can walk the
+- ybd.py parses all of the definitions directories and can walk the
   whole build tree for any component in build order within two seconds or so. It doesn't fetch or build anything yet though.
 - It has a notional working cache scheme, but Emmet has already highlighted it's not safe - I'd welcome input/help on that (note I have so far been unable to understand morph's cache key scheme)
-- there are only a couple of simple tests at the moment - try running ./check.sh
-- I'm not particularly wedded to brock as a name, but
-  - afaict it's unique as a foss project name
-  - it resonates with baserock
-  - it is clearly not morph :-)
-- I'm now looking at celery as a candidate for addressing the complexities of distbuild. Anyone interested to help out?

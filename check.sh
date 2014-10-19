@@ -1,8 +1,8 @@
-rm -fr ~/.brock/caches/*
-python brock.py test-definitions/fifth-set.def
-ls  ~/.brock/cache/| sort > test-definitions/all-cache-names
+rm -fr ~/.ybd/caches/*
+python ybd.py test-definitions/fifth-set.def
+ls  ~/.ybd/cache/| sort > test-definitions/all-cache-names
 echo '---------------'
 echo 'Check'
 git diff
-pep8 brock.py
+pep8 *.py
 echo '---------------'

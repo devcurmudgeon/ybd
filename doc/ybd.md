@@ -1,6 +1,6 @@
-# brock
+# ybd
 
-brock is an attempt to build on what we've learned from Morph, seeking
+ybd is an attempt to build on what we've learned from Morph, seeking
 the following advantages:
 - less functionality (just build, cache, deploy, trove)
   - drop morph branch|checkout|edit|merge
@@ -27,9 +27,9 @@ the following advantages:
 - a much smaller, much simpler codebase than we have with morph
 - use existing software for the hard parts of distbuild (celery?)
 
-- the initial idea is `brock build` replaces `morph build`
+- the initial idea is `ybd foo` replaces `morph build system`
+- and `ybd foo bar` replaces `morph deploy cluster`
 - then extend it to deal with multi-worker builds
-- then follow on with brock deploy
 
 ## Some design notes
 
