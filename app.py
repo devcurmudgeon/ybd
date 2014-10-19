@@ -17,6 +17,7 @@
 #
 # =*= License: GPL-2 =*=
 
+import contextlib
 import os
 import datetime
 import defs
@@ -37,6 +38,11 @@ def setup(target):
         if not os.path.exists(config[directory]):
             os.mkdir(config[directory])
 
+    # git replace means we can't trust that just the sha1 of a branch
+    # is enough to say what it contains, so we turn it off by setting
+    # the right flag in an environment variable.
+    os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
+
 
 def log(component, message, data=''):
     ''' Print a timestamped log. '''
@@ -46,3 +52,14 @@ def log(component, message, data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print '%s [%s] %s %s' % (timestamp, name, message, data)
+
+
+@contextlib.contextmanager
+def chdir(dirname=None):
+    currentdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+        yield
+    finally:
+        os.chdir(currentdir)

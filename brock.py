@@ -45,25 +45,26 @@ def assemble(definitions, this):
     By the time we get here, all dependencies for 'this' have been assembled.
 
     '''
-    app.log(this, 'assemble')
-    cache.checkout(this)
 
-    os.chdir(app.config['assembly'])
-    # run the configure-commands
-    app.log(this, 'configure-commands')
-    # print get(this,'configure-commands')
+    with app.chdir(app.config['assembly']):
 
-    # run the build-commands
-    app.log(this, 'build-commands')
-    # print get(this,'build-commands')
+        app.log(this, 'assemble', app.config['assembly'])
+        cache.checkout(this)
 
-    # run the install-commands
-    app.log(this, 'install-commands')
-    # print get(this,'install-commands')
+        # run the configure-commands
+        app.log(this, 'configure-commands')
 
-    # cache the result
-    app.log(this, 'cache')
-    cache.cache(definitions, this)
+        # run the build-commands
+        app.log(this, 'build-commands')
+        # print get(this,'build-commands')
+
+        # run the install-commands
+        app.log(this, 'install-commands')
+        # print get(this,'install-commands')
+
+        # cache the result
+        app.log(this, 'cache')
+        cache.cache(definitions, this)
 
 
 def build(definitions, target):

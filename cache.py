@@ -20,6 +20,7 @@
 import os
 import app
 import defs
+import git
 from subprocess import call
 from subprocess import check_output
 
@@ -58,61 +59,107 @@ def get_sha(this):
     if this['ref']:
         ref = this['ref']
 
-    os.chdir(this['git'])
-    sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
+    with app.chdir(this['git']):
+        # we need the earliest sha1 that matches this ref/version
+        sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
 
     return sha1
 
 
 def get_tree(this):
-
-    try:
-        os.chdir(this['git'])
-        call(['pwd'])
-        app.log(this, 'ref is', get_ref(this))
-        tree = check_output(['git', 'rev-parse', get_ref(this) + '^{tree}'])[0:-1]
-        app.log(this, 'tree is', tree)
-
-    except:
-        app.log('something went wrong', this, get_ref(this))
-        raise SystemExit
-        # either we don't have a git dir, or ref is not unique, or does not exist
+    with app.chdir(this['git']):
         try:
-            refs = call(['git', 'rev-list', '--all'])
-            print refs[-1]
+            app.log(this, 'ref is', get_ref(this))
+            tree = check_output(['git', 'rev-parse', get_ref(this)
+                                 + '^{tree}'])[0:-1]
+            app.log(this, 'tree is', tree)
 
         except:
-            pass
+            app.log('Oops, something went wrong', this, get_ref(this))
+            raise SystemExit
+
+            # either we don't have a git dir, or ref is not unique
+            # or ref does not exist
+            try:
+                refs = call(['git', 'rev-list', '--all'])
+                print refs[-1]
+
+            except:
+                pass
 
     return tree
+
+
+def copy_repo(repo, destdir):
+    '''Copies a cached repository into a directory using cp.
+
+    This also fixes up the repository afterwards, so that it can contain
+    code etc.  It does not leave any given branch ready for use.
+
+    '''
+
+    # core.bare should be false so that git believes work trees are possible
+    # we do not want the origin remote to behave as a mirror for pulls
+    # we want a traditional refs/heads -> refs/remotes/origin ref mapping
+    # set the origin url to the cached repo so that we can quickly clean up
+    # by packing the refs, we can then edit then en-masse easily
+    call(['cp', '-a', repo, os.path.join(destdir, '.git')])
+    call(['git', 'config', 'core.bare', 'false'])
+    call(['git', 'config', '--unset', 'remote.origin.mirror'])
+    call(['git', 'config', 'remote.origin.fetch',
+          '+refs/heads/*:refs/remotes/origin/*'])
+    call(['git',  'config', 'remote.origin.url', repo])
+    call(['git',  'pack-refs', '--all', '--prune'])
+
+    # turn refs/heads/* into refs/remotes/origin/* in the packed refs
+    # so that the new copy behaves more like a traditional clone.
+    with open(os.path.join(destdir, ".git", "packed-refs"), "r") as ref_fh:
+        pack_lines = ref_fh.read().split("\n")
+    with open(os.path.join(destdir, ".git", "packed-refs"), "w") as ref_fh:
+        ref_fh.write(pack_lines.pop(0) + "\n")
+        for refline in pack_lines:
+            if ' refs/remotes/' in refline:
+                continue
+            if ' refs/heads/' in refline:
+                sha, ref = refline[:40], refline[41:]
+                if ref.startswith("refs/heads/"):
+                    ref = "refs/remotes/origin/" + ref[11:]
+                refline = "%s %s" % (sha, ref)
+            ref_fh.write("%s\n" % (refline))
+    # Finally run a remote update to clear up the refs ready for use.
+    call(['git', 'remote', 'update', 'origin', '--prune'])
 
 
 def checkout(this):
     # checkout the required version of this from git
     if this['repo']:
-        repo = this['repo'].replace('upstream:','')
+        repo = this['repo'].replace('upstream: ', '')
+        repourl = 'git://git.baserock.org/delta/' + repo + '.git'
         this['git'] = os.path.join(app.config['gits'], repo)
         if not os.path.exists(this['git']):
             # TODO - try tarball first
-            call(['git', 'clone', 'git://git.baserock.org/delta/' + repo + '.git', this['git']])
+
+            call(['git', 'clone', '--mirror', '-n', repourl, this['git']])
 
         app.log(this, 'git repo is mirrored at', this['git'])
 
         # if we don't have the required ref, try to fetch it?
-        builddir = os.path.join(app.config['assembly'], this['name'] +'.build')
-        call(['git', 'clone', this['git'], builddir])
-        os.chdir(builddir)
-        sha = get_sha(this)
-        if call(['git', 'checkout', sha]) != 0:
-            app.log(this, 'Oops, git checkout failed for', get_sha(this))
-            raise SystemExit
+
+        this['build'] = os.path.join(app.config['assembly'], this['name']
+                                     + '.build')
+        os.makedirs(this['build'])
+        with app.chdir(this['build']):
+            copy_repo(this['git'], this['build'])
+            sha = get_sha(this)
+            if call(['git', 'checkout', '-b', sha]) != 0:
+                app.log(this, 'Oops, git checkout failed for', get_sha(this))
+                raise SystemExit
 
     else:
-        # this may be a tarball
+        # this may be a tarball?
+
         app.log(this, 'No repo specified')
         raise SystemExit
-
-    return builddir
 
 
 def touch(pathname):

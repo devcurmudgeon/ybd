@@ -22,6 +22,7 @@ import os
 import hashlib
 import app
 
+
 def get(thing, value):
     ''' Look up value from thing, return thing if none. '''
     val = []
