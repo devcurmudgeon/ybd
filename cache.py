@@ -58,6 +58,9 @@ def get_repo_url(this):
     url = url.replace('upstream:', 'git://git.baserock.org/delta/')
     url = url.replace('baserock:baserock/',
                       'git://git.baserock.org/baserock/baserock/')
+    url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
+    url = url.replace('github:', 'git://github.com/')
+    url = url.replace('gnome:', 'git://git.gnome.org')
     url = url + '.git'
     return url
 
@@ -66,6 +69,9 @@ def get_repo_name(this):
     repo = this['repo']
     repo = repo.replace('upstream:', '')
     repo = repo.replace('baserock:baserock/', '')
+    repo = repo.replace('freedesktop:', '')
+    repo = repo.replace('github:', '')
+    repo = repo.replace('gnome:', '')
     return repo
 
 
@@ -180,7 +186,7 @@ def checkout(this):
                 raise SystemExit
 
     else:
-        # this may be a tarball, or a collection
+        # TODO this may be a tarball, or a collection
 
         app.log(this, 'No repo specified')
 
