@@ -80,7 +80,7 @@ def load_def(path, name):
         definition['hash'] = hashlib.sha256(filename).hexdigest()[:8]
 
     except ValueError:
-        app.log(this, 'Oops, problem loading', filename)
+        app.log(this, 'ERROR: problem loading', filename)
 
     return definition
 
@@ -101,7 +101,7 @@ def get_def(definitions, this):
                 definition['name'].split('|')[0] == get(this, 'name')):
             return definition
 
-    app.log(this, 'Oops, where is', get(this, 'name'))
+    app.log(this, 'ERROR: no definition found for', this)
     raise SystemExit
 
 

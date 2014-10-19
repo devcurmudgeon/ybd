@@ -70,8 +70,8 @@ def get_repo_name(this):
 
 
 def get_tree(this):
-    if defs.get(this,'ref'):
-        ref = defs.get(this,'ref')
+    if defs.get(this, 'ref'):
+        ref = defs.get(this, 'ref')
 
     if defs.version(this):
         ref = defs.version(this)
@@ -90,14 +90,15 @@ def get_tree(this):
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-            app.log('Oops, could not find tree for', this, ref)
+            app.log('ERROR: could not find tree for', this, ref)
             raise SystemExit
             try:
-                refs = call(['git', 'rev-list', '--all'], stdout=subprocess.PIPE)
+                refs = call(['git', 'rev-list', '--all'],
+                            stdout=subprocess.PIPE)
                 print refs[-1]
 
             except:
-                app.log('Oops, could not find tree for', this, ref)
+                app.log('ERROR: could not find tree for', this, ref)
                 raise SystemExit
 
     app.log(this, 'tree is', tree)
@@ -151,8 +152,11 @@ def checkout(this):
         if not os.path.exists(this['git']):
             # TODO - try tarball first
 
-            call(['git', 'clone', '--mirror', '-n',
-                  get_repo_url(this), this['git']])
+            if call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
+                     this['git']]) != 0:
+
+                app.log(this, 'ERROR: failed to clone', get_repo_name(this))
+                raise SystemExit
 
         app.log(this, 'git repo is mirrored at', this['git'])
 
@@ -172,7 +176,7 @@ def checkout(this):
         with app.chdir(this['build']):
             tree = get_tree(this)
             if call(['git', 'checkout', '-b', tree]) != 0:
-                app.log(this, 'Oops, git checkout failed for', get_tree(this))
+                app.log(this, 'ERROR: git checkout failed for', get_tree(this))
                 raise SystemExit
 
     else:
