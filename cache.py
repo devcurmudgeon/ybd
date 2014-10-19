@@ -162,9 +162,16 @@ def checkout(this):
 
         this['build'] = os.path.join(app.config['assembly'], this['name']
                                      + '.build')
-        os.makedirs(this['build'])
+
+        try:
+            os.makedirs(this['build'])
+            with app.chdir(this['build']):
+                copy_repo(this['git'], this['build'])
+
+        except:
+            app.log(this, 'Re-using existing build dir', this['build'])
+
         with app.chdir(this['build']):
-            copy_repo(this['git'], this['build'])
             sha = get_sha(this)
             if call(['git', 'checkout', '-b', sha]) != 0:
                 app.log(this, 'Oops, git checkout failed for', get_sha(this))
