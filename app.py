@@ -63,3 +63,16 @@ def chdir(dirname=None):
         yield
     finally:
         os.chdir(currentdir)
+
+
+@contextlib.contextmanager
+def timer(this):
+    starttime = datetime.datetime.now()
+    try:
+        yield
+    finally:
+        td = datetime.datetime.now() - starttime
+        hours, remainder = divmod(int(td.total_seconds()), 60*60)
+        minutes, seconds = divmod(remainder, 60)
+        td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
+        log(this, 'Elapsed time', td_string)

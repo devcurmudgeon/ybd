@@ -69,24 +69,25 @@ def assemble(definitions, this):
 
 def build(definitions, target):
     ''' Build dependencies and content recursively until target is cached. '''
-#    app.log('starting build', target)
-    if cache.is_cached(definitions, target):
-        app.log(target, 'is already cached as',
-                cache.is_cached(definitions, target))
-        return
+    with app.timer(target):
+        # app.log('starting build', target)
+        if cache.is_cached(definitions, target):
+            app.log(target, 'is already cached as',
+                    cache.is_cached(definitions, target))
+            return
 
-    this = defs.get_def(definitions, target)
+        this = defs.get_def(definitions, target)
 
-    for dependency in defs.get(this, 'build-depends'):
-        build(definitions, dependency)
+        for dependency in defs.get(this, 'build-depends'):
+            build(definitions, dependency)
 
-    # wait here for all the dependencies to complete
-    # how do we know when that happens?
+        # wait here for all the dependencies to complete
+        # how do we know when that happens?
 
-    for content in defs.get(this, 'contents'):
-        build(definitions, content)
+        for content in defs.get(this, 'contents'):
+            build(definitions, content)
 
-    assemble(definitions, this)
+        assemble(definitions, this)
 
 
 path, target = os.path.split(sys.argv[1])
