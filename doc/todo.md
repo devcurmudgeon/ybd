@@ -1,7 +1,7 @@
 TODO
-- git handling
 - make cache safe
 - check for duplicate contents
+- check for duplicate builds
 - config
 - arch handling
 - implement actual build functionality
