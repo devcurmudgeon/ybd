@@ -30,7 +30,9 @@ def cache_key(definitions, this):
     # what about architecture?
 
     definition = defs.get_def(definitions, this)
-    return (definition['name'] + "|" +
+    safename = definition['name'].replace('/', '-')
+    app.log(this, 'safename', safename)
+    return (safename + "|" +
             definition['hash'] + ".cache")
 
 
@@ -52,41 +54,54 @@ def is_cached(definitions, this):
     return False
 
 
-def get_sha(this):
-    if defs.version(this):
-        ref = defs.version(this)
+def get_repo_url(this):
+    url = this['repo']
+    url = url.replace('upstream:', 'git://git.baserock.org/delta/')
+    url = url.replace('baserock:baserock/',
+                      'git://git.baserock.org/baserock/baserock/')
+    url = url + '.git'
+    return url
 
-    if this['ref']:
-        ref = this['ref']
 
-    with app.chdir(this['git']):
-        # we need the earliest sha1 that matches this ref/version
-        sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
-
-    return sha1
+def get_repo_name(this):
+    repo = this['repo']
+    repo = repo.replace('upstream:', '')
+    repo = repo.replace('baserock:baserock/', '')
+    return repo
 
 
 def get_tree(this):
+    if defs.get(this,'ref'):
+        ref = defs.get(this,'ref')
+
+    if defs.version(this):
+        ref = defs.version(this)
+
     with app.chdir(this['git']):
         try:
-            app.log(this, 'ref is', get_ref(this))
-            tree = check_output(['git', 'rev-parse', get_ref(this)
-                                 + '^{tree}'])[0:-1]
-            app.log(this, 'tree is', tree)
+            if call(['git', 'rev-parse', ref]):
+                # ref is either not unique or missing
+                app.log(this, 'ref is either not unique or missing', ref)
+            else:
+                sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
+                tree = check_output(['git', 'rev-parse', sha1
+                                     + '^{tree}'])[0:-1]
 
         except:
-            app.log('Oops, something went wrong', this, get_ref(this))
-            raise SystemExit
-
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
+
+            app.log('Oops, could not find tree for', this, ref)
+            raise SystemExit
             try:
                 refs = call(['git', 'rev-list', '--all'])
                 print refs[-1]
 
             except:
-                pass
+                app.log('Oops, could not find tree for', this, ref)
+                raise SystemExit
 
+    app.log(this, 'tree is', tree)
     return tree
 
 
@@ -130,22 +145,6 @@ def copy_repo(repo, destdir):
     call(['git', 'remote', 'update', 'origin', '--prune'])
 
 
-def get_repo_url(this):
-    url = this['repo']
-    url = url.replace('upstream:', 'git://git.baserock.org/delta/')
-    url = url.replace('baserock:baserock/',
-                      'git://git.baserock.org/baserock/baserock/')
-    url = url + '.git'
-    return url
-
-
-def get_repo_name(this):
-    repo = this['repo']
-    repo = repo.replace('upstream:', '')
-    repo = repo.replace('baserock:baserock/', '')
-    return repo
-
-
 def checkout(this):
     # checkout the required version of this from git
     if defs.get(this, 'repo'):
@@ -172,9 +171,9 @@ def checkout(this):
             app.log(this, 'Re-using existing build dir', this['build'])
 
         with app.chdir(this['build']):
-            sha = get_sha(this)
-            if call(['git', 'checkout', '-b', sha]) != 0:
-                app.log(this, 'Oops, git checkout failed for', get_sha(this))
+            tree = get_tree(this)
+            if call(['git', 'checkout', '-b', tree]) != 0:
+                app.log(this, 'Oops, git checkout failed for', get_tree(this))
                 raise SystemExit
 
     else:
@@ -185,5 +184,6 @@ def checkout(this):
 
 def touch(pathname):
     ''' Create an empty file if pathname does not exist already. '''
+
     with open(pathname, 'w'):
         pass
