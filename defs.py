@@ -77,7 +77,7 @@ def load_def(path, name):
             text = f.read()
 
         definition = yaml.safe_load(text)
-        definition['hash'] = hashlib.sha256(filename).hexdigest()[:8]
+        definition['hash'] = hashlib.sha256(filename.encode('utf-8')).hexdigest()[:8]
 
     except ValueError:
         app.log(this, 'ERROR: problem loading', filename)

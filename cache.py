@@ -101,7 +101,7 @@ def get_tree(this):
             try:
                 refs = call(['git', 'rev-list', '--all'],
                             stdout=subprocess.PIPE)
-                print refs[-1]
+                print(refs[-1])
 
             except:
                 app.log('ERROR: could not find tree for', this, ref)
