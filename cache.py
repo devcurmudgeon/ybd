@@ -78,7 +78,7 @@ def get_tree(this):
     if defs.get(this, 'ref'):
         ref = defs.get(this, 'ref')
 
-    if defs.version(this):
+    if defs.version(this) and defs.version(this) != defs.get(this, 'hash'):
         ref = defs.version(this)
 
     with app.chdir(this['git']):
@@ -87,9 +87,10 @@ def get_tree(this):
                 # ref is either not unique or missing
                 app.log(this, 'ref is either not unique or missing', ref)
             else:
-                sha1 = check_output(['git', 'rev-parse', ref])[0:-1]
-                tree = check_output(['git', 'rev-parse', sha1
-                                     + '^{tree}'])[0:-1]
+                sha1 = check_output(['git', 'rev-parse', ref],
+                                    universal_newlines=True)[0:-1]
+                tree = check_output(['git', 'rev-parse', sha1 + '^{tree}'],
+                                    universal_newlines=True)[0:-1]
 
         except:
             # either we don't have a git dir, or ref is not unique
