@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2014  Codethink Limited
 #
@@ -51,7 +51,7 @@ def log(component, message, data=''):
         name = component
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print '%s [%s] %s %s' % (timestamp, name, message, data)
+    print('%s [%s] %s %s' % (timestamp, name, message, data))
 
 
 @contextlib.contextmanager
