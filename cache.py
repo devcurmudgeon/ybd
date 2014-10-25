@@ -20,7 +20,6 @@
 import os
 import app
 import defs
-import git
 from subprocess import call
 from subprocess import check_output
 
