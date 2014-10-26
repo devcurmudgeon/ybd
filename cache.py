@@ -87,9 +87,7 @@ def get_tree(this):
                 # ref is either not unique or missing
                 app.log(this, 'ref is either not unique or missing', ref)
             else:
-                sha1 = check_output(['git', 'rev-parse', ref],
-                                    universal_newlines=True)[0:-1]
-                tree = check_output(['git', 'rev-parse', sha1 + '^{tree}'],
+                tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
                                     universal_newlines=True)[0:-1]
 
         except:
