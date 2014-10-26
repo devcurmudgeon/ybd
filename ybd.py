@@ -52,15 +52,13 @@ def assemble(definitions, this):
         cache.checkout(this)
 
         # run the configure-commands
-        app.log(this, 'configure-commands')
+        app.log(this, 'configure-commands', defs.get(this,'configure-commands'))
 
         # run the build-commands
-        app.log(this, 'build-commands')
-        # print get(this,'build-commands')
+        app.log(this, 'build-commands', defs.get(this,'build-commands'))
 
         # run the install-commands
-        app.log(this, 'install-commands')
-        # print get(this,'install-commands')
+        app.log(this, 'install-commands', defs.get(this,'install-commands'))
 
         # cache the result
         app.log(this, 'cache')
@@ -96,4 +94,3 @@ target = target.replace('.morph', '')
 app.setup(target)
 defs.load_defs(definitions)
 build(definitions, target)
-teardown()
