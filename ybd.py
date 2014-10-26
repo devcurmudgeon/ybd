@@ -91,7 +91,6 @@ def build(definitions, target):
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
-target = target.replace('.morph', '')
 app.setup(target)
 defs.load_defs(definitions)
 build(definitions, target)

@@ -37,8 +37,7 @@ def load_defs(definitions):
     ''' Load all definitions from `cwd` tree. '''
     for dirname, dirnames, filenames in os.walk("."):
         for filename in filenames:
-            if not (filename.endswith('.def') or
-                    filename.endswith('.morph')):
+            if not filename.endswith('.def'):
                 continue
 
             this = load_def(dirname, filename)
