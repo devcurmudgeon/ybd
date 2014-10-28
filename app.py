@@ -25,33 +25,6 @@ import shutil
 
 config = {}
 
-
-def setup(target):
-    config['base'] = os.path.expanduser('~/.ybd/')
-    config['caches'] = os.path.join(config['base'], 'caches')
-    config['gits'] = os.path.join(config['base'], 'gits')
-    config['staging'] = os.path.join(config['base'], 'staging')
-    timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-    config['assembly'] = os.path.join(config['staging'],
-                                      target + '-' + timestamp)
-
-    for directory in ['base', 'caches', 'gits', 'staging', 'assembly']:
-        if not os.path.exists(config[directory]):
-            os.mkdir(config[directory])
-
-    # git replace means we can't trust that just the sha1 of a branch
-    # is enough to say what it contains, so we turn it off by setting
-    # the right flag in an environment variable.
-    os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
-
-
-def teardown(target):
-    # assuming success, we can remove the 'assembly' directory
-    # shutil.rmtree(config['assembly'])
-    log(target, 'assembly directory is still at', config['assembly'])
-    pass
-
-
 def log(component, message, data=''):
     ''' Print a timestamped log. '''
     name = defs.get(component, 'name')
@@ -60,6 +33,35 @@ def log(component, message, data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print('%s [%s] %s %s' % (timestamp, name, message, data))
+
+
+@contextlib.contextmanager
+def setup(target):
+    try:
+        config['base'] = os.path.expanduser('~/.ybd/')
+        config['caches'] = os.path.join(config['base'], 'caches')
+        config['gits'] = os.path.join(config['base'], 'gits')
+        config['staging'] = os.path.join(config['base'], 'staging')
+        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        config['assembly'] = os.path.join(config['staging'],
+                                          target + '-' + timestamp)
+
+        for directory in ['base', 'caches', 'gits', 'staging', 'assembly']:
+            if not os.path.exists(config[directory]):
+                os.mkdir(config[directory])
+
+        # git replace means we can't trust that just the sha1 of a branch
+        # is enough to say what it contains, so we turn it off by setting
+        # the right flag in an environment variable.
+        os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
+
+        yield
+
+    finally:
+        # assuming success, we can remove the 'assembly' directory
+        # shutil.rmtree(config['assembly'])
+        log(target, 'assembly directory is still at', config['assembly'])
+        pass
 
 
 @contextlib.contextmanager
