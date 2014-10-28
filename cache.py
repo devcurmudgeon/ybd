@@ -30,8 +30,7 @@ def cache_key(definitions, this):
 
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
-    return (safename + "|" +
-            definition['hash'] + ".cache")
+    return (safename + "|" + definition['hash'] + ".cache")
 
 
 def cache(definitions, this):
@@ -178,9 +177,9 @@ def checkout(this):
             app.log(this, 'Re-using existing build dir', this['build'])
 
         with app.chdir(this['build']):
-            tree = get_tree(this)
-            if call(['git', 'checkout', '-b', tree]) != 0:
-                app.log(this, 'ERROR: git checkout failed for', get_tree(this))
+            this['tree'] = get_tree(this)
+            if call(['git', 'checkout', '-b', this['tree']]) != 0:
+                app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
 
     else:
