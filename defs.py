@@ -33,6 +33,17 @@ def get(thing, value):
     return val
 
 
+def insert_def(definitions, this):
+    for i, definition in enumerate(definitions):
+        if definition['name'] == this['name']:
+            for key in this:
+                app.log(this, 'key', key)
+                definition[key] = this[key]
+
+            return
+
+    definitions.append(this)
+
 def load_defs(definitions):
     ''' Load all definitions from `cwd` tree. '''
     for dirname, dirnames, filenames in os.walk("."):
@@ -41,28 +52,19 @@ def load_defs(definitions):
                 continue
 
             this = load_def(dirname, filename)
-#            log(this, 'loading definition')
             name = get(this, 'name')
             if name != []:
-                for i, definition in enumerate(definitions):
-                    if definition['name'] == this['name']:
-                        for key in this:
-                            definitions[i][key] = this[key]
-
-                if get(definitions, 'name') == []:
-                    definitions.append(this)
+                insert_def(definitions, this)
 
                 for dependency in get(this, 'build-depends'):
-                    # print 'dependency is %s' % dependency
                     if get(dependency, 'repo') != []:
                         dependency['hash'] = this['hash']
-                        definitions.append(dependency)
+                        insert_def(definitions, dependency)
 
                 for content in get(this, 'contents'):
-                    # print 'content is %s' % content
                     if get(content, 'repo') != []:
                         content['hash'] = this['hash']
-                        definitions.append(content)
+                        insert_def(definitions, content)
 
         if '.git' in dirnames:
             dirnames.remove('.git')
