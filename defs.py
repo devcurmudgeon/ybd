@@ -37,12 +37,12 @@ def insert_def(definitions, this):
     for i, definition in enumerate(definitions):
         if definition['name'] == this['name']:
             for key in this:
-                app.log(this, 'key', key)
                 definition[key] = this[key]
 
             return
 
     definitions.append(this)
+
 
 def load_defs(definitions):
     ''' Load all definitions from `cwd` tree. '''
