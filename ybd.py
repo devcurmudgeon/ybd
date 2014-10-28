@@ -34,11 +34,6 @@ import app
 definitions = []
 
 
-def teardown():
-    #  assuming success, we can remove the 'assembly' directory
-    pass
-
-
 def assemble(definitions, this):
     ''' Do the actual creation of an artifact.
 
@@ -94,3 +89,4 @@ target = target.replace('.def', '')
 app.setup(target)
 defs.load_defs(definitions)
 build(definitions, target)
+app.teardown(target)

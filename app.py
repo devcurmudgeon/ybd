@@ -21,6 +21,7 @@ import contextlib
 import os
 import datetime
 import defs
+import shutil
 
 config = {}
 
@@ -42,6 +43,13 @@ def setup(target):
     # is enough to say what it contains, so we turn it off by setting
     # the right flag in an environment variable.
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
+
+
+def teardown(target):
+    # assuming success, we can remove the 'assembly' directory
+    # shutil.rmtree(config['assembly'])
+    log(target, 'assembly directory is still at', config['assembly'])
+    pass
 
 
 def log(component, message, data=''):
