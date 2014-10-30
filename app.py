@@ -22,6 +22,7 @@ import os
 import datetime
 import defs
 import shutil
+from subprocess import check_output
 
 config = {}
 
@@ -38,6 +39,8 @@ def log(component, message, data=''):
 @contextlib.contextmanager
 def setup(target):
     try:
+        config['DTR'] = check_output(['git', 'rev-parse', 'HEAD^{tree}'],
+                                    universal_newlines=True)[0:-1]
         config['base'] = os.path.expanduser('~/.ybd/')
         config['caches'] = os.path.join(config['base'], 'caches')
         config['gits'] = os.path.join(config['base'], 'gits')
@@ -54,6 +57,8 @@ def setup(target):
         # is enough to say what it contains, so we turn it off by setting
         # the right flag in an environment variable.
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
+
+        log(target, 'Config', config)
 
         yield
 

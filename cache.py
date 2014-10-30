@@ -26,11 +26,10 @@ from subprocess import check_output
 
 def cache_key(definitions, this):
     ''' A simple cache key. May not be safe, yet. '''
-    # what about architecture?
 
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
-    return (safename + "|" + definition['hash'] + ".cache")
+    return (safename + "|" + definition['hash'] +"|"+ app.config['DTR'])
 
 
 def cache(definitions, this):
@@ -43,8 +42,22 @@ def cache(definitions, this):
 
 def is_cached(definitions, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
-    cachefile = os.path.join(app.config['caches'],
-                             cache_key(definitions, this))
+
+    definition = defs.get_def(definitions, this)
+
+    # get any potential caches
+
+    possibles = []
+
+    for file in os.listdir(app.config['caches']):
+        if definition['name'] in file and definition ['hash'] in file:
+            possibles.append(file)
+
+    cachefile = 'argesfghddf'
+    for cache in possibles:
+        if app.config['DTR'] == cache.split('|')[-1]:
+            cachefile = os.path.join(app.config['caches'], cache)
+
     if os.path.exists(cachefile):
         return cachefile
 
@@ -82,26 +95,30 @@ def get_tree(this):
 
     with app.chdir(this['git']):
         try:
-            if call(['git', 'rev-parse', ref]):
-                # ref is either not unique or missing
-                app.log(this, 'ref is either not unique or missing', ref)
-            else:
-                tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
-                                    universal_newlines=True)[0:-1]
+            if call(['git', 'rev-parse', ref, ]):
+                # can't resolve this ref. is it upstream?
+                call(['git', 'fetch', 'origin'])
+                if call(['git', 'rev-parse', ref]):
+                    app.log(this, 'ref is either not unique or missing', ref)
+                    raise SystemExit
+
+            tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
+                                universal_newlines=True)[0:-1]
 
         except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-            app.log('ERROR: could not find tree for', this, ref)
+            app.log(this, 'ERROR: could not find tree for ref', ref)
             raise SystemExit
+
             try:
                 refs = call(['git', 'rev-list', '--all'],
                             stdout=subprocess.PIPE)
                 print(refs[-1])
 
             except:
-                app.log('ERROR: could not find tree for', this, ref)
+                app.log(this, 'ERROR: could not find tree for ref', ref)
                 raise SystemExit
 
     app.log(this, 'tree is', tree)
@@ -161,9 +178,7 @@ def checkout(this):
                 app.log(this, 'ERROR: failed to clone', get_repo_name(this))
                 raise SystemExit
 
-        app.log(this, 'git repo is mirrored at', this['git'])
-
-        # if we don't have the required ref, try to fetch it?
+            app.log(this, 'git repo is mirrored at', this['git'])
 
         this['build'] = os.path.join(app.config['assembly'], this['name']
                                      + '.build')
