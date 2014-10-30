@@ -1,34 +1,34 @@
 name: first-set|v1.0
 build-depends:
-- name: foo|v2.8
-  repo: upstream:foo
-  ref: v.2.8
+- name: foo|a784837a749
+  repo: github:devcurmudgeon/ybd
+  ref: a784837a7495908110a551abffa91c8689cea196
 contents:
-- name: foo|v3.17
-  repo: upstream:foo
-  ref: master
-- name: far|v50
-  repo: upstream:far
-  ref: v1.2.3
+- name: foo|51b85
+  repo: github:devcurmudgeon/ybd
+  ref: 51b858a5afd6e102e626472929940612b85cf0d5
+- name: far|3b7e2a6
+  repo: github:devcurmudgeon/ybd
+  ref: 3b7e2a602e81f22394f1f817b65ade949f8cfe60
   build-depends:
-  - foo|v2.8
-- name: fuppet|a5242345634ddddddd
-  repo: upstream:fuppet
-  ref: v99
+  - foo|a784837a749
+- name: fuppet|5bb3981b0f54
+  repo: github:devcurmudgeon/ybd
+  ref: 5bb3981b0f548762cea3383e10070cdfadf5ccec
   build-depends:
   - foo
   - far
 - name: flax
-  repo: upstream:flax
-  ref: master
-- name: feggle|3535fff
-  repo: upstream:feggle
-  ref: v1.0
+  repo: github:devcurmudgeon/ybd
+  ref: 9112f
+- name: feggle|509ee0
+  repo: github:devcurmudgeon/ybd
+  ref: 509ee02b8
 - name: flint
-  repo: upstream:flint
-  ref: master
+  repo: github:devcurmudgeon/ybd
+  ref: 509ee02b8
 - name: ferbur
-  repo: upstream:ferbur
-  ref: invalid
+  repo: github:devcurmudgeon/ybd
+  ref: 509ee02b8
   build-depends:
   - flint
