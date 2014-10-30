@@ -20,6 +20,7 @@
 import os
 import app
 import defs
+import re
 from subprocess import call
 from subprocess import check_output
 
@@ -77,13 +78,7 @@ def get_repo_url(this):
 
 
 def get_repo_name(this):
-    repo = this['repo']
-    repo = repo.replace('upstream:', '')
-    repo = repo.replace('baserock:baserock/', '')
-    repo = repo.replace('freedesktop:', '')
-    repo = repo.replace('github:', '')
-    repo = repo.replace('gnome:', '')
-    return repo
+    return re.split('[:/]', this['repo'])[-1]
 
 
 def get_tree(this):
