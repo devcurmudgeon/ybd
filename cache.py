@@ -30,7 +30,7 @@ def cache_key(definitions, this):
 
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
-    return (safename + "|" + definition['hash'] +"|"+ app.config['DTR'])
+    return (safename + "|" + definition['hash'] + "|" + app.config['DTR'])
 
 
 def cache(definitions, this):
@@ -51,7 +51,7 @@ def is_cached(definitions, this):
     possibles = []
 
     for file in os.listdir(app.config['caches']):
-        if definition['name'] in file and definition ['hash'] in file:
+        if definition['name'] in file and definition['hash'] in file:
             possibles.append(file)
 
     cachefile = 'argesfghddf'
@@ -106,15 +106,6 @@ def get_tree(this):
 
             app.log(this, 'ERROR: could not find tree for ref', ref)
             raise SystemExit
-
-            try:
-                refs = call(['git', 'rev-list', '--all'],
-                            stdout=subprocess.PIPE)
-                print(refs[-1])
-
-            except:
-                app.log(this, 'ERROR: could not find tree for ref', ref)
-                raise SystemExit
 
     app.log(this, 'tree is', tree)
     return tree

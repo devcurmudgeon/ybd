@@ -22,6 +22,7 @@ import os
 import app
 from subprocess import check_output
 
+
 def get(thing, value):
     ''' Look up value from thing, return thing if none. '''
     val = []
@@ -78,7 +79,7 @@ def load_def(path, name):
 
         definition = yaml.safe_load(text)
         definition['hash'] = check_output(['git', 'hash-object', filename],
-                                    universal_newlines=True)[0:8]
+                                          universal_newlines=True)[0:8]
 
     except ValueError:
         app.log(this, 'ERROR: problem loading', filename)
