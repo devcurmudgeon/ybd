@@ -86,6 +86,7 @@ def build(definitions, target):
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
-with app.setup(target):
-    defs.load_defs(definitions)
-    build(definitions, target)
+with app.timer('TOTAL'):
+    with app.setup(target):
+        defs.load_defs(definitions)
+        build(definitions, target)
