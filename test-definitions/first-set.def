@@ -1,5 +1,8 @@
 name: first-set|v1.0
 build-depends:
+- name: faab|22df3f6245ed6
+  repo: github:devcurmudgeon/ybd
+  ref: 22df3f6245ed6
 - name: foo|a784837a749
   repo: github:devcurmudgeon/ybd
   ref: a784837a7495908110a551abffa91c8689cea196
