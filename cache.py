@@ -23,6 +23,7 @@ import defs
 import re
 from subprocess import call
 from subprocess import check_output
+import hashlib
 
 
 def cache_key(definitions, this):
@@ -30,7 +31,13 @@ def cache_key(definitions, this):
 
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
-    return (safename + "|" + definition['hash'] + "|" + app.config['DTR'])
+
+    key_hash = hashlib.sha256()
+    for it in defs.get(definition, 'build-depends'):
+        dependency = defs.get_def(definitions, it)
+        key_hash.update(dependency['hash'].encode('utf-8'))
+
+    return (safename + "|" + definition['hash'] + '|' + key_hash.hexdigest())
 
 
 def cache(definitions, this):
@@ -44,20 +51,9 @@ def cache(definitions, this):
 def is_cached(definitions, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    definition = defs.get_def(definitions, this)
+    cache = cache_key(definitions, this)
 
-    # get any potential caches
-
-    possibles = []
-
-    for file in os.listdir(app.config['caches']):
-        if definition['name'] in file and definition['hash'] in file:
-            possibles.append(file)
-
-    cachefile = 'argesfghddf'
-    for cache in possibles:
-        if app.config['DTR'] == cache.split('|')[-1]:
-            cachefile = os.path.join(app.config['caches'], cache)
+    cachefile = os.path.join(app.config['caches'], cache)
 
     if os.path.exists(cachefile):
         return cachefile
