@@ -26,9 +26,6 @@ import cache
 import app
 
 
-definitions = []
-
-
 def assemble(definitions, this):
     ''' Do the actual creation of an artifact.
 
@@ -83,5 +80,6 @@ path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
 with app.timer('TOTAL'):
     with app.setup(target):
+        definitions = []
         defs.load_defs(definitions)
         build(definitions, target)
