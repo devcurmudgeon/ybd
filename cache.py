@@ -37,6 +37,10 @@ def cache_key(definitions, this):
         dependency = defs.get_def(definitions, it)
         key_hash.update(dependency['hash'].encode('utf-8'))
 
+    for it in defs.lookup(definition, 'contents'):
+        content = defs.get_def(definitions, it)
+        key_hash.update(content['hash'].encode('utf-8'))
+
     return (safename + "|" + definition['hash'] + '|' + key_hash.hexdigest())
 
 
