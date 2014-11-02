@@ -23,7 +23,7 @@ import app
 from subprocess import check_output
 
 
-def get(thing, value):
+def lookup(thing, value):
     ''' Look up value from thing, return thing if none. '''
     val = []
     try:
@@ -52,17 +52,17 @@ def load_defs(definitions):
                 continue
 
             this = load_def(dirname, filename)
-            name = get(this, 'name')
+            name = lookup(this, 'name')
             if name != []:
                 insert_def(definitions, this)
 
-                for dependency in get(this, 'build-depends'):
-                    if get(dependency, 'repo') != []:
+                for dependency in lookup(this, 'build-depends'):
+                    if lookup(dependency, 'repo') != []:
                         dependency['hash'] = this['hash']
                         insert_def(definitions, dependency)
 
-                for content in get(this, 'contents'):
-                    if get(content, 'repo') != []:
+                for content in lookup(this, 'contents'):
+                    if lookup(content, 'repo') != []:
                         content['hash'] = this['hash']
                         insert_def(definitions, content)
 
@@ -93,14 +93,14 @@ def get_def(definitions, this):
     We may need to loop through the whole list to find the right entry.
 
     '''
-    if (get(this, 'contents') != [] or get(this, 'repo') != []):
+    if (lookup(this, 'contents') != [] or lookup(this, 'repo') != []):
         return this
 
     for definition in definitions:
         if (definition['name'] == this
             or definition['name'].split('|')[0] == this
-            or definition['name'] == get(this, 'name') or
-                definition['name'].split('|')[0] == get(this, 'name')):
+            or definition['name'] == lookup(this, 'name') or
+                definition['name'].split('|')[0] == lookup(this, 'name')):
             return definition
 
     app.log(this, 'ERROR: no definition found for', this)

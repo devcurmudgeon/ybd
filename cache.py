@@ -33,7 +33,7 @@ def cache_key(definitions, this):
     safename = definition['name'].replace('/', '-')
 
     key_hash = hashlib.sha256()
-    for it in defs.get(definition, 'build-depends'):
+    for it in defs.lookup(definition, 'build-depends'):
         dependency = defs.get_def(definitions, it)
         key_hash.update(dependency['hash'].encode('utf-8'))
 
@@ -78,10 +78,10 @@ def get_repo_name(this):
 
 
 def get_tree(this):
-    if defs.get(this, 'ref'):
-        ref = defs.get(this, 'ref')
+    if defs.lookup(this, 'ref'):
+        ref = defs.lookup(this, 'ref')
 
-    if defs.version(this) and defs.version(this) != defs.get(this, 'hash'):
+    if defs.version(this) and defs.version(this) != defs.lookup(this, 'hash'):
         ref = defs.version(this)
 
     with app.chdir(this['git']):
@@ -149,7 +149,7 @@ def copy_repo(repo, destdir):
 
 def checkout(this):
     # checkout the required version of this from git
-    if defs.get(this, 'repo'):
+    if defs.lookup(this, 'repo'):
         this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
         if not os.path.exists(this['git']):
             # TODO - try tarball first

@@ -48,13 +48,13 @@ def assemble(definitions, this):
 
         # run the configure-commands
 #        app.log(this, 'configure-commands',
-#                defs.get(this, 'configure-commands'))
+#                defs.lookup(this, 'configure-commands'))
 
         # run the build-commands
-#        app.log(this, 'build-commands', defs.get(this, 'build-commands'))
+#        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
 
         # run the install-commands
-#        app.log(this, 'install-commands', defs.get(this, 'install-commands'))
+#        app.log(this, 'install-commands', defs.lookup(this, 'install-commands'))
 
         # cache the result
 #        app.log(this, 'cache')
@@ -72,13 +72,13 @@ def build(definitions, target):
 
         this = defs.get_def(definitions, target)
 
-        for dependency in defs.get(this, 'build-depends'):
+        for dependency in defs.lookup(this, 'build-depends'):
             build(definitions, dependency)
 
         # wait here for all the dependencies to complete
         # how do we know when that happens?
 
-        for content in defs.get(this, 'contents'):
+        for content in defs.lookup(this, 'contents'):
             build(definitions, content)
 
         assemble(definitions, this)

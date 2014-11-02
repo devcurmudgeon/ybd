@@ -29,7 +29,7 @@ config = {}
 
 def log(component, message, data=''):
     ''' Print a timestamped log. '''
-    name = defs.get(component, 'name')
+    name = defs.lookup(component, 'name')
     if name == []:
         name = component
 
