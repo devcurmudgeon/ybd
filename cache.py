@@ -32,7 +32,7 @@ def cache_key(definitions, this):
     definition = defs.get_def(definitions, this)
     safename = definition['name'].replace('/', '-')
 
-    key_hash = hashlib.sha256()
+    key_hash = hashlib.sha256(definition['hash'].encode('utf-8'))
     for it in defs.lookup(definition, 'build-depends'):
         dependency = defs.get_def(definitions, it)
         key_hash.update(dependency['hash'].encode('utf-8'))
