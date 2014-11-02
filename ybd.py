@@ -19,13 +19,8 @@
 
 '''A module to build a definition.'''
 
-import yaml
 import os
 import sys
-import hashlib
-import datetime
-import tempfile
-from subprocess import call
 import defs
 import cache
 import app
