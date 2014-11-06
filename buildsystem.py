@@ -12,11 +12,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
+#
+# =*= License: GPL-2 =*=
 
 import os
-
-import morphlib
 
 
 class BuildSystem(object):
@@ -51,15 +50,6 @@ class BuildSystem(object):
         key = '_'.join(key.split('-'))
         return getattr(self, key)
 
-    def get_morphology(self, name):
-        '''Return the text of an autodetected chunk morphology.'''
-
-        return morphlib.morphology.Morphology({
-            'name': name,
-            'kind': 'chunk',
-            'build-system': self.name,
-        })
-
     def used_by_project(self, file_list):
         '''Does a project use this build system?
 
@@ -72,7 +62,7 @@ class BuildSystem(object):
 
 class ManualBuildSystem(BuildSystem):
 
-    '''A manual build system where the morphology must specify all commands.'''
+    '''A manual build system where the definition must specify all commands.'''
 
     name = 'manual'
 
@@ -82,7 +72,7 @@ class ManualBuildSystem(BuildSystem):
 
 class DummyBuildSystem(BuildSystem):
 
-    '''A dummy build system, useful for debugging morphologies.'''
+    '''A dummy build system, useful for debugging definitions.'''
 
     name = 'dummy'
 
@@ -268,9 +258,9 @@ def detect_build_system(file_list):
     For ``exists`` see the ``BuildSystem.exists`` method.
 
     '''
-    for bs in build_systems:
-        if bs.used_by_project(file_list):
-            return bs
+    for build_system in build_systems:
+        if build_system.used_by_project(file_list):
+            return build_system
     return None
 
 
@@ -281,7 +271,7 @@ def lookup_build_system(name):
 
     '''
 
-    for bs in build_systems:
-        if bs.name == name:
-            return bs
+    for build_system in build_systems:
+        if build_system.name == name:
+            return build_system
     raise KeyError('Unknown build system: %s' % name)
