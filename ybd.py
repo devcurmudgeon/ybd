@@ -24,7 +24,8 @@ import sys
 import defs
 import cache
 import app
-
+import buildsystem
+from subprocess import check_output
 
 def assemble(definitions, this):
     ''' Do the actual creation of an artifact.
@@ -37,7 +38,15 @@ def assemble(definitions, this):
 
         app.log(this, 'assemble', app.config['assembly'])
         cache.checkout(this)
+        with app.chdir(this['build']):
+            try:
+                file_list = check_output(['git', 'ls-tree', '--name-only', this['ref']],
+                                         universal_newlines=True)
+                build_system = buildsystem.detect_build_system(file_list)
+                app.log(this, 'build system', build_system)
 
+            except:
+	            app.log(this, 'build system is not recognised')
         # run the configure-commands
 #        app.log(this, 'configure-commands',
 #                defs.lookup(this, 'configure-commands'))
@@ -56,7 +65,7 @@ def assemble(definitions, this):
 def build(definitions, target):
     ''' Build dependencies and content recursively until target is cached. '''
     with app.timer(target):
-        # app.log('starting build', target)
+        app.log(target, 'starting build')
         if cache.is_cached(definitions, target):
             app.log(target, 'is already cached as',
                     cache.is_cached(definitions, target))

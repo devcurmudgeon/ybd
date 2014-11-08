@@ -33,13 +33,6 @@ def cache_key(definitions, this):
     safename = definition['name'].replace('/', '-')
 
     key_hash = hashlib.sha256(definition['hash'].encode('utf-8'))
-    for it in defs.lookup(definition, 'build-depends'):
-        dependency = defs.get_def(definitions, it)
-        key_hash.update(dependency['hash'].encode('utf-8'))
-
-    for it in defs.lookup(definition, 'contents'):
-        content = defs.get_def(definitions, it)
-        key_hash.update(content['hash'].encode('utf-8'))
 
     return (safename + "|" + definition['hash'] + '|' + key_hash.hexdigest())
 
@@ -152,6 +145,15 @@ def copy_repo(repo, destdir):
 
 
 def checkout(this):
+
+    this['build'] = os.path.join(app.config['assembly'], this['name']
+                                 + '.build')
+    app.log(this, 'build dir', this['build'])
+    try:
+        os.makedirs(this['build'])
+    except:
+        app.log(this, 'Re-using existing build dir', this['build'])
+
     # checkout the required version of this from git
     if defs.lookup(this, 'repo'):
         this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
@@ -166,18 +168,8 @@ def checkout(this):
 
             app.log(this, 'git repo is mirrored at', this['git'])
 
-        this['build'] = os.path.join(app.config['assembly'], this['name']
-                                     + '.build')
-
-        try:
-            os.makedirs(this['build'])
-            with app.chdir(this['build']):
-                copy_repo(this['git'], this['build'])
-
-        except:
-            app.log(this, 'Re-using existing build dir', this['build'])
-
         with app.chdir(this['build']):
+            copy_repo(this['git'], this['build'])
             this['tree'] = get_tree(this)
             if call(['git', 'checkout', '-b', this['tree']]) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
