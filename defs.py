@@ -24,7 +24,7 @@ from subprocess import check_output
 
 
 def lookup(thing, value):
-    ''' Look up value from thing, return thing if none. '''
+    ''' Look up value from thing, return [] if none. '''
     val = []
     try:
         val = thing[value]
