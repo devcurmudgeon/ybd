@@ -24,6 +24,8 @@ import re
 from subprocess import call
 from subprocess import check_output
 import hashlib
+import urllib.request
+import json
 
 
 def cache_key(definitions, this):
@@ -80,6 +82,18 @@ def get_tree(this):
 
     if defs.version(this) and defs.version(this) != defs.lookup(this, 'hash'):
         ref = defs.version(this)
+
+    url = (app.config['cache-server-url']
+           + 'repo=' + get_repo_url(this) + '&ref=' + ref)
+
+    try:
+        with urllib.request.urlopen(url) as response:
+            tree = json.loads(response.read().decode())['tree']
+
+        app.log(this, 'cache-server tree is', tree)
+
+    except:
+        app.log(this, 'cache-server does not have tree for ref', ref)
 
     with app.chdir(this['git']):
         try:

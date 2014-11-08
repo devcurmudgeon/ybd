@@ -40,6 +40,7 @@ def log(component, message, data=''):
 @contextlib.contextmanager
 def setup(target):
     try:
+        config['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
         config['DTR'] = check_output(['git', 'rev-parse', 'HEAD^{tree}'],
                                      universal_newlines=True)[0:-1]
         config['base'] = os.path.expanduser('~/.ybd/')
