@@ -184,6 +184,7 @@ class CPANBuildSystem(BuildSystem):
 
         return any(x in file_list for x in indicators)
 
+
 class CMakeBuildSystem(BuildSystem):
 
     '''The cmake build system.'''
@@ -194,7 +195,7 @@ class CMakeBuildSystem(BuildSystem):
         BuildSystem.__init__(self)
         self.configure_commands = [
             'cmake -DCMAKE_INSTALL_PREFIX=/usr'
-         ]
+        ]
         self.build_commands = [
             'make',
         ]
@@ -210,6 +211,7 @@ class CMakeBuildSystem(BuildSystem):
         ]
 
         return any(x in file_list for x in indicators)
+
 
 class QMakeBuildSystem(BuildSystem):
 
@@ -237,7 +239,7 @@ class QMakeBuildSystem(BuildSystem):
         for x in file_list:
             if x.endswith(indicator):
                 return True
-            
+
         return False
 
 build_systems = [

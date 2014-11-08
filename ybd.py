@@ -27,6 +27,7 @@ import app
 import buildsystem
 from subprocess import check_output
 
+
 def assemble(definitions, this):
     ''' Do the actual creation of an artifact.
 
@@ -40,13 +41,15 @@ def assemble(definitions, this):
         cache.checkout(this)
         with app.chdir(this['build']):
             try:
-                file_list = check_output(['git', 'ls-tree', '--name-only', this['ref']],
+                file_list = check_output(['git', 'ls-tree', '--name-only',
+                                          this['ref']],
                                          universal_newlines=True)
                 build_system = buildsystem.detect_build_system(file_list)
                 app.log(this, 'build system', build_system)
 
             except:
-	            app.log(this, 'build system is not recognised')
+                app.log(this, 'build system is not recognised')
+
         # run the configure-commands
 #        app.log(this, 'configure-commands',
 #                defs.lookup(this, 'configure-commands'))
@@ -55,7 +58,8 @@ def assemble(definitions, this):
 #        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
 
         # run the install-commands
-#        app.log(this, 'install-commands', defs.lookup(this, 'install-commands'))
+#        app.log(this, 'install-commands', defs.lookup(this,
+#                                                      'install-commands'))
 
         # cache the result
 #        app.log(this, 'cache')
@@ -91,4 +95,6 @@ with app.timer('TOTAL'):
     with app.setup(target):
         definitions = []
         defs.load_defs(definitions)
+#        for definition in definitions:
+#            app.log(definition['name'], 'hash', definition['hash'])
         build(definitions, target)
