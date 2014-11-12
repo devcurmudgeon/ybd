@@ -20,7 +20,7 @@
 import contextlib
 import os
 import datetime
-import defs
+import definitions
 import shutil
 from subprocess import check_output
 
@@ -29,6 +29,7 @@ config = {}
 
 def log(component, message, data=''):
     ''' Print a timestamped log. '''
+    defs = definitions.Definitions()
     name = defs.lookup(component, 'name')
     if name == []:
         name = component

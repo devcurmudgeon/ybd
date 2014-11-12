@@ -21,14 +21,14 @@
 
 import os
 import sys
-import defs
+from definitions import Definitions
 import cache
 import app
 import buildsystem
 from subprocess import check_output
 
 
-def assemble(definitions, this):
+def assemble(this):
     ''' Do the actual creation of an artifact.
 
     By the time we get here, all dependencies for 'this' have been assembled.
@@ -63,38 +63,34 @@ def assemble(definitions, this):
 
         # cache the result
 #        app.log(this, 'cache')
-        cache.cache(definitions, this)
+        cache.cache(this)
 
 
-def build(definitions, target):
-    ''' Build dependencies and content recursively until target is cached. '''
-    with app.timer(target):
-        app.log(target, 'starting build')
-        if cache.is_cached(definitions, target):
-            app.log(target, 'is already cached as',
-                    cache.is_cached(definitions, target))
+def build(this):
+    ''' Build dependencies and content recursively until this is cached. '''
+    with app.timer(this):
+        app.log(this, 'starting build')
+        if cache.is_cached(this):
+            app.log(this, 'is already cached as',
+                    cache.is_cached(this))
             return
 
-        this = defs.get_def(definitions, target)
-
         for dependency in defs.lookup(this, 'build-depends'):
-            build(definitions, dependency)
+            build(dependency)
 
         # wait here for all the dependencies to complete
         # how do we know when that happens?
 
         for content in defs.lookup(this, 'contents'):
-            build(definitions, content)
+            build(content)
 
-        assemble(definitions, this)
+        assemble(this)
 
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
 with app.timer('TOTAL'):
     with app.setup(target):
-        definitions = []
-        defs.load_defs(definitions)
-#        for definition in definitions:
-#            app.log(definition['name'], 'hash', definition['hash'])
-        build(definitions, target)
+        defs = Definitions()
+        definition = defs.get(target)
+        build(definition)
