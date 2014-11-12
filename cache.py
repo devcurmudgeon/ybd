@@ -19,40 +19,43 @@
 
 import os
 import app
-import defs
 import re
 from subprocess import call
 from subprocess import check_output
 import hashlib
 import urllib.request
 import json
+import definitions
 
 
-def cache_key(definitions, this):
-    ''' A simple cache key. May not be safe, yet. '''
-
-    definition = defs.get_def(definitions, this)
+def cache_key(this):
+    defs = definitions.Definitions()
+    definition = defs.get(this)
     safename = definition['name'].replace('/', '-')
 
-    key_hash = hashlib.sha256(definition['hash'].encode('utf-8'))
+    cache_this = {}
 
-    return (safename + "|" + definition['hash'] + '|' + key_hash.hexdigest())
+    for key in ['tree', 'build-depends', 'contents', 'configure-commands', 'build-commands', 'install-commands']:
+        if defs.lookup(definition, key):
+            cache_this[key] = definition[key]
+    key = json.dumps(cache_this, sort_keys=True).encode('utf-8')
+    definition['cache-key'] = safename + "|" + hashlib.sha256(key).hexdigest()
+    return (safename + "|" + hashlib.sha256(key).hexdigest())
 
 
-def cache(definitions, this):
+def cache(this):
     ''' Just create an empty file for now. '''
     cachefile = os.path.join(app.config['caches'],
-                             cache_key(definitions, this))
+                             cache_key(this))
     touch(cachefile)
     app.log(this, 'is now cached at', cachefile)
 
 
-def is_cached(definitions, this):
+def is_cached(this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cache = cache_key(definitions, this)
-
-    cachefile = os.path.join(app.config['caches'], cache)
+    cachefile = os.path.join(app.config['caches'],
+                             cache_key(this))
 
     if os.path.exists(cachefile):
         return cachefile
@@ -77,11 +80,13 @@ def get_repo_name(this):
 
 
 def get_tree(this):
+    tree = None
+    defs = definitions.Definitions()
+    if defs.version(this):
+        ref = defs.version(this)
+
     if defs.lookup(this, 'ref'):
         ref = defs.lookup(this, 'ref')
-
-    if defs.version(this) and defs.version(this) != defs.lookup(this, 'hash'):
-        ref = defs.version(this)
 
     url = (app.config['cache-server-url']
            + 'repo=' + get_repo_url(this) + '&ref=' + ref)
@@ -90,10 +95,10 @@ def get_tree(this):
         with urllib.request.urlopen(url) as response:
             tree = json.loads(response.read().decode())['tree']
 
-        app.log(this, 'cache-server tree is', tree)
+        return tree
 
     except:
-        app.log(this, 'cache-server does not have tree for ref', ref)
+        app.log(this, 'Cache-server does not have tree for ref', ref)
 
     with app.chdir(this['git']):
         try:
@@ -112,7 +117,6 @@ def get_tree(this):
             # or ref does not exist
 
             app.log(this, 'ERROR: could not find tree for ref', ref)
-            raise SystemExit
 
     app.log(this, 'tree is', tree)
     return tree
@@ -169,6 +173,7 @@ def checkout(this):
         app.log(this, 'Re-using existing build dir', this['build'])
 
     # checkout the required version of this from git
+    defs = definitions.Definitions()
     if defs.lookup(this, 'repo'):
         this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
         if not os.path.exists(this['git']):
