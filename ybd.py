@@ -66,15 +66,14 @@ def assemble(this):
 
 def build(this):
     ''' Build dependencies and content recursively until this is cached. '''
+    defs = Definitions()
+    definition = defs.get(this)
+    if cache.is_cached(definition):
+        app.log(this, 'is already cached as', cache.is_cached(this))
+        return
+
     with app.timer(this):
         app.log(this, 'starting build')
-        defs = Definitions()
-        definition = defs.get(this)
-        if cache.is_cached(definition):
-            app.log(this, 'is already cached as',
-                    cache.is_cached(this))
-            return
-
         for dependency in defs.lookup(definition, 'build-depends'):
             build(dependency)
 
