@@ -91,5 +91,4 @@ def timer(this):
         hours, remainder = divmod(int(td.total_seconds()), 60*60)
         minutes, seconds = divmod(remainder, 60)
         td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        if td_string != "00:00:00":
-            log(this, 'Elapsed time', td_string)
+        log(this, 'Elapsed time', td_string)
