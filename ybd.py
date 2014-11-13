@@ -69,7 +69,7 @@ def build(this):
     defs = Definitions()
     definition = defs.get(this)
     if cache.is_cached(definition):
-        app.log(this, 'is already cached as', cache.is_cached(this))
+        app.log(this, 'cache found at', cache.is_cached(this))
         return
 
     with app.timer(this):
