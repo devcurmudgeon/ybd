@@ -53,7 +53,6 @@ class Definitions():
             if '.git' in dirnames:
                 dirnames.remove('.git')
 
-
     def _load(self, path, name):
         ''' Load a single definition file, and create a hash for it. '''
         try:
