@@ -37,7 +37,6 @@ def assemble(this):
 
     with app.chdir(app.config['assembly']):
 
-        app.log(this, 'assemble', app.config['assembly'])
         cache.checkout(this)
         with app.chdir(this['build']):
             try:
@@ -51,18 +50,17 @@ def assemble(this):
                 app.log(this, 'build system is not recognised')
 
         # run the configure-commands
-#        app.log(this, 'configure-commands',
-#                defs.lookup(this, 'configure-commands'))
+        app.log(this, 'configure-commands',
+                defs.lookup(this, 'configure-commands'))
 
         # run the build-commands
-#        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
+        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
 
         # run the install-commands
-#        app.log(this, 'install-commands', defs.lookup(this,
-#                                                      'install-commands'))
+        app.log(this, 'install-commands', defs.lookup(this,
+                                                      'install-commands'))
 
         # cache the result
-#        app.log(this, 'cache')
         cache.cache(this)
 
 
@@ -70,21 +68,23 @@ def build(this):
     ''' Build dependencies and content recursively until this is cached. '''
     with app.timer(this):
         app.log(this, 'starting build')
-        if cache.is_cached(this):
+        defs = Definitions()
+        definition = defs.get(this)
+        if cache.is_cached(definition):
             app.log(this, 'is already cached as',
                     cache.is_cached(this))
             return
 
-        for dependency in defs.lookup(this, 'build-depends'):
+        for dependency in defs.lookup(definition, 'build-depends'):
             build(dependency)
 
         # wait here for all the dependencies to complete
         # how do we know when that happens?
 
-        for content in defs.lookup(this, 'contents'):
+        for content in defs.lookup(definition, 'contents'):
             build(content)
 
-        assemble(this)
+        assemble(definition)
 
 
 path, target = os.path.split(sys.argv[1])
