@@ -44,7 +44,7 @@ def cache_key(this):
         if defs.lookup(definition, key) != []:
             cache_this[key] = definition[key]
 
-    for key in ['build-depends', 'contents']:
+    for key in ['build-depends', 'components']:
         for it in defs.lookup(definition, key):
             component = defs.get(it)
             cache_this[component['name']] = cache_key(component)

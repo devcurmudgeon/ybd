@@ -46,9 +46,9 @@ class Definitions():
                         if self.lookup(dependency, 'repo') != []:
                             self._insert(dependency)
 
-                    for content in self.lookup(this, 'contents'):
-                        if self.lookup(content, 'repo') != []:
-                            self._insert(content)
+                    for component in self.lookup(this, 'components'):
+                        if self.lookup(component, 'repo') != []:
+                            self._insert(component)
 
             if '.git' in dirnames:
                 dirnames.remove('.git')
@@ -85,7 +85,7 @@ class Definitions():
         We may need to loop through the whole list to find the right entry.
 
         '''
-        if (self.lookup(this, 'contents') != []
+        if (self.lookup(this, 'components') != []
                 or self.lookup(this, 'repo') != []):
             return this
 

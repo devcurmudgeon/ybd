@@ -13,17 +13,17 @@ In particular I'd like to see
 - faster calculation of build-order, cache-keys
 - aim to run on non-Linux environments (eg Mac OS)
 - drop the words morph, morphology, stratum, chunk from the Baserock vocabulary
-- instead we just deal with content
-  - a content definition may have contents and build-dependencies
-  - contents is just a list of content
-  - build-dependencies is just a list of content too
-  - support for nested content
-  - content may contain no code (could be just videos for example)
-  - content can be a tarball
-  - can have multiple versions of a piece of content, eg
+- instead we just deal with component
+  - a component definition may have components and build-dependencies
+  - components is just a list of component
+  - build-dependencies is just a list of component too
+  - support for nested component
+  - component may contain no code (could be just videos for example)
+  - component can be a tarball
+  - can have multiple versions of a piece of component, eg
     - foo|aa and foo|bb installed
-    - foo|cc and foo|dd used as build-dependencies by other content
-- ability to build and deploy any level of content
+    - foo|cc and foo|dd used as build-dependencies by other component
+- ability to build and deploy any level of component
   - an individual software component (what we've called chunks til now)
   - a logically-coupled set of components (what we've called strata)
   - a bootable collection of sets of components (what we've called systems)

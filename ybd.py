@@ -65,7 +65,7 @@ def assemble(this):
 
 
 def build(this):
-    ''' Build dependencies and content recursively until this is cached. '''
+    ''' Build dependencies and component recursively until this is cached. '''
     defs = Definitions()
     definition = defs.get(this)
     if cache.is_cached(definition):
@@ -80,8 +80,8 @@ def build(this):
         # wait here for all the dependencies to complete
         # how do we know when that happens?
 
-        for content in defs.lookup(definition, 'contents'):
-            build(content)
+        for component in defs.lookup(definition, 'components'):
+            build(component)
 
         assemble(definition)
 
