@@ -49,16 +49,25 @@ def assemble(this):
             except:
                 app.log(this, 'build system is not recognised')
 
+            try:
+                last_tag = check_output(['git', 'describe', '--abbrev=0',
+                                         '--tags', this['ref']])[0:-1]
+                app.log(this, 'Upstream version', last_tag.decode("utf-8"))
+            except:
+                if defs.lookup(this, 'ref'):
+                    app.log(this, 'Upstream version', this['ref'][:8])
+                pass
+
         # run the configure-commands
-        app.log(this, 'configure-commands',
-                defs.lookup(this, 'configure-commands'))
+#        app.log(this, 'configure-commands',
+#                defs.lookup(this, 'configure-commands'))
 
         # run the build-commands
-        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
+#        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
 
         # run the install-commands
-        app.log(this, 'install-commands', defs.lookup(this,
-                                                      'install-commands'))
+#        app.log(this, 'install-commands', defs.lookup(this,
+#                                                      'install-commands'))
 
         # cache the result
         cache.cache(this)
