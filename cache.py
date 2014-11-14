@@ -52,7 +52,7 @@ def cache_key(this):
     result = json.dumps(cache_this, sort_keys=True).encode('utf-8')
 
     definition['cache'] = safename + ":" + hashlib.sha256(result).hexdigest()
-    return (safename + ":" + hashlib.sha256(result).hexdigest())
+    return definition['cache']
 
 
 def cache(this):
