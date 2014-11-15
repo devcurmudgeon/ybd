@@ -61,8 +61,6 @@ class Definitions():
                 text = f.read()
 
             definition = yaml.safe_load(text)
-            if self.lookup(definition, 'repo'):
-                definition['tree'] = cache.get_tree(definition)
 
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
@@ -85,9 +83,6 @@ class Definitions():
         We may need to loop through the whole list to find the right entry.
 
         '''
-        if (self.lookup(this, 'components') != []
-                or self.lookup(this, 'repo') != []):
-            return this
 
         for definition in self.__definitions:
             if (definition['name'] == this

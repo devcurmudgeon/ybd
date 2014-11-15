@@ -55,8 +55,7 @@ def assemble(this):
 #                app.log(this, 'Build system', build_system)
 
             except:
-#                app.log(this, 'Build system is not recognised')
-                pass
+                app.log(this, 'Build system is not recognised')
 
             try:
                 last_tag = check_output(['git', 'describe', '--abbrev=0',
@@ -76,26 +75,31 @@ def assemble(this):
         cache.cache(this)
 
 
-def build(this):
+def build(target):
     ''' Build dependencies and component recursively until this is cached. '''
     defs = Definitions()
-    definition = defs.get(this)
-    if cache.is_cached(definition):
+    this = defs.get(target)
+    if defs.lookup(this, 'repo') != []:
+        this['git'] = (os.path.join(app.config['gits'],
+                       cache.get_repo_name(this)))
+        this['tree'] = cache.get_tree(this)
+
+    if cache.is_cached(this):
         app.log(this, 'Cache found', cache.is_cached(this))
         return
 
     with app.timer(this):
         app.log(this, 'Starting build')
-        for dependency in defs.lookup(definition, 'build-depends'):
-            build(dependency)
+        for dependency in defs.lookup(this, 'build-depends'):
+            build(defs.get(dependency))
 
         # wait here for all the dependencies to complete
         # how do we know when that happens?
 
-        for component in defs.lookup(definition, 'components'):
-            build(component)
+        for component in defs.lookup(this, 'components'):
+            build(defs.get(component))
 
-        assemble(definition)
+        assemble(this)
 
 
 path, target = os.path.split(sys.argv[1])
