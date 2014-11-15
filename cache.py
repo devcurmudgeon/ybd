@@ -115,18 +115,6 @@ def get_tree(this):
     if defs.lookup(this, 'ref'):
         ref = defs.lookup(this, 'ref')
 
-    url = (app.config['cache-server-url']
-           + 'repo=' + get_repo_url(this) + '&ref=' + ref)
-
-    try:
-        with urllib.request.urlopen(url) as response:
-            tree = json.loads(response.read().decode())['tree']
-
-        return tree
-
-    except:
-        app.log(this, 'Cache-server does not have tree for ref', ref)
-
     try:
         mirror(this)
         with app.chdir(this['git']):
