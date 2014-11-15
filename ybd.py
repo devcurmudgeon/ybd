@@ -79,8 +79,6 @@ def build(target):
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != []:
-        this['git'] = (os.path.join(app.config['gits'],
-                       cache.get_repo_name(this)))
         this['tree'] = cache.get_tree(this)
 
     if cache.is_cached(this):

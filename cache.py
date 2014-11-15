@@ -33,6 +33,9 @@ def cache_key(this):
     defs = definitions.Definitions()
     definition = defs.get(this)
 
+    if defs.lookup(definition, 'tree') == []:
+        definition['tree'] = get_tree(definition)
+
     if defs.lookup(definition, 'cache') != []:
         return definition['cache']
 
@@ -53,6 +56,7 @@ def cache_key(this):
     result = json.dumps(hash_this, sort_keys=True).encode('utf-8')
 
     definition['cache'] = safename + ":" + hashlib.sha256(result).hexdigest()
+    app.log(definition, ' cache_key is', definition['cache'])
     return definition['cache']
 
 
@@ -96,6 +100,15 @@ def get_repo_name(this):
 def get_tree(this):
     tree = None
     defs = definitions.Definitions()
+
+    if defs.lookup(this, 'repo') == []:
+        return tree
+
+    if defs.lookup(this, 'git') == []:
+        this['git'] = (os.path.join(app.config['gits'],
+                       get_repo_name(this)))
+
+
     if defs.version(this):
         ref = defs.version(this)
 
@@ -114,9 +127,9 @@ def get_tree(this):
     except:
         app.log(this, 'Cache-server does not have tree for ref', ref)
 
-    mirror(this)
-    with app.chdir(this['git']):
-        try:
+    try:
+        mirror(this)
+        with app.chdir(this['git']):
             if call(['git', 'rev-parse', ref + '^{object}'],
                     stdout=DEVNULL,
                     stderr=DEVNULL):
@@ -133,11 +146,12 @@ def get_tree(this):
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
                                 universal_newlines=True)[0:-1]
 
-        except:
+    except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-            app.log(this, 'ERROR: could not find tree for ref', ref)
+        app.log(this, 'ERROR: could not find tree for ref', ref)
+        raise SystemExit
 
     return tree
 
