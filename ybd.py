@@ -60,7 +60,6 @@ def assemble(this):
             try:
                 last_tag = check_output(['git', 'describe', '--abbrev=0',
                                          '--tags', this['ref']],
-                                        stdout=DEVNULL,
                                         stderr=DEVNULL)[0:-1]
                 app.log(this, 'Upstream version', last_tag.decode("utf-8"))
             except:
