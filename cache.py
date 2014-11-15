@@ -84,7 +84,8 @@ def get_repo_url(this):
     url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
     url = url.replace('github:', 'git://github.com/')
     url = url.replace('gnome:', 'git://git.gnome.org')
-    url = url + '.git'
+    if not url.endswith('.git'):
+        url = url + '.git'
     return url
 
 
@@ -113,6 +114,7 @@ def get_tree(this):
     except:
         app.log(this, 'Cache-server does not have tree for ref', ref)
 
+    mirror(this)
     with app.chdir(this['git']):
         try:
             if call(['git', 'rev-parse', ref + '^{object}'],
@@ -125,7 +127,7 @@ def get_tree(this):
                 if call(['git', 'rev-parse', ref + '^{object}'],
                         stdout=DEVNULL,
                         stderr=DEVNULL):
-                    app.log(this, 'ERROR: ref is either not unique or missing', ref)
+                    app.log(this, 'ERROR: ref is not unique or missing', ref)
                     raise SystemExit
 
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
@@ -184,10 +186,7 @@ def copy_repo(repo, destdir):
          stderr=DEVNULL)
 
 
-def checkout(this):
-    # checkout the required version of this from git
-    defs = definitions.Definitions()
-    this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
+def mirror(this):
     if not os.path.exists(this['git']):
         # TODO - try tarball first
 
@@ -198,6 +197,11 @@ def checkout(this):
             raise SystemExit
 
         app.log(this, 'Git repo is mirrored at', this['git'])
+
+
+def checkout(this):
+    # checkout the required version of this from git
+    mirror(this)
 
     with app.chdir(this['build']):
         this['tree'] = get_tree(this)
