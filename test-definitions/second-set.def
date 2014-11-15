@@ -1,7 +1,7 @@
 name: second-set
 build-depends:
 - first-set|v1.0
-contents:
+components:
 - name: soo|v3.17
   repo: upstream:saragossa
   ref: master

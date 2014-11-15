@@ -6,7 +6,7 @@ build-depends:
 - name: foo|a784837a749
   repo: github:devcurmudgeon/ybd
   ref: a784837a7495908110a551abffa91c8689cea196
-contents:
+components:
 - name: foo|51b85
   repo: github:devcurmudgeon/ybd
   ref: 51b858a5afd6e102e626472929940612b85cf0d5

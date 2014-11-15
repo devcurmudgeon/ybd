@@ -1,7 +1,7 @@
 name: sixth-set
 build-depends:
 - first-set
-contents:
+components:
 - name: six-one
 - name: six-two
 - name: six-three
