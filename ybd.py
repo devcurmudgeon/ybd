@@ -90,7 +90,7 @@ def build(target):
         for dependency in defs.lookup(this, 'build-depends'):
             build(defs.get(dependency))
 
-        # wait here for all the dependencies to complete
+        # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
 
         for component in defs.lookup(this, 'components'):

@@ -1,5 +1,4 @@
 TODO
-- make cache safe
 - check for duplicate components
 - check for duplicate builds
 - config
