@@ -22,6 +22,7 @@ import app
 import re
 from subprocess import call
 from subprocess import check_output
+from subprocess import DEVNULL
 import hashlib
 import urllib.request
 import json
@@ -114,10 +115,16 @@ def get_tree(this):
 
     with app.chdir(this['git']):
         try:
-            if call(['git', 'rev-parse', ref + '^{object}']):
+            if call(['git', 'rev-parse', ref + '^{object}'],
+                    stdout=DEVNULL,
+                    stderr=DEVNULL):
                 # can't resolve this ref. is it upstream?
-                call(['git', 'fetch', 'origin'])
-                if call(['git', 'rev-parse', ref + '^{object}']):
+                call(['git', 'fetch', 'origin'],
+                     stdout=DEVNULL,
+                     stderr=DEVNULL)
+                if call(['git', 'rev-parse', ref + '^{object}'],
+                        stdout=DEVNULL,
+                        stderr=DEVNULL):
                     app.log(this, 'ref is either not unique or missing', ref)
                     raise SystemExit
 
@@ -150,7 +157,9 @@ def copy_repo(repo, destdir):
     call(['git', 'config', 'core.bare', 'false'])
     call(['git', 'config', '--unset', 'remote.origin.mirror'])
     call(['git', 'config', 'remote.origin.fetch',
-          '+refs/heads/*:refs/remotes/origin/*'])
+          '+refs/heads/*:refs/remotes/origin/*'],
+         stdout=DEVNULL,
+         stderr=DEVNULL)
     call(['git',  'config', 'remote.origin.url', repo])
     call(['git',  'pack-refs', '--all', '--prune'])
 
@@ -170,7 +179,9 @@ def copy_repo(repo, destdir):
                 refline = "%s %s" % (sha, ref)
             ref_fh.write("%s\n" % (refline))
     # Finally run a remote update to clear up the refs ready for use.
-    call(['git', 'remote', 'update', 'origin', '--prune'])
+    call(['git', 'remote', 'update', 'origin', '--prune'],
+         stdout=DEVNULL,
+         stderr=DEVNULL)
 
 
 def checkout(this):
@@ -191,7 +202,9 @@ def checkout(this):
     with app.chdir(this['build']):
         this['tree'] = get_tree(this)
         copy_repo(this['git'], this['build'])
-        if call(['git', 'checkout', '-b', this['tree']]) != 0:
+        if call(['git', 'checkout', '-b', this['tree']],
+                stdout=DEVNULL,
+                stderr=DEVNULL) != 0:
             app.log(this, 'ERROR: git checkout failed for', this['tree'])
             raise SystemExit
 
