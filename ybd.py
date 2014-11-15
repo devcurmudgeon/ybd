@@ -106,4 +106,6 @@ with app.timer('TOTAL'):
     with app.setup(target):
         defs = Definitions()
         definition = defs.get(target)
+        with app.timer('CACHE-KEYS'):
+            cache.is_cached(target)
         build(definition)
