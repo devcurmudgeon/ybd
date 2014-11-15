@@ -42,16 +42,16 @@ def cache_key(this):
     safename = definition['name'].replace('/', '-')
     hash_this = {}
 
+    for key in ['build-depends', 'components']:
+        for it in defs.lookup(definition, key):
+            component = defs.get(it)
+            hash_this[component['name']] = cache_key(component)
+
     for key in ['tree', 'configure-commands', 'build-commands',
                 'install-commands']:
 
         if defs.lookup(definition, key) != []:
             hash_this[key] = definition[key]
-
-    for key in ['build-depends', 'components']:
-        for it in defs.lookup(definition, key):
-            component = defs.get(it)
-            hash_this[component['name']] = cache_key(component)
 
     result = json.dumps(hash_this, sort_keys=True).encode('utf-8')
 
@@ -107,7 +107,6 @@ def get_tree(this):
     if defs.lookup(this, 'git') == []:
         this['git'] = (os.path.join(app.config['gits'],
                        get_repo_name(this)))
-
 
     if defs.version(this):
         ref = defs.version(this)

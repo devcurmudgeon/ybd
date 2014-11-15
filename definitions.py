@@ -49,6 +49,8 @@ class Definitions():
                     for component in self.lookup(this, 'components'):
                         if self.lookup(component, 'repo') != []:
                             self._insert(component)
+                        component['build-depends'] = (
+                            self.lookup(this, 'build-depends'))
 
             if '.git' in dirnames:
                 dirnames.remove('.git')
