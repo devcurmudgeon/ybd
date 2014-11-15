@@ -45,6 +45,11 @@ def cache_key(this):
     for key in ['build-depends', 'components']:
         for it in defs.lookup(definition, key):
             component = defs.get(it)
+
+            if definition['name'] == component['name']:
+                app.log(this, 'ERROR: recursion loop')
+                raise SystemExit
+
             hash_this[component['name']] = cache_key(component)
 
     for key in ['tree', 'configure-commands', 'build-commands',
