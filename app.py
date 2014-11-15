@@ -20,7 +20,6 @@
 import contextlib
 import os
 import datetime
-import definitions
 import shutil
 from subprocess import check_output
 
@@ -29,10 +28,11 @@ config = {}
 
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
-    defs = definitions.Definitions()
-    name = defs.lookup(component, 'name')
-    if name == []:
-        name = component
+    name = component
+    try:
+        name = component['name']
+    except:
+        pass
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print('%s [%s] %s %s' % (timestamp, name, message, data))
