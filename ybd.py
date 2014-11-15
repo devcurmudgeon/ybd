@@ -101,6 +101,7 @@ def build(this):
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
 with app.timer('TOTAL'):
+    app.log(target, 'YBD starts')
     with app.setup(target):
         defs = Definitions()
         definition = defs.get(target)
