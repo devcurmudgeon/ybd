@@ -63,7 +63,6 @@ def assemble(this):
             except:
                 if defs.lookup(this, 'ref'):
                     app.log(this, 'Upstream version', this['ref'][:8])
-                pass
 
             # run the configure-commands
             # run the build-commands
