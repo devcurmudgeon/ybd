@@ -61,7 +61,7 @@ def cache(this):
     cachefile = os.path.join(app.config['caches'],
                              cache_key(this))
     touch(cachefile)
-    app.log(this, 'is now cached at', cachefile)
+    app.log(this, 'Now cached as', cache_key(this))
 
 
 def is_cached(this):
@@ -71,7 +71,7 @@ def is_cached(this):
                              cache_key(this))
 
     if os.path.exists(cachefile):
-        return cachefile
+        return cache_key(this)
 
     return False
 
@@ -125,7 +125,7 @@ def get_tree(this):
                 if call(['git', 'rev-parse', ref + '^{object}'],
                         stdout=DEVNULL,
                         stderr=DEVNULL):
-                    app.log(this, 'ref is either not unique or missing', ref)
+                    app.log(this, 'ERROR: ref is either not unique or missing', ref)
                     raise SystemExit
 
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
@@ -197,7 +197,7 @@ def checkout(this):
             app.log(this, 'ERROR: failed to clone', get_repo_name(this))
             raise SystemExit
 
-        app.log(this, 'git repo is mirrored at', this['git'])
+        app.log(this, 'Git repo is mirrored at', this['git'])
 
     with app.chdir(this['build']):
         this['tree'] = get_tree(this)

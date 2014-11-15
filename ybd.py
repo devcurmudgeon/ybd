@@ -52,10 +52,11 @@ def assemble(this):
                                           this['ref']],
                                          universal_newlines=True)
                 build_system = buildsystem.detect_build_system(file_list)
-                app.log(this, 'build system', build_system)
+#                app.log(this, 'Build system', build_system)
 
             except:
-                app.log(this, 'build system is not recognised')
+#                app.log(this, 'Build system is not recognised')
+                pass
 
             try:
                 last_tag = check_output(['git', 'describe', '--abbrev=0',
@@ -80,11 +81,11 @@ def build(this):
     defs = Definitions()
     definition = defs.get(this)
     if cache.is_cached(definition):
-        app.log(this, 'cache found at', cache.is_cached(this))
+        app.log(this, 'Cache found', cache.is_cached(this))
         return
 
     with app.timer(this):
-        app.log(this, 'starting build')
+        app.log(this, 'Starting build')
         for dependency in defs.lookup(definition, 'build-depends'):
             build(dependency)
 
