@@ -35,10 +35,17 @@ def assemble(this):
 
     '''
 
-    with app.chdir(app.config['assembly']):
+    this['build'] = os.path.join(app.config['assembly'], this['name']
+                                 + '.build')
+    try:
+        os.makedirs(this['build'])
+    except:
+        app.log(this, 'Re-using existing build dir', this['build'])
 
-        cache.checkout(this)
-        with app.chdir(this['build']):
+    defs = Definitions()
+    with app.chdir(this['build']):
+        if defs.lookup(this, 'repo') != []:
+            cache.checkout(this)
             try:
                 file_list = check_output(['git', 'ls-tree', '--name-only',
                                           this['ref']],
@@ -58,16 +65,9 @@ def assemble(this):
                     app.log(this, 'Upstream version', this['ref'][:8])
                 pass
 
-        # run the configure-commands
-#        app.log(this, 'configure-commands',
-#                defs.lookup(this, 'configure-commands'))
-
-        # run the build-commands
-#        app.log(this, 'build-commands', defs.lookup(this, 'build-commands'))
-
-        # run the install-commands
-#        app.log(this, 'install-commands', defs.lookup(this,
-#                                                      'install-commands'))
+            # run the configure-commands
+            # run the build-commands
+            # run the install-commands
 
         # cache the result
         cache.cache(this)

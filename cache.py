@@ -174,41 +174,26 @@ def copy_repo(repo, destdir):
 
 
 def checkout(this):
-
-    this['build'] = os.path.join(app.config['assembly'], this['name']
-                                 + '.build')
-    app.log(this, 'build dir', this['build'])
-    try:
-        os.makedirs(this['build'])
-    except:
-        app.log(this, 'Re-using existing build dir', this['build'])
-
     # checkout the required version of this from git
     defs = definitions.Definitions()
-    if defs.lookup(this, 'repo'):
-        this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
-        if not os.path.exists(this['git']):
-            # TODO - try tarball first
+    this['git'] = os.path.join(app.config['gits'], get_repo_name(this))
+    if not os.path.exists(this['git']):
+        # TODO - try tarball first
 
-            if call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
-                     this['git']]) != 0:
+        if call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
+                 this['git']]) != 0:
 
-                app.log(this, 'ERROR: failed to clone', get_repo_name(this))
-                raise SystemExit
+            app.log(this, 'ERROR: failed to clone', get_repo_name(this))
+            raise SystemExit
 
-            app.log(this, 'git repo is mirrored at', this['git'])
+        app.log(this, 'git repo is mirrored at', this['git'])
 
-        with app.chdir(this['build']):
-            this['tree'] = get_tree(this)
-            copy_repo(this['git'], this['build'])
-            if call(['git', 'checkout', '-b', this['tree']]) != 0:
-                app.log(this, 'ERROR: git checkout failed for', this['tree'])
-                raise SystemExit
-
-    else:
-        # TODO this may be a tarball, or a collection
-
-        app.log(this, 'No repo specified')
+    with app.chdir(this['build']):
+        this['tree'] = get_tree(this)
+        copy_repo(this['git'], this['build'])
+        if call(['git', 'checkout', '-b', this['tree']]) != 0:
+            app.log(this, 'ERROR: git checkout failed for', this['tree'])
+            raise SystemExit
 
 
 def touch(pathname):
