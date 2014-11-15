@@ -114,10 +114,10 @@ def get_tree(this):
 
     with app.chdir(this['git']):
         try:
-            if call(['git', 'rev-parse', ref, ]):
+            if call(['git', 'rev-parse', ref + '^{object}']):
                 # can't resolve this ref. is it upstream?
                 call(['git', 'fetch', 'origin'])
-                if call(['git', 'rev-parse', ref]):
+                if call(['git', 'rev-parse', ref + '^{object}']):
                     app.log(this, 'ref is either not unique or missing', ref)
                     raise SystemExit
 
@@ -130,7 +130,6 @@ def get_tree(this):
 
             app.log(this, 'ERROR: could not find tree for ref', ref)
 
-    app.log(this, 'tree is', tree)
     return tree
 
 
@@ -200,8 +199,8 @@ def checkout(this):
             app.log(this, 'git repo is mirrored at', this['git'])
 
         with app.chdir(this['build']):
-            copy_repo(this['git'], this['build'])
             this['tree'] = get_tree(this)
+            copy_repo(this['git'], this['build'])
             if call(['git', 'checkout', '-b', this['tree']]) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
