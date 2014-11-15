@@ -27,7 +27,7 @@ from subprocess import check_output
 config = {}
 
 
-def log(component, message, data=''):
+def log(component, message='', data=''):
     ''' Print a timestamped log. '''
     defs = definitions.Definitions()
     name = defs.lookup(component, 'name')
