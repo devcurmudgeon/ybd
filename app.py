@@ -42,16 +42,18 @@ def log(component, message='', data=''):
 def setup(target):
     try:
         config['base'] = os.path.expanduser('~/.ybd/')
-        if os.path.exists('/src/cache'):
+        if os.path.exists('/src'):
             config['base'] = '/src'
         config['caches'] = os.path.join(config['base'], 'cache')
-        config['gits'] = os.path.join(config['base'], 'gits')
+        config['artifacts'] = os.path.join(config['caches'], 'artifacts')
+        config['gits'] = os.path.join(config['caches'], 'gits')
         config['staging'] = os.path.join(config['base'], 'staging')
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         config['assembly'] = os.path.join(config['staging'],
                                           target + '-' + timestamp)
 
-        for directory in ['base', 'caches', 'gits', 'staging', 'assembly']:
+        for directory in ['base', 'caches', 'artifacts', 'gits',
+                          'staging', 'assembly']:
             if not os.path.exists(config[directory]):
                 os.mkdir(config[directory])
 

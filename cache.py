@@ -65,7 +65,7 @@ def cache_key(this):
 
 def cache(this):
     ''' Just create an empty file for now. '''
-    cachefile = os.path.join(app.config['caches'],
+    cachefile = os.path.join(app.config['artifacts'],
                              cache_key(this))
     touch(cachefile)
     app.log(this, 'Now cached as', cache_key(this))
@@ -74,7 +74,7 @@ def cache(this):
 def is_cached(this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cachefile = os.path.join(app.config['caches'],
+    cachefile = os.path.join(app.config['artifacts'],
                              cache_key(this))
 
     if os.path.exists(cachefile):
