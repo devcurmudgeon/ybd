@@ -73,6 +73,8 @@ class Definitions():
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
                 for key in this:
+                    if (key == 'ref' and self.lookup(definition, 'ref') != []):
+                        app.log(this, 'WARNING: definition is not unique')
                     definition[key] = this[key]
 
                 return
