@@ -60,7 +60,7 @@ def cache_key(this):
     result = json.dumps(hash_this, sort_keys=True).encode('utf-8')
 
     definition['cache'] = safename + ":" + hashlib.sha256(result).hexdigest()
-    app.log(definition, 'cache_key is', definition['cache'])
+    app.log(definition, 'Cache_key is', definition['cache'])
     return definition['cache']
 
 
@@ -111,8 +111,8 @@ def quote_url(url):
 
 
 def get_repo_name(this):
-#    return re.split('[:/]', this['repo'])[-1]
     return quote_url(get_repo_url(this))
+#    return re.split('[:/]', this['repo'])[-1]
 
 
 def get_tree(this):
@@ -209,27 +209,34 @@ def copy_repo(repo, destdir):
 
 def mirror(this):
     if not os.path.exists(this['git']):
-
         # try tarball first
         try:
             os.makedirs(this['git'])
             with app.chdir(this['git']):
+                app.log(this, 'Fetching tarball')
                 repo_url = get_repo_url(this)
                 tar_file = quote_url(repo_url) + '.tar'
-                tar_url = os.path.join("http://git.baserock.org/tarballs", tar_file)
-                call(['wget', tar_url])
-                call(['tar', 'xf', tar_file])
-                call(['git', 'config', 'remote.origin.url', repo_url])
-                call(['git', 'config', 'remote.origin.mirror', 'true'])
-                call(['git', 'config', 'remote.origin.fetch', '+refs/*:refs/*'])
+                tar_url = os.path.join("http://git.baserock.org/tarballs",
+                                       tar_file)
+                with open(os.devnull, "w") as fnull:
+                    call(['wget', tar_url], stdout=fnull, stderr=fnull)
+                    call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
+                    call(['git', 'config', 'remote.origin.url', repo_url],
+                         stdout=fnull, stderr=fnull)
+                    call(['git', 'config', 'remote.origin.mirror', 'true'],
+                         stdout=fnull, stderr=fnull)
+                    if call(['git', 'config', 'remote.origin.fetch',
+                             '+refs/*:refs/*'],
+                            stdout=fnull, stderr=fnull) != 0:
+                        raise BaseException('Did not get a valid git repo')
         except:
-            app.log(this, 'Using git clone')
-            raise SystemExit
-#            shutil.rmtree(this['git'])
-            if call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
-                     this['git']]) != 0:
-
-                app.log(this, 'ERROR: failed to clone', get_repo_name(this))
+            app.log(this, 'Using git clone', get_repo_url(this))
+            try:
+                with open(os.devnull, "w") as fnull:
+                    call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
+                          this['git']], stdout=fnull, stderr=fnull)
+            except:
+                app.log(this, 'ERROR: failed to clone', get_repo_url(this))
                 raise SystemExit
 
         app.log(this, 'Git repo is mirrored at', this['git'])
