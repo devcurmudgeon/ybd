@@ -26,7 +26,6 @@ import cache
 import app
 import buildsystem
 from subprocess import check_output
-from subprocess import DEVNULL
 
 
 def assemble(this):
@@ -58,9 +57,10 @@ def assemble(this):
                 app.log(this, 'Build system is not recognised')
 
             try:
-                last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                         '--tags', this['ref']],
-                                        stderr=DEVNULL)[0:-1]
+                with open(os.devnull, "w") as fnull:
+                    last_tag = check_output(['git', 'describe', '--abbrev=0',
+                                             '--tags', this['ref']],
+                                            stderr=fnull)[0:-1]
                 app.log(this, 'Upstream version', last_tag.decode("utf-8"))
             except:
                 if defs.lookup(this, 'ref'):

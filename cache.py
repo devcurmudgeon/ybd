@@ -22,9 +22,7 @@ import app
 import re
 from subprocess import call
 from subprocess import check_output
-from subprocess import DEVNULL
 import hashlib
-import urllib.request
 import json
 import definitions
 
@@ -121,17 +119,17 @@ def get_tree(this):
 
     try:
         mirror(this)
-        with app.chdir(this['git']):
+        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
             if call(['git', 'rev-parse', ref + '^{object}'],
-                    stdout=DEVNULL,
-                    stderr=DEVNULL):
+                    stdout=fnull,
+                    stderr=fnull):
                 # can't resolve this ref. is it upstream?
                 call(['git', 'fetch', 'origin'],
-                     stdout=DEVNULL,
-                     stderr=DEVNULL)
+                     stdout=fnull,
+                     stderr=fnull)
                 if call(['git', 'rev-parse', ref + '^{object}'],
-                        stdout=DEVNULL,
-                        stderr=DEVNULL):
+                        stdout=fnull,
+                        stderr=fnull):
                     app.log(this, 'ERROR: ref is not unique or missing', ref)
                     raise SystemExit
 
@@ -164,10 +162,11 @@ def copy_repo(repo, destdir):
     call(['cp', '-a', repo, os.path.join(destdir, '.git')])
     call(['git', 'config', 'core.bare', 'false'])
     call(['git', 'config', '--unset', 'remote.origin.mirror'])
-    call(['git', 'config', 'remote.origin.fetch',
-          '+refs/heads/*:refs/remotes/origin/*'],
-         stdout=DEVNULL,
-         stderr=DEVNULL)
+    with open(os.devnull, "w") as fnull:
+        call(['git', 'config', 'remote.origin.fetch',
+              '+refs/heads/*:refs/remotes/origin/*'],
+             stdout=fnull,
+             stderr=fnull)
     call(['git',  'config', 'remote.origin.url', repo])
     call(['git',  'pack-refs', '--all', '--prune'])
 
@@ -187,9 +186,10 @@ def copy_repo(repo, destdir):
                 refline = "%s %s" % (sha, ref)
             ref_fh.write("%s\n" % (refline))
     # Finally run a remote update to clear up the refs ready for use.
-    call(['git', 'remote', 'update', 'origin', '--prune'],
-         stdout=DEVNULL,
-         stderr=DEVNULL)
+    with open(os.devnull, "w") as fnull:
+        call(['git', 'remote', 'update', 'origin', '--prune'],
+             stdout=fnull,
+             stderr=fnull)
 
 
 def mirror(this):
@@ -212,11 +212,12 @@ def checkout(this):
     with app.chdir(this['build']):
         this['tree'] = get_tree(this)
         copy_repo(this['git'], this['build'])
-        if call(['git', 'checkout', '-b', this['tree']],
-                stdout=DEVNULL,
-                stderr=DEVNULL) != 0:
-            app.log(this, 'ERROR: git checkout failed for', this['tree'])
-            raise SystemExit
+        with open(os.devnull, "w") as fnull:
+            if call(['git', 'checkout', '-b', this['tree']],
+                    stdout=fnull,
+                    stderr=fnull) != 0:
+                app.log(this, 'ERROR: git checkout failed for', this['tree'])
+                raise SystemExit
 
 
 def touch(pathname):

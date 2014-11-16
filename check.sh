@@ -1,4 +1,4 @@
 echo
 echo
 rm -fr ~/.ybd/staging/*
-python3 ../ybd/ybd.py $1
+python ../ybd/ybd.py $1
