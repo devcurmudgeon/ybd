@@ -36,8 +36,7 @@ def build(target):
         app.log(this, 'Cache found', cache.is_cached(this))
         return
 
-    with app.timer(this):
-        app.log(this, 'Starting build')
+    with app.timer(this, 'Starting build'):
         for dependency in defs.lookup(this, 'build-depends'):
             build(defs.get(dependency))
 

@@ -29,11 +29,10 @@ import build
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
-with app.timer('TOTAL'):
-    app.log(target, 'YBD starts')
+with app.timer('TOTAL', 'YBD starts'):
     with app.setup(target):
         defs = Definitions()
         definition = defs.get(target)
-        with app.timer('CACHE-KEYS'):
+        with app.timer('CACHE-KEYS', 'Calculating'):
             cache.is_cached(target)
         build.build(definition)

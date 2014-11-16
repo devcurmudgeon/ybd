@@ -82,8 +82,9 @@ def chdir(dirname=None):
 
 
 @contextlib.contextmanager
-def timer(this):
+def timer(this, start_message=''):
     starttime = datetime.datetime.now()
+    log(this, start_message)
     try:
         yield
     finally:
