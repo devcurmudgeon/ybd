@@ -41,7 +41,7 @@ def cache_key(this):
     safename = definition['name'].replace('/', '-')
     hash_this = {}
 
-    for key in ['build-depends', 'components']:
+    for key in ['build-depends', 'contents']:
         for it in defs.lookup(definition, key):
             component = defs.get(it)
 

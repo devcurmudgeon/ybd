@@ -43,7 +43,7 @@ def build(target):
         # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
 
-        for component in defs.lookup(this, 'components'):
+        for component in defs.lookup(this, 'contents'):
             build(defs.get(component))
 
         assemble(this)

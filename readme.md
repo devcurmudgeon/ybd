@@ -13,8 +13,8 @@ YBD aims to show improvements on/for Baserock morph:
 - drop the words morph, morphology, stratum, chunk from the Baserock vocabulary
   - run morph-converter.sh on a checkout of definitions.git to do the renaming
 - instead just deal with generic definitions and components
-  - a definition may have components and build-dependencies
-  - components are just a list of definitions
+  - a definition may have contents and build-dependencies
+  - contents are just a list of definitions
   - build-dependencies are just a list of definitions too
   - support for nested definitions
   - a component may contain no code (could be just videos for example)

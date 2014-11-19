@@ -4,8 +4,8 @@ find . -name *morph | xargs sed -i -e "s/^- morph: systems\//- name: /"
 find . -name *morph | xargs sed -i -e "s/\.morph//"
 
 # rename strata: and chunks: => components:
-find . -name *morph | xargs sed -i -e "s/strata:/components:/"
-find . -name *morph | xargs sed -i -e "s/chunks:/components:/"
+find . -name *morph | xargs sed -i -e "s/strata:/contents:/"
+find . -name *morph | xargs sed -i -e "s/chunks:/contents:/"
 find . -name *morph | xargs sed -i -e "/morph: /d"
 
 # drop all lines containing empty build-depends

@@ -46,7 +46,7 @@ class Definitions():
                         if self.lookup(dependency, 'repo') != []:
                             self._insert(dependency)
 
-                    for component in self.lookup(this, 'components'):
+                    for component in self.lookup(this, 'contents'):
                         if self.lookup(component, 'repo') != []:
                             self._insert(component)
                         component['build-depends'] = (
