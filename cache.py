@@ -41,8 +41,8 @@ def cache_key(this):
     safename = definition['name'].replace('/', '-')
     hash_this = {}
 
-    for key in ['build-depends', 'contents']:
-        for it in defs.lookup(definition, key):
+    for factor in ['build-depends', 'contents']:
+        for it in defs.lookup(definition, factor):
             component = defs.get(it)
 
             if definition['name'] == component['name']:
@@ -51,11 +51,11 @@ def cache_key(this):
 
             hash_this[component['name']] = cache_key(component)
 
-    for key in ['tree', 'configure-commands', 'build-commands',
-                'install-commands']:
+    for factor in ['tree', 'configure-commands', 'build-commands',
+                   'install-commands']:
 
-        if defs.lookup(definition, key) != []:
-            hash_this[key] = definition[key]
+        if defs.lookup(definition, factor) != []:
+            hash_this[factor] = definition[factor]
 
     result = json.dumps(hash_this, sort_keys=True).encode('utf-8')
 
