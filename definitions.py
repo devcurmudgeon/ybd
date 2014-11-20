@@ -47,10 +47,12 @@ class Definitions():
                             self._insert(dependency)
 
                     for component in self.lookup(this, 'contents'):
-                        if self.lookup(component, 'repo') != []:
-                            self._insert(component)
                         component['build-depends'] = (
-                            self.lookup(this, 'build-depends'))
+                            self.lookup(component, 'build-depends'))
+                        for dependency in self.lookup(this, 'build-depends'):
+                            component['build-depends'].extend(
+                                [self.lookup(dependency, 'name')])
+                        self._insert(component)
 
             if '.git' in dirnames:
                 dirnames.remove('.git')
@@ -72,28 +74,21 @@ class Definitions():
     def _insert(self, this):
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
-                for key in this:
-                    if (key == 'ref' and self.lookup(definition, 'ref') != []):
-                        app.log(this, 'WARNING: definition is not unique')
-                    definition[key] = this[key]
+                if (self.lookup(definition, 'ref') == []
+                or self.lookup(this, 'ref') == []):
+                    for key in this:
+                        definition[key] = this[key]
 
-                return
+                    return
+
+                app.log(this, 'WARNING: definition is not unique')
 
         self.__definitions.append(this)
 
     def get(self, this):
-        ''' Load in the actual definition for a given named component.
-
-        We may need to loop through the whole list to find the right entry.
-
-        '''
-
         for definition in self.__definitions:
-            if (definition['name'] == this
-                or definition['name'].split('|')[0] == this
-                or definition['name'] == self.lookup(this, 'name')
-                or definition['name'].split('|')[0]
-                    == self.lookup(this, 'name')):
+            if (definition['name'] == this or
+                    definition['name'] == self.lookup(this, 'name')):
                 return definition
 
         app.log(this, 'ERROR: no definition found for', this)
