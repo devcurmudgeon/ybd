@@ -133,7 +133,8 @@ def get_tree(this):
         ref = defs.lookup(this, 'ref')
 
     try:
-        mirror(this)
+        if not os.path.exists(this['git']):
+            mirror(this)
         with app.chdir(this['git']), open(os.devnull, "w") as fnull:
             if call(['git', 'rev-parse', ref + '^{object}'],
                     stdout=fnull,
@@ -208,51 +209,47 @@ def copy_repo(repo, destdir):
 
 
 def mirror(this):
-    if not os.path.exists(this['git']):
-        # try tarball first
+    # try tarball first
+    try:
+        os.makedirs(this['git'])
+        with app.chdir(this['git']):
+            app.log(this, 'Fetching tarball')
+            repo_url = get_repo_url(this)
+            tar_file = quote_url(repo_url) + '.tar'
+            tar_url = os.path.join("http://git.baserock.org/tarballs",
+                                   tar_file)
+            with open(os.devnull, "w") as fnull:
+                call(['wget', tar_url], stdout=fnull, stderr=fnull)
+                call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
+                call(['git', 'config', 'remote.origin.url', repo_url],
+                     stdout=fnull, stderr=fnull)
+                call(['git', 'config', 'remote.origin.mirror', 'true'],
+                     stdout=fnull, stderr=fnull)
+                if call(['git', 'config', 'remote.origin.fetch',
+                         '+refs/*:refs/*'],
+                        stdout=fnull, stderr=fnull) != 0:
+                    raise BaseException('Did not get a valid git repo')
+    except:
+        app.log(this, 'Using git clone', get_repo_url(this))
         try:
-            os.makedirs(this['git'])
-            with app.chdir(this['git']):
-                app.log(this, 'Fetching tarball')
-                repo_url = get_repo_url(this)
-                tar_file = quote_url(repo_url) + '.tar'
-                tar_url = os.path.join("http://git.baserock.org/tarballs",
-                                       tar_file)
-                with open(os.devnull, "w") as fnull:
-                    call(['wget', tar_url], stdout=fnull, stderr=fnull)
-                    call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
-                    call(['git', 'config', 'remote.origin.url', repo_url],
-                         stdout=fnull, stderr=fnull)
-                    call(['git', 'config', 'remote.origin.mirror', 'true'],
-                         stdout=fnull, stderr=fnull)
-                    if call(['git', 'config', 'remote.origin.fetch',
-                             '+refs/*:refs/*'],
-                            stdout=fnull, stderr=fnull) != 0:
-                        raise BaseException('Did not get a valid git repo')
+            with open(os.devnull, "w") as fnull:
+                call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
+                      this['git']], stdout=fnull, stderr=fnull)
         except:
-            app.log(this, 'Using git clone', get_repo_url(this))
-            try:
-                with open(os.devnull, "w") as fnull:
-                    call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
-                          this['git']], stdout=fnull, stderr=fnull)
-            except:
-                app.log(this, 'ERROR: failed to clone', get_repo_url(this))
-                raise SystemExit
+            app.log(this, 'ERROR: failed to clone', get_repo_url(this))
+            raise SystemExit
 
-        app.log(this, 'Git repo is mirrored at', this['git'])
+    app.log(this, 'Git repo is mirrored at', this['git'])
 
 
 def checkout(this):
     # checkout the required version of this from git
-    mirror(this)
-
     with app.chdir(this['build']):
         this['tree'] = get_tree(this)
         copy_repo(this['git'], this['build'])
         with open(os.devnull, "w") as fnull:
-            if call(['git', 'checkout', '-b', this['tree']],
-                    stdout=fnull,
-                    stderr=fnull) != 0:
+            if call(['git', 'checkout', this['ref']],
+                    stdout=fnull, stderr=fnull) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
 
