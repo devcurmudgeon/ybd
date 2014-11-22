@@ -20,6 +20,7 @@
 import os
 from definitions import Definitions
 import cache
+import repos
 import app
 import buildsystem
 from subprocess import check_output
@@ -31,7 +32,7 @@ def assemble(target):
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != []:
-        this['tree'] = cache.get_tree(this)
+        this['tree'] = repos.get_tree(this)
 
     if cache.is_cached(this):
         app.log(this, 'Cache found', cache.is_cached(this))
@@ -68,7 +69,7 @@ def build(this):
     defs = Definitions()
     with app.chdir(this['build']):
         if defs.lookup(this, 'repo') != []:
-            cache.checkout(this)
+            repos.checkout(this)
             get_upstream_version(defs, this)
             get_build_system_commands(defs, this)
 
