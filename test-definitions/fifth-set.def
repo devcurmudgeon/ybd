@@ -3,7 +3,7 @@ build-depends:
 - third-set
 - fourth-set
 - first-set|v1.0
-components:
+contents:
 - name: phip
   repo: upstream:phip
 - name: phroog

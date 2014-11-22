@@ -1,5 +1,5 @@
 name: fourth-set
-components:
+contents:
 - name: first-set
 - name: second-set
 - name: third-set
