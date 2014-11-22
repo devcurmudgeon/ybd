@@ -23,10 +23,11 @@ import cache
 import app
 import buildsystem
 from subprocess import check_output
+from subprocess import call
 
 
 def build(target):
-    ''' Build dependencies and component recursively until this is cached. '''
+    ''' Build dependencies and contents recursively until target is cached. '''
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != []:
@@ -56,6 +57,7 @@ def assemble(this):
 
     '''
 
+    app.log(this, 'Start assembly')
     this['build'] = os.path.join(app.config['assembly'], this['name']
                                  + '.build')
     try:
@@ -68,12 +70,13 @@ def assemble(this):
         if defs.lookup(this, 'repo') != []:
             cache.checkout(this)
             try:
-                file_list = check_output(['git', 'ls-tree', '--name-only',
-                                          this['ref']],
-                                         universal_newlines=True)
+                file_list = check_output(['ls'])
                 build_system = buildsystem.detect_build_system(file_list)
-#                app.log(this, 'Build system', build_system)
-
+                for commands in ['configure-commands',
+                                 'build-commands',
+                                 'install-commands']:
+                    if defs.lookup(this, commands) == []:
+                        this[commands] = build_system.commands[commands]
             except:
                 app.log(this, 'Build system is not recognised')
 
@@ -88,8 +91,16 @@ def assemble(this):
                     app.log(this, 'Upstream version', this['ref'][:8])
 
             # run the configure-commands
+            for command in defs.lookup(this, 'configure-commands'):
+                call(['sh', '-c', command])
+
             # run the build-commands
+            for command in defs.lookup(this, 'build-commands'):
+                call(['sh', '-c', command])
+
             # run the install-commands
+            for command in defs.lookup(this, 'install-commands'):
+                app.log(this, 'install commands', command)
 
         # cache the result
         cache.cache(this)

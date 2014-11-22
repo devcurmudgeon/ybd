@@ -35,18 +35,7 @@ class BuildSystem(object):
     '''
 
     def __init__(self):
-        self.pre_configure_commands = []
-        self.configure_commands = []
-        self.post_configure_commands = []
-        self.pre_build_commands = []
-        self.build_commands = []
-        self.post_build_commands = []
-        self.pre_test_commands = []
-        self.test_commands = []
-        self.post_test_commands = []
-        self.pre_install_commands = []
-        self.install_commands = []
-        self.post_install_commands = []
+        self.commands = {}
 
     def __getitem__(self, key):
         key = '_'.join(key.split('-'))
@@ -72,23 +61,6 @@ class ManualBuildSystem(BuildSystem):
         return False
 
 
-class DummyBuildSystem(BuildSystem):
-
-    '''A dummy build system, useful for debugging definitions.'''
-
-    name = 'dummy'
-
-    def __init__(self):
-        BuildSystem.__init__(self)
-        self.configure_commands = ['echo dummy configure']
-        self.build_commands = ['echo dummy build']
-        self.test_commands = ['echo dummy test']
-        self.install_commands = ['echo dummy install']
-
-    def used_by_project(self, file_list):
-        return False
-
-
 class AutotoolsBuildSystem(BuildSystem):
 
     '''The automake/autoconf/libtool holy trinity.'''
@@ -97,19 +69,19 @@ class AutotoolsBuildSystem(BuildSystem):
 
     def __init__(self):
         BuildSystem.__init__(self)
-        self.configure_commands = [
+        self.commands['configure-commands'] = [
             'export NOCONFIGURE=1; ' +
             'if [ -e autogen ]; then ./autogen; ' +
             'elif [ -e autogen.sh ]; then ./autogen.sh; ' +
             'elif [ ! -e ./configure ]; then autoreconf -ivf; fi',
             './configure --prefix="$PREFIX"',
         ]
-        self.build_commands = [
+        self.commands['build-commands'] = [
             'make',
         ]
-        self.test_commands = [
+        self.commands['test-commands'] = [
         ]
-        self.install_commands = [
+        self.commands['install-commands'] = [
             'make DESTDIR="$DESTDIR" install',
         ]
 
@@ -134,14 +106,14 @@ class PythonDistutilsBuildSystem(BuildSystem):
 
     def __init__(self):
         BuildSystem.__init__(self)
-        self.configure_commands = [
+        self.commands['configure-commands'] = [
         ]
-        self.build_commands = [
+        self.commands['build-commands'] = [
             'python setup.py build',
         ]
-        self.test_commands = [
+        self.commands['test-commands'] = [
         ]
-        self.install_commands = [
+        self.commands['install-commands'] = [
             'python setup.py install --prefix "$PREFIX" --root "$DESTDIR"',
         ]
 
@@ -161,7 +133,7 @@ class CPANBuildSystem(BuildSystem):
 
     def __init__(self):
         BuildSystem.__init__(self)
-        self.configure_commands = [
+        self.commands['configure-commands'] = [
             'perl Makefile.PL INSTALLDIRS=perl '
             'INSTALLARCHLIB="$PREFIX/lib/perl" '
             'INSTALLPRIVLIB="$PREFIX/lib/perl" '
@@ -170,12 +142,12 @@ class CPANBuildSystem(BuildSystem):
             'INSTALLMAN1DIR="$PREFIX/share/man/man1" '
             'INSTALLMAN3DIR="$PREFIX/share/man/man3"',
         ]
-        self.build_commands = [
+        self.commands['build-commands'] = [
             'make',
         ]
-        self.test_commands = [
+        self.commands['test-commands'] = [
         ]
-        self.install_commands = [
+        self.commands['install-commands'] = [
             'make DESTDIR="$DESTDIR" install',
         ]
 
@@ -195,15 +167,15 @@ class CMakeBuildSystem(BuildSystem):
 
     def __init__(self):
         BuildSystem.__init__(self)
-        self.configure_commands = [
+        self.commands['configure-commands'] = [
             'cmake -DCMAKE_INSTALL_PREFIX=/usr'
         ]
-        self.build_commands = [
+        self.commands['build-commands'] = [
             'make',
         ]
-        self.test_commands = [
+        self.commands['test-commands'] = [
         ]
-        self.install_commands = [
+        self.commands['install-commands'] = [
             'make DESTDIR="$DESTDIR" install',
         ]
 
@@ -223,15 +195,15 @@ class QMakeBuildSystem(BuildSystem):
 
     def __init__(self):
         BuildSystem.__init__(self)
-        self.configure_commands = [
+        self.commands['configure-commands'] = [
             'qmake -makefile '
         ]
-        self.build_commands = [
+        self.commands['build-commands'] = [
             'make',
         ]
-        self.test_commands = [
+        self.commands['test-commands'] = [
         ]
-        self.install_commands = [
+        self.commands['install-commands'] = [
             'make INSTALL_ROOT="$DESTDIR" install',
         ]
 
@@ -250,8 +222,7 @@ build_systems = [
     PythonDistutilsBuildSystem(),
     CPANBuildSystem(),
     CMakeBuildSystem(),
-    QMakeBuildSystem(),
-    DummyBuildSystem(),
+    QMakeBuildSystem()
 ]
 
 
@@ -266,16 +237,3 @@ def detect_build_system(file_list):
         if build_system.used_by_project(file_list):
             return build_system
     return None
-
-
-def lookup_build_system(name):
-    '''Return build system that corresponds to the name.
-
-    If the name does not match any build system, raise ``KeyError``.
-
-    '''
-
-    for build_system in build_systems:
-        if build_system.name == name:
-            return build_system
-    raise KeyError('Unknown build system: %s' % name)
