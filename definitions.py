@@ -75,7 +75,7 @@ class Definitions():
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
                 if (self.lookup(definition, 'ref') == []
-                or self.lookup(this, 'ref') == []):
+                        or self.lookup(this, 'ref') == []):
                     for key in this:
                         definition[key] = this[key]
 
