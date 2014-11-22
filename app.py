@@ -45,7 +45,7 @@ def setup(target):
         if os.path.exists('/src'):
             config['base'] = '/src'
         config['caches'] = os.path.join(config['base'], 'cache')
-        config['artifacts'] = os.path.join(config['caches'], 'artifacts')
+        config['artifacts'] = os.path.join(config['caches'], 'ybd-artifacts')
         config['gits'] = os.path.join(config['caches'], 'gits')
         config['staging'] = os.path.join(config['base'], 'staging')
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
