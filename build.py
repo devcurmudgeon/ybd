@@ -27,7 +27,7 @@ from subprocess import call
 
 
 def assemble(target):
-    ''' Assemble dependencies and contents recursively until target is cached. '''
+    '''Assemble dependencies and contents recursively until target exists.'''
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != []:
@@ -90,17 +90,13 @@ def build(this):
                 if defs.lookup(this, 'ref'):
                     app.log(this, 'Upstream version', this['ref'][:8])
 
-            # run the configure-commands
             for command in defs.lookup(this, 'configure-commands'):
                 call(['sh', '-c', command])
 
-            # run the build-commands
             for command in defs.lookup(this, 'build-commands'):
                 call(['sh', '-c', command])
 
-            # run the install-commands
             for command in defs.lookup(this, 'install-commands'):
                 app.log(this, 'install commands', command)
 
-        # cache the result
         cache.cache(this)

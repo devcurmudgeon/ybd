@@ -57,6 +57,12 @@ class ManualBuildSystem(BuildSystem):
 
     name = 'manual'
 
+    def __init__(self):
+        BuildSystem.__init__(self)
+        self.commands['configure-commands'] = []
+        self.commands['build-commands'] = []
+        self.commands['install-commands'] = []
+
     def used_by_project(self, file_list):
         return False
 
@@ -217,7 +223,6 @@ class QMakeBuildSystem(BuildSystem):
         return False
 
 build_systems = [
-    ManualBuildSystem(),
     AutotoolsBuildSystem(),
     PythonDistutilsBuildSystem(),
     CPANBuildSystem(),
@@ -227,13 +232,10 @@ build_systems = [
 
 
 def detect_build_system(file_list):
-    '''Automatically detect the build system, if possible.
 
-    If the build system cannot be detected automatically, return None.
-    For ``exists`` see the ``BuildSystem.exists`` method.
+    '''Automatically detect the build system, if possible.'''
 
-    '''
     for build_system in build_systems:
         if build_system.used_by_project(file_list):
             return build_system
-    return None
+    return ManualBuildSystem()

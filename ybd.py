@@ -24,7 +24,7 @@ import sys
 from definitions import Definitions
 import cache
 import app
-import build
+from build import assemble
 
 
 path, target = os.path.split(sys.argv[1])
@@ -35,4 +35,4 @@ with app.timer('TOTAL', 'YBD starts'):
         definition = defs.get(target)
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.is_cached(target)
-        build.assemble(definition)
+        assemble(definition)
