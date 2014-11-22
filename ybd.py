@@ -35,4 +35,4 @@ with app.timer('TOTAL', 'YBD starts'):
         definition = defs.get(target)
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.is_cached(target)
-        build.build(definition)
+        build.assemble(definition)

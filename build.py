@@ -26,8 +26,8 @@ from subprocess import check_output
 from subprocess import call
 
 
-def build(target):
-    ''' Build dependencies and contents recursively until target is cached. '''
+def assemble(target):
+    ''' Assemble dependencies and contents recursively until target is cached. '''
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != []:
@@ -37,27 +37,27 @@ def build(target):
         app.log(this, 'Cache found', cache.is_cached(this))
         return
 
-    with app.timer(this, 'Starting build'):
+    with app.timer(this, 'Starting assembly'):
         for dependency in defs.lookup(this, 'build-depends'):
-            build(defs.get(dependency))
+            assemble(defs.get(dependency))
 
         # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
 
         for component in defs.lookup(this, 'contents'):
-            build(defs.get(component))
+            assemble(defs.get(component))
 
-        assemble(this)
+        build(this)
 
 
-def assemble(this):
+def build(this):
     ''' Do the actual creation of an artifact.
 
     By the time we get here, all dependencies for 'this' have been assembled.
 
     '''
 
-    app.log(this, 'Start assembly')
+    app.log(this, 'Start build')
     this['build'] = os.path.join(app.config['assembly'], this['name']
                                  + '.build')
     try:
