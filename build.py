@@ -69,26 +69,8 @@ def build(this):
     with app.chdir(this['build']):
         if defs.lookup(this, 'repo') != []:
             cache.checkout(this)
-            try:
-                file_list = check_output(['ls'])
-                build_system = buildsystem.detect_build_system(file_list)
-                for commands in ['configure-commands',
-                                 'build-commands',
-                                 'install-commands']:
-                    if defs.lookup(this, commands) == []:
-                        this[commands] = build_system.commands[commands]
-            except:
-                app.log(this, 'Build system is not recognised')
-
-            try:
-                with open(os.devnull, "w") as fnull:
-                    last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                             '--tags', this['ref']],
-                                            stderr=fnull)[0:-1]
-                app.log(this, 'Upstream version', last_tag.decode("utf-8"))
-            except:
-                if defs.lookup(this, 'ref'):
-                    app.log(this, 'Upstream version', this['ref'][:8])
+            get_upstream_version(defs, this)
+            get_build_system_commands(defs, this)
 
             for command in defs.lookup(this, 'configure-commands'):
                 call(['sh', '-c', command])
@@ -100,3 +82,24 @@ def build(this):
                 app.log(this, 'install commands', command)
 
         cache.cache(this)
+
+
+def get_upstream_version(defs, this):
+    try:
+        with open(os.devnull, "w") as fnull:
+            last_tag = check_output(['git', 'describe', '--abbrev=0',
+                                     '--tags', this['ref']],
+                                    stderr=fnull)[0:-1]
+        app.log(this, 'Upstream version', last_tag.decode("utf-8"))
+    except:
+        if defs.lookup(this, 'ref'):
+            app.log(this, 'Upstream version', this['ref'][:8])
+
+
+def get_build_system_commands(defs, this):
+    file_list = check_output(['ls'])
+    build_system = buildsystem.detect_build_system(file_list)
+    for commands in ['configure-commands', 'build-commands',
+                     'install-commands']:
+        if defs.lookup(this, commands) == []:
+            this[commands] = build_system.commands[commands]
