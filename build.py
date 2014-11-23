@@ -61,13 +61,15 @@ def build(this):
     app.log(this, 'Start build')
     this['build'] = os.path.join(app.config['assembly'], this['name']
                                  + '.build')
+    env = { 'DESTDIR': os.path.join(app.config['assembly'], this['name']
+                                 + '.install') }
     try:
         os.makedirs(this['build'])
     except:
         app.log(this, 'Re-using existing build dir', this['build'])
 
     defs = Definitions()
-    with app.chdir(this['build']):
+    with app.chdir(this['build'], env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
             get_upstream_version(defs, this)
@@ -81,6 +83,7 @@ def build(this):
 
             for command in defs.lookup(this, 'install-commands'):
                 app.log(this, 'install commands', command)
+                call(['sh', '-c', command])
 
         cache.cache(this)
 

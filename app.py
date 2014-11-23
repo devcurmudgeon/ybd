@@ -71,13 +71,22 @@ def setup(target):
 
 
 @contextlib.contextmanager
-def chdir(dirname=None):
+def chdir(dirname=None, env={}):
     currentdir = os.getcwd()
+    currentenv = {}
     try:
         if dirname is not None:
             os.chdir(dirname)
+        for key, value in env.iteritems():
+            currentenv[key] = os.environ.get(key)
+            os.environ[key] = value
         yield
     finally:
+        for key, value in currentenv.iteritems():
+            if value:
+                os.environ[key] = value
+            else:
+                del os.environ[key]
         os.chdir(currentdir)
 
 
