@@ -65,7 +65,6 @@ class Definitions():
                 text = f.read()
 
             definition = yaml.safe_load(text)
-
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
 
@@ -81,7 +80,10 @@ class Definitions():
 
                     return
 
-                app.log(this, 'WARNING: definition is not unique')
+                for key in this:
+                    if definition[key] != this[key]:
+                        app.log(this, 'WARNING: multiple definitions of', key)
+                        app.log(this, '%s | %s' % (definition[key], this[key]))
 
         self.__definitions.append(this)
 
