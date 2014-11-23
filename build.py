@@ -61,8 +61,8 @@ def build(this):
     app.log(this, 'Start build')
     this['build'] = os.path.join(app.config['assembly'], this['name']
                                  + '.build')
-    env = { 'DESTDIR': os.path.join(app.config['assembly'], this['name']
-                                 + '.install') }
+    env = {'DESTDIR': os.path.join(app.config['assembly'],
+           this['name'] + '.install')}
     try:
         os.makedirs(this['build'])
     except:

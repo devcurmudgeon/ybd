@@ -194,5 +194,3 @@ def checkout(this):
                     stdout=fnull, stderr=fnull) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
-
-
