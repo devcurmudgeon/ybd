@@ -105,6 +105,6 @@ class Definitions():
 
     def version(self, this):
         try:
-            return this['name'].split('|')[1]
+            return this['name'].split('@')[1]
         except:
             return False
