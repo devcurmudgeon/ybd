@@ -37,7 +37,7 @@ def cache_key(this):
         return definition['cache']
 
     safename = definition['name'].replace('/', '-')
-    hash_this = {}
+    hash_factors = {}
 
     for factor in ['build-depends', 'contents']:
         for it in defs.lookup(definition, factor):
@@ -47,15 +47,15 @@ def cache_key(this):
                 app.log(this, 'ERROR: recursion loop')
                 raise SystemExit
 
-            hash_this[component['name']] = cache_key(component)
+            hash_factors[component['name']] = cache_key(component)
 
     for factor in ['tree', 'configure-commands', 'build-commands',
                    'install-commands']:
 
         if defs.lookup(definition, factor) != []:
-            hash_this[factor] = definition[factor]
+            hash_factors[factor] = definition[factor]
 
-    result = json.dumps(hash_this, sort_keys=True).encode('utf-8')
+    result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
     definition['cache'] = safename + ":" + hashlib.sha256(result).hexdigest()
     app.log(definition, 'Cache_key is', definition['cache'])
