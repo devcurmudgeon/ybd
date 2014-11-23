@@ -76,28 +76,29 @@ def build(this):
             get_build_system_commands(defs, this)
 
             for command in defs.lookup(this, 'configure-commands'):
-                call(['sh', '-c', command])
+                app.run_cmd(this, command)
 
             for command in defs.lookup(this, 'build-commands'):
-                call(['sh', '-c', command])
+                app.run_cmd(this, command)
 
             for command in defs.lookup(this, 'install-commands'):
-                app.log(this, 'install commands', command)
-                call(['sh', '-c', command])
+                app.run_cmd(this, command)
 
         cache.cache(this)
 
 
 def get_upstream_version(defs, this):
+    last_tag = 'No tag found'
     try:
         with open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
                                      '--tags', this['ref']],
                                     stderr=fnull)[0:-1]
-        app.log(this, 'Upstream version', last_tag.decode("utf-8"))
     except:
-        if defs.lookup(this, 'ref'):
-            app.log(this, 'Upstream version', this['ref'][:8])
+        pass
+
+    if defs.lookup(this, 'ref') or last_tag:
+        app.log(this, 'Upstream version: %s (%s)' % (this['ref'][:8], last_tag))
 
 
 def get_build_system_commands(defs, this):
