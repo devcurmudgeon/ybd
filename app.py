@@ -22,7 +22,7 @@ import os
 import datetime
 import shutil
 from subprocess import check_output
-
+from subprocess import call
 config = {}
 
 
@@ -36,6 +36,13 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print('%s [%s] %s %s' % (timestamp, name, message, data))
+
+
+def run_cmd(this, command):
+    with open(os.devnull, "w") as fnull:
+        if call(['sh', '-c', command], stdout=fnull, stderr=fnull):
+            log(this, 'ERROR: command failed:', command)
+            raise SystemExit
 
 
 @contextlib.contextmanager
