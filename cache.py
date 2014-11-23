@@ -18,6 +18,7 @@
 # =*= License: GPL-2 =*=
 
 import os
+import shutil
 import app
 import re
 import hashlib
@@ -57,7 +58,7 @@ def cache_key(this):
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
-    definition['cache'] = safename + ":" + hashlib.sha256(result).hexdigest()
+    definition['cache'] = safename + "@" + hashlib.sha256(result).hexdigest()
     app.log(definition, 'Cache_key is', definition['cache'])
     return definition['cache']
 
@@ -66,7 +67,8 @@ def cache(this):
     ''' Just create an empty file for now. '''
     cachefile = os.path.join(app.config['artifacts'],
                              cache_key(this))
-    touch(cachefile)
+
+    shutil.make_archive(cachefile, 'gztar', os.environ['DESTDIR'])
     app.log(this, 'Now cached as', cache_key(this))
 
 
@@ -74,16 +76,9 @@ def is_cached(this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
     cachefile = os.path.join(app.config['artifacts'],
-                             cache_key(this))
+                             cache_key(this) + '.tar.gz')
 
     if os.path.exists(cachefile):
-        return cache_key(this)
+        return cachefile
 
     return False
-
-
-def touch(pathname):
-    ''' Create an empty file if pathname does not exist already. '''
-
-    with open(pathname, 'w'):
-        pass
