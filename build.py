@@ -61,12 +61,11 @@ def build(this):
     app.log(this, 'Start build')
     this['build'] = os.path.join(app.config['assembly'], this['name']
                                  + '.build')
-    env = {'DESTDIR': os.path.join(app.config['assembly'],
-           this['name'] + '.install')}
-    try:
-        os.makedirs(this['build'])
-    except:
-        app.log(this, 'Re-using existing build dir', this['build'])
+    this['install'] = os.path.join(app.config['assembly'], this['name']
+                                   + '.install')
+    env = {'DESTDIR': this['install']}
+    os.makedirs(this['build'])
+    os.makedirs(this['install'])
 
     defs = Definitions()
     with app.chdir(this['build'], env):
