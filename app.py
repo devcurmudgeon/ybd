@@ -41,7 +41,8 @@ def log(component, message='', data=''):
 def run_cmd(this, command):
     with open(os.devnull, "w") as fnull:
         if call(['sh', '-c', command], stdout=fnull, stderr=fnull):
-            log(this, 'ERROR: command failed:', command)
+            log(this, 'ERROR: in directory %s command failed:' % os.getcwd(),
+                command)
             raise SystemExit
 
 
