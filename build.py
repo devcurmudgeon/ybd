@@ -34,8 +34,8 @@ def assemble(target):
     if defs.lookup(this, 'repo') != []:
         this['tree'] = repos.get_tree(this)
 
-    if cache.is_cached(this):
-        app.log(this, 'Cache found', cache.is_cached(this))
+    if cache.get_cache(this):
+        app.log(this, 'Cache found', cache.get_cache(this))
         return
 
     with app.timer(this, 'Starting assembly'):
