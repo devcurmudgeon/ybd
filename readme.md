@@ -20,8 +20,8 @@ YBD aims to show improvements on/for Baserock morph:
   - a component may contain no code (could be just videos for example)
   - a component may be a tarball
   - may have multiple versions of a component, eg
-    - foo|aa and foo|bb installed
-    - foo|cc and foo|dd used as build-dependencies by other component
+    - foo@aa and foo@bb installed
+    - foo@cc and foo@dd used as build-dependencies by other component
 - ability to build any level of component
   - an individual software component (what we've called chunks until now)
   - a logically-coupled set of components (what we've called strata)
