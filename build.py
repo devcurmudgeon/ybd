@@ -20,6 +20,7 @@
 import os
 from definitions import Definitions
 import cache
+from staging import StagingArea
 import repos
 import app
 import buildsystem
@@ -39,8 +40,10 @@ def assemble(target):
         return
 
     with app.timer(this, 'Starting assembly'):
+        stage = StagingArea(this)
         for dependency in defs.lookup(this, 'build-depends'):
             assemble(defs.get(dependency))
+            stage.stage(dependency)
 
         # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
@@ -59,15 +62,9 @@ def build(this):
     '''
 
     app.log(this, 'Start build')
-    this['build'] = os.path.join(app.config['assembly'], this['name']
-                                 + '.build')
-    this['install'] = os.path.join(app.config['assembly'], this['name']
-                                   + '.install')
-    env = {'DESTDIR': this['install']}
-    os.makedirs(this['build'])
-    os.makedirs(this['install'])
 
     defs = Definitions()
+    env = {'DESTDIR': this['install']}
     with app.chdir(this['build'], env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
@@ -97,7 +94,8 @@ def get_upstream_version(defs, this):
         pass
 
     if defs.lookup(this, 'ref') or last_tag:
-        app.log(this, 'Upstream version: %s (%s)' % (this['ref'][:8], last_tag))
+        app.log(this, 'Upstream version: %s (%s)' % (this['ref'][:8],
+                                                     last_tag))
 
 
 def get_build_system_commands(defs, this):
