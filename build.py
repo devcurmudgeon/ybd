@@ -64,7 +64,7 @@ def build(this):
     app.log(this, 'Start build')
 
     defs = Definitions()
-    env = {'DESTDIR': this['install']}
+    env = {'DESTDIR': this['install'], 'PREFIX': '/usr'}
     with app.chdir(this['build'], env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
