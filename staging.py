@@ -24,6 +24,7 @@ import shutil
 import cache
 from subprocess import check_output
 from subprocess import call
+import sandbox
 
 
 class StagingArea(object):
@@ -37,6 +38,10 @@ class StagingArea(object):
         os.makedirs(this['install'])
         self.build = this['build']
         self.install = this['install']
+
+    def run(self, args):
+#       call(sandbox.containerised_cmdline(args))
+        print(sandbox.containerised_cmdline(args))
 
     def stage(self, component):
         unpackdir = self._unpack_artifact(component)
@@ -74,7 +79,7 @@ class StagingArea(object):
 
             for entry in os.listdir(srcpath):
                 self._hardlink_all_files(os.path.join(srcpath, entry),
-                                        os.path.join(destpath, entry))
+                                         os.path.join(destpath, entry))
         elif stat.S_ISLNK(mode):
             # Copy the symlink.
             if os.path.lexists(destpath):
