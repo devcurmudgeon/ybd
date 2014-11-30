@@ -19,20 +19,19 @@ import contextlib
 import os
 import textwrap
 from subprocess import call
-
+import app
 
 @contextlib.contextmanager
 def setup_sandbox(this):
     try:
-        if this['build-mode'] != 'bootstrap':
-            jail = app.config['assembly']
-            for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
-                call(['mkdir', '-p', os.path.join(jail, directory)])
-            call(['mknod', '-m', '666', os.path.join(jail, 'dev/null'),
-                  'c', '1', '3'])
-            etcdir = os.path.join(jail, 'etc')
-            call(['cp', '/etc/ld.so.cache', etcdir])
-            call(['cp', '/etc/ld.so.conf', etcdir])
+        jail = app.config['assembly']
+        for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
+            call(['mkdir', '-p', os.path.join(jail, directory)])
+        call(['mknod', '-m', '666', os.path.join(jail, 'dev/null'),
+              'c', '1', '3'])
+        etcdir = os.path.join(jail, 'etc')
+        call(['cp', '/etc/ld.so.cache', etcdir])
+        call(['cp', '/etc/ld.so.conf', etcdir])
 
         yield
 

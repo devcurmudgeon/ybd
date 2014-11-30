@@ -25,7 +25,7 @@ from definitions import Definitions
 import cache
 import app
 from build import assemble
-
+from sandbox import setup_sandbox
 
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
@@ -35,4 +35,5 @@ with app.timer('TOTAL', 'YBD starts'):
         definition = defs.get(target)
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(target)
-        assemble(definition)
+        with setup_sandbox(definition):
+            assemble(definition)
