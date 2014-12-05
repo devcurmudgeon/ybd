@@ -22,13 +22,14 @@ from subprocess import call
 import app
 
 @contextlib.contextmanager
-def setup_sandbox(this):
+def setup(this):
     try:
         jail = app.config['assembly']
         for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
             call(['mkdir', '-p', os.path.join(jail, directory)])
-        call(['mknod', '-m', '666', os.path.join(jail, 'dev/null'),
-              'c', '1', '3'])
+        devnull = os.path.join(jail, 'dev/null')
+        call(['sudo', 'mknod', devnull, 'c', '1', '3'])
+        call(['sudo', 'chmod', '666', devnull])
         etcdir = os.path.join(jail, 'etc')
         call(['cp', '/etc/ld.so.cache', etcdir])
         call(['cp', '/etc/ld.so.conf', etcdir])
@@ -38,6 +39,14 @@ def setup_sandbox(this):
     finally:
         pass
 
+@contextlib.contextmanager
+def chroot(dir, env):
+    print('Chrooting %s' % dir)
+    try:
+        yield
+
+    finally:
+        pass
 
 def unshared_cmdline(args, root='/', mounts=()):
     '''Describe how to run 'args' inside a separate mount namespace.
@@ -98,6 +107,11 @@ def unshared_cmdline(args, root='/', mounts=()):
     cmdline = ['unshare', '--mount', '--', 'sh', '-ec', command, '-']
     cmdline.extend(cmdargs)
     return cmdline
+
+
+def run_cmd(this, command):
+#   call(sandbox.containerised_cmdline(args))
+    app.log(this, 'running command', containerised_cmdline(command))
 
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
