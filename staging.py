@@ -43,7 +43,7 @@ class StagingArea(object):
 #       call(sandbox.containerised_cmdline(args))
         print(sandbox.containerised_cmdline(args))
 
-    def stage(self, component):
+    def add(self, component):
         unpackdir = self._unpack_artifact(component)
         self._hardlink_all_files(unpackdir, app.config['assembly'])
 

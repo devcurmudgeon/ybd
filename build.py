@@ -43,7 +43,7 @@ def assemble(target):
         stage = StagingArea(this)
         for dependency in defs.lookup(this, 'build-depends'):
             assemble(defs.get(dependency))
-            stage.stage(dependency)
+            stage.add(dependency)
 
         # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
