@@ -75,7 +75,7 @@ def setup(target):
     finally:
         # assuming success, we can remove the 'assembly' directory
         # shutil.rmtree(config['assembly'])
-        log(target, 'assembly directory is still at', config['assembly'])
+        log(target, 'Assembly directory is still at', config['assembly'])
 
 
 @contextlib.contextmanager

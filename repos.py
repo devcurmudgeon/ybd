@@ -155,7 +155,7 @@ def mirror(this):
     try:
         os.makedirs(this['git'])
         with app.chdir(this['git']):
-            app.log(this, 'Fetching tarball')
+            app.log(this, 'Try fetching tarball')
             repo_url = get_repo_url(this)
             tar_file = quote_url(repo_url) + '.tar'
             tar_url = os.path.join("http://git.baserock.org/tarballs",
