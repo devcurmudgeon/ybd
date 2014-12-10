@@ -67,7 +67,7 @@ def cache(this):
     cachefile = os.path.join(app.config['artifacts'],
                              cache_key(this))
 
-    shutil.make_archive(cachefile, 'gztar', os.environ['DESTDIR'])
+    shutil.make_archive(cachefile, 'gztar', this['install'])
     app.log(this, 'Now cached as', cache_key(this))
 
 
