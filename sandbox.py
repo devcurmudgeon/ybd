@@ -21,6 +21,7 @@ import textwrap
 from subprocess import call
 import app
 
+
 @contextlib.contextmanager
 def setup(this):
     try:
@@ -39,6 +40,7 @@ def setup(this):
     finally:
         pass
 
+
 @contextlib.contextmanager
 def chroot(dir, env):
     print('Chrooting %s' % dir)
@@ -47,6 +49,7 @@ def chroot(dir, env):
 
     finally:
         pass
+
 
 def unshared_cmdline(args, root='/', mounts=()):
     '''Describe how to run 'args' inside a separate mount namespace.
@@ -110,7 +113,7 @@ def unshared_cmdline(args, root='/', mounts=()):
 
 
 def run_cmd(this, command):
-#   call(sandbox.containerised_cmdline(args))
+    # call(sandbox.containerised_cmdline(args))
     app.log(this, 'running command', containerised_cmdline(command))
 
 
