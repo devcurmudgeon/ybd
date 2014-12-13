@@ -26,13 +26,14 @@ from subprocess import check_output
 
 class Definitions():
     __definitions = []
+    __trees = {}
 
     def __init__(self):
         ''' Load all definitions from `cwd` tree. '''
         if self.__definitions != []:
             return
 
-        for dirname, dirnames, filenames in os.walk("."):
+        for dirname, dirnames, filenames in os.walk(os.getcwd()):
             for filename in filenames:
                 if not filename.endswith('.def'):
                     continue
@@ -56,6 +57,14 @@ class Definitions():
 
             if '.git' in dirnames:
                 dirnames.remove('.git')
+
+        try:
+            self.__trees = self._load(os.getcwd(), ".trees")
+            for definition in self.__definitions:
+                definition['tree'] = self.__trees.get(definition['name'])
+
+        except:
+            return
 
     def _load(self, path, name):
         ''' Load a single definition file, and create a hash for it. '''
@@ -110,3 +119,11 @@ class Definitions():
             return this['name'].split('@')[1]
         except:
             return False
+
+    def save_trees(self):
+        self.__trees = {}
+        for definition in self.__definitions:
+            if definition.get('tree') is not None:
+                self.__trees[definition['name']] = definition.get('tree')
+        with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
+            f.write(yaml.dump(self.__trees, default_flow_style=False))
