@@ -170,6 +170,7 @@ def mirror(this):
                          '+refs/*:refs/*'],
                         stdout=fnull, stderr=fnull) != 0:
                     raise BaseException('Did not get a valid git repo')
+                call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
         app.log(this, 'Using git clone', get_repo_url(this))
         try:
@@ -191,12 +192,12 @@ def fetch(repo):
 def checkout(this):
     # checkout the required version of this from git
     with app.chdir(this['build']):
+        app.log(this, 'Git checkout')
         if not this.get('git'):
             this['git'] = (os.path.join(app.config['gits'],
                            get_repo_name(this)))
         if not os.path.exists(this['git']):
             mirror(this)
-        fetch(this['git'])
         copy_repo(this['git'], this['build'])
         with open(os.devnull, "w") as fnull:
             if call(['git', 'checkout', this['ref']],
