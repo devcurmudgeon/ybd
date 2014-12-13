@@ -99,7 +99,7 @@ def get_upstream_version(defs, this):
 
 
 def get_build_system_commands(defs, this):
-    file_list = check_output(['ls'])
+    file_list = check_output(['ls']).decode("utf-8").splitlines()
     build_system = buildsystem.detect_build_system(file_list)
     for commands in ['configure-commands', 'build-commands',
                      'install-commands']:

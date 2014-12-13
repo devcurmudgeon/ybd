@@ -86,12 +86,12 @@ def chdir(dirname=None, env={}):
     try:
         if dirname is not None:
             os.chdir(dirname)
-        for key, value in env.iteritems():
+        for key, value in env.items():
             currentenv[key] = os.environ.get(key)
             os.environ[key] = value
         yield
     finally:
-        for key, value in currentenv.iteritems():
+        for key, value in currentenv.items():
             if value:
                 os.environ[key] = value
             else:
