@@ -35,5 +35,6 @@ with app.timer('TOTAL', 'YBD starts'):
         definition = defs.get(target)
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(target)
+        defs.save_trees()
         with sandbox.setup(definition):
             assemble(definition)

@@ -40,7 +40,7 @@ class StagingArea(object):
         self.install = this['install']
 
     def run(self, args):
-#       call(sandbox.containerised_cmdline(args))
+        # call(sandbox.containerised_cmdline(args))
         print(sandbox.containerised_cmdline(args))
 
     def add(self, component):

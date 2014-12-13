@@ -24,6 +24,8 @@ from subprocess import call
 from subprocess import check_output
 import string
 import definitions
+import urllib.request
+import json
 
 
 def get_repo_url(this):
@@ -58,50 +60,46 @@ def get_repo_name(this):
 
 
 def get_tree(this):
-    tree = None
     defs = definitions.Definitions()
 
     if defs.lookup(this, 'repo') == []:
-        return tree
+        return None
 
     if defs.lookup(this, 'git') == []:
         this['git'] = (os.path.join(app.config['gits'],
                        get_repo_name(this)))
 
-    if defs.version(this):
-        ref = defs.version(this)
+    ref = defs.lookup(this, 'ref')
+    url = (app.config['cache-server-url'] + 'repo='
+           + get_repo_url(this) + '&ref=' + ref)
+    if not os.path.exists(this['git']):
+        try:
+            with urllib.request.urlopen(url) as response:
+                tree = json.loads(response.read().decode())['tree']
+                return tree
 
-    if defs.lookup(this, 'ref'):
-        ref = defs.lookup(this, 'ref')
+        except:
+            app.log(this, 'WARNING: no tree from cache-server', tree)
 
-    try:
-        if not os.path.exists(this['git']):
-            mirror(this)
-        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
-            if call(['git', 'rev-parse', ref + '^{object}'],
-                    stdout=fnull,
-                    stderr=fnull):
-                # can't resolve this ref. is it upstream?
-                call(['git', 'fetch', 'origin'],
-                     stdout=fnull,
-                     stderr=fnull)
-                if call(['git', 'rev-parse', ref + '^{object}'],
-                        stdout=fnull,
-                        stderr=fnull):
-                    app.log(this, 'ERROR: ref is not unique or missing', ref)
-                    raise SystemExit
+    mirror(this)
 
+    with app.chdir(this['git']), open(os.devnull, "w") as fnull:
+        if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
+                stderr=fnull):
+            # can't resolve this ref. is it upstream?
+            call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
+
+        try:
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
                                 universal_newlines=True)[0:-1]
+            return tree
 
-    except:
+        except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-        app.log(this, 'ERROR: could not find tree for ref', ref)
-        raise SystemExit
-
-    return tree
+            app.log(this, 'ERROR: could not find tree for ref', ref)
+            raise SystemExit
 
 
 def copy_repo(repo, destdir):
@@ -163,6 +161,7 @@ def mirror(this):
             with open(os.devnull, "w") as fnull:
                 call(['wget', tar_url], stdout=fnull, stderr=fnull)
                 call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
+                os.remove(tar_file)
                 call(['git', 'config', 'remote.origin.url', repo_url],
                      stdout=fnull, stderr=fnull)
                 call(['git', 'config', 'remote.origin.mirror', 'true'],
@@ -184,10 +183,20 @@ def mirror(this):
     app.log(this, 'Git repo is mirrored at', this['git'])
 
 
+def fetch(repo):
+    with app.chdir(repo), open(os.devnull, "w") as fnull:
+        call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
+
+
 def checkout(this):
     # checkout the required version of this from git
     with app.chdir(this['build']):
-        this['tree'] = get_tree(this)
+        if not this.get('git'):
+            this['git'] = (os.path.join(app.config['gits'],
+                           get_repo_name(this)))
+        if not os.path.exists(this['git']):
+            mirror(this)
+        fetch(this['git'])
         copy_repo(this['git'], this['build'])
         with open(os.devnull, "w") as fnull:
             if call(['git', 'checkout', this['ref']],

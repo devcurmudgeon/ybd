@@ -40,6 +40,7 @@ def log(component, message='', data=''):
 
 def run_cmd(this, command):
     log(this, 'Running command', command)
+    return
     with open(os.devnull, "w") as fnull:
         if call(['sh', '-c', command], stdout=fnull, stderr=fnull):
             log(this, 'ERROR: in directory %s command failed:' % os.getcwd(),
@@ -50,6 +51,7 @@ def run_cmd(this, command):
 @contextlib.contextmanager
 def setup(target):
     try:
+        config['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
         config['base'] = os.path.expanduser('~/.ybd/')
         if os.path.exists('/src'):
             config['base'] = '/src'

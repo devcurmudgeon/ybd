@@ -32,7 +32,7 @@ def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
     defs = Definitions()
     this = defs.get(target)
-    if defs.lookup(this, 'repo') != []:
+    if defs.lookup(this, 'repo') != [] and defs.lookup(this, 'tree') == []:
         this['tree'] = repos.get_tree(this)
 
     if cache.get_cache(this):
