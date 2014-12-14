@@ -30,9 +30,9 @@ import sandbox
 class StagingArea(object):
 
     def __init__(self, this):
-        this['build'] = os.path.join(app.config['assembly'], this['name']
+        this['build'] = os.path.join(app.settings['assembly'], this['name']
                                      + '.build')
-        this['install'] = os.path.join(app.config['assembly'], this['name']
+        this['install'] = os.path.join(app.settings['assembly'], this['name']
                                        + '.install')
         os.makedirs(this['build'])
         os.makedirs(this['install'])
@@ -45,7 +45,7 @@ class StagingArea(object):
 
     def add(self, component):
         unpackdir = self._unpack_artifact(component)
-        self._hardlink_all_files(unpackdir, app.config['assembly'])
+        self._hardlink_all_files(unpackdir, app.settings['assembly'])
 
     def _unpack_artifact(self, component):
         cachefile = cache.get_cache(component)

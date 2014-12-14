@@ -66,13 +66,13 @@ def get_tree(this):
         return None
 
     if defs.lookup(this, 'git') == []:
-        this['git'] = (os.path.join(app.config['gits'],
+        this['git'] = (os.path.join(app.settings['gits'],
                        get_repo_name(this)))
 
     ref = defs.lookup(this, 'ref')
     if not os.path.exists(this['git']):
         try:
-            url = (app.config['cache-server-url'] + 'repo='
+            url = (app.settings['cache-server-url'] + 'repo='
                    + get_repo_url(this) + '&ref=' + ref)
             with urllib.request.urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
@@ -192,7 +192,7 @@ def checkout(this):
     with app.chdir(this['build']):
         app.log(this, 'Git checkout')
         if not this.get('git'):
-            this['git'] = (os.path.join(app.config['gits'],
+            this['git'] = (os.path.join(app.settings['gits'],
                            get_repo_name(this)))
         if not os.path.exists(this['git']):
             mirror(this)

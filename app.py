@@ -23,7 +23,7 @@ import datetime
 import shutil
 from subprocess import check_output
 from subprocess import call
-config = {}
+settings = {}
 
 
 def log(component, message='', data=''):
@@ -50,22 +50,22 @@ def run_cmd(this, command):
 @contextlib.contextmanager
 def setup(target):
     try:
-        config['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
-        config['base'] = os.path.expanduser('~/.ybd/')
+        settings['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
+        settings['base'] = os.path.expanduser('~/.ybd/')
         if os.path.exists('/src'):
-            config['base'] = '/src'
-        config['caches'] = os.path.join(config['base'], 'cache')
-        config['artifacts'] = os.path.join(config['caches'], 'ybd-artifacts')
-        config['gits'] = os.path.join(config['caches'], 'gits')
-        config['staging'] = os.path.join(config['base'], 'staging')
+            settings['base'] = '/src'
+        settings['caches'] = os.path.join(settings['base'], 'cache')
+        settings['artifacts'] = os.path.join(settings['caches'], 'ybd-artifacts')
+        settings['gits'] = os.path.join(settings['caches'], 'gits')
+        settings['staging'] = os.path.join(settings['base'], 'staging')
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        config['assembly'] = os.path.join(config['staging'],
+        settings['assembly'] = os.path.join(settings['staging'],
                                           target + '-' + timestamp)
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
                           'staging', 'assembly']:
-            if not os.path.exists(config[directory]):
-                os.mkdir(config[directory])
+            if not os.path.exists(settings[directory]):
+                os.mkdir(settings[directory])
 
         # git replace means we can't trust that just the sha1 of a branch
         # is enough to say what it contains, so we turn it off by setting
@@ -76,8 +76,8 @@ def setup(target):
 
     finally:
         # assuming success, we can remove the 'assembly' directory
-        # shutil.rmtree(config['assembly'])
-        log(target, 'Assembly directory is still at', config['assembly'])
+        # shutil.rmtree(settings['assembly'])
+        log(target, 'Assembly directory is still at', settings['assembly'])
 
 
 @contextlib.contextmanager

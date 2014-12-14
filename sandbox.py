@@ -25,7 +25,7 @@ import app
 @contextlib.contextmanager
 def setup(this):
     try:
-        jail = app.config['assembly']
+        jail = app.settings['assembly']
         for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
             call(['mkdir', '-p', os.path.join(jail, directory)])
         devnull = os.path.join(jail, 'dev/null')

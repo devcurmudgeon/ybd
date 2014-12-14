@@ -64,7 +64,7 @@ def cache_key(this):
 
 
 def cache(this):
-    cachefile = os.path.join(app.config['artifacts'],
+    cachefile = os.path.join(app.settings['artifacts'],
                              cache_key(this))
 
     shutil.make_archive(cachefile, 'gztar', this['install'])
@@ -74,7 +74,7 @@ def cache(this):
 def get_cache(this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cachefile = os.path.join(app.config['artifacts'],
+    cachefile = os.path.join(app.settings['artifacts'],
                              cache_key(this) + '.tar.gz')
 
     if os.path.exists(cachefile):
