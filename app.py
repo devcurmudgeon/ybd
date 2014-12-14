@@ -39,8 +39,7 @@ def log(component, message='', data=''):
 
 
 def run_cmd(this, command):
-    log(this, 'Running command', command)
-    return
+    log(this, 'Running command\n\n', command)
     with open(os.devnull, "w") as fnull:
         if call(['sh', '-c', command], stdout=fnull, stderr=fnull):
             log(this, 'ERROR: in directory %s command failed:' % os.getcwd(),
