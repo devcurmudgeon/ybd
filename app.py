@@ -48,19 +48,23 @@ def run_cmd(this, command):
 
 
 @contextlib.contextmanager
-def setup(target):
+def setup(target, arch):
     try:
-        settings['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
+        settings['arch'] = arch
+        settings['no-ccache'] = True
+        settings['cache-server-url'] = \
+            'http://git.baserock.org:8080/1.0/sha1s?'
         settings['base'] = os.path.expanduser('~/.ybd/')
         if os.path.exists('/src'):
             settings['base'] = '/src'
         settings['caches'] = os.path.join(settings['base'], 'cache')
-        settings['artifacts'] = os.path.join(settings['caches'], 'ybd-artifacts')
+        settings['artifacts'] = os.path.join(settings['caches'],
+                                             'ybd-artifacts')
         settings['gits'] = os.path.join(settings['caches'], 'gits')
         settings['staging'] = os.path.join(settings['base'], 'staging')
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         settings['assembly'] = os.path.join(settings['staging'],
-                                          target + '-' + timestamp)
+                                            target + '-' + timestamp)
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
                           'staging', 'assembly']:

@@ -24,6 +24,7 @@ from staging import StagingArea
 import repos
 import app
 import buildsystem
+from buildenvironment import BuildEnvironment
 from subprocess import check_output
 from subprocess import call
 
@@ -40,10 +41,11 @@ def assemble(target):
         return
 
     with app.timer(this, 'Starting assembly'):
-        stage = StagingArea(this)
+        build_env = BuildEnvironment(app.settings)
+        stage = StagingArea(this, build_env)
         for dependency in defs.lookup(this, 'build-depends'):
             assemble(defs.get(dependency))
-            stage.add(dependency)
+            stage.install_artifact(dependency)
 
         # if we're distbuilding, wait here for all dependencies to complete
         # how do we know when that happens?
@@ -64,7 +66,8 @@ def build(this):
     app.log(this, 'Start build')
 
     defs = Definitions()
-    env = {'DESTDIR': this['install'], 'PREFIX': '/usr'}
+    env = {'DESTDIR': this['install'], 'PREFIX': '/usr',
+           'BUILD_ARCH': app.settings.get('arch')}
     with app.chdir(this['build'], env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
