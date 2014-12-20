@@ -23,6 +23,7 @@ import datetime
 import shutil
 from subprocess import check_output
 from subprocess import call
+from multiprocessing import cpu_count
 settings = {}
 
 
@@ -69,6 +70,7 @@ def setup(target, arch):
         settings['assembly'] = os.path.join(settings['staging'],
                                             target + '-' + timestamp)
         settings['logfile'] = os.path.join(settings['assembly'], 'ybd.log')
+        settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
                           'staging', 'assembly']:
@@ -79,6 +81,7 @@ def setup(target, arch):
         # is enough to say what it contains, so we turn it off by setting
         # the right flag in an environment variable.
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
+
 
         yield
 

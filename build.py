@@ -28,7 +28,6 @@ from buildenvironment import BuildEnvironment
 from subprocess import check_output
 from subprocess import call
 
-
 def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
     defs = Definitions()
@@ -55,6 +54,14 @@ def assemble(target):
 
         build(this)
 
+def extra_env(this):
+    env = {}
+    env['DESTDIR'] = this.get('install')
+    env['PREFIX'] = this.get('prefix') or '/usr'
+    env['MAKEFLAGS'] = '-j%s' %  (this.get('max_jobs') or
+                                  app.settings['max_jobs'])
+
+    return env
 
 def build(this):
     ''' Do the actual creation of an artifact.
@@ -66,8 +73,8 @@ def build(this):
     app.log(this, 'Start build')
 
     defs = Definitions()
-    build_env = BuildEnvironment(app.settings, {'DESTDIR': this['install'],
-                                                'PREFIX': '/usr'})
+
+    build_env = BuildEnvironment(app.settings, extra_env(this))
     with app.chdir(this['build'], build_env.env):
         call(['env'])
         if defs.lookup(this, 'repo') != []:
