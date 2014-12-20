@@ -29,13 +29,15 @@ class BuildEnvironment():
 
     '''
 
-    def __init__(self, settings):
+    def __init__(self, settings, extra_env={}):
         '''Create a new BuildEnvironment object'''
 
         self.extra_path = []
 
         self.env = self._clean_env(settings)
         self.env.update(self._env_for_arch(settings['arch']))
+        for key in extra_env:
+            self.env[key] = extra_env[key]
 
     _osenv = os.environ
     _ccache_path = '/usr/lib/ccache'

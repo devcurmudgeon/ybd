@@ -66,9 +66,10 @@ def build(this):
     app.log(this, 'Start build')
 
     defs = Definitions()
-    env = {'DESTDIR': this['install'], 'PREFIX': '/usr',
-           'BUILD_ARCH': app.settings.get('arch')}
-    with app.chdir(this['build'], env):
+    build_env = BuildEnvironment(app.settings, {'DESTDIR': this['install'],
+                                                'PREFIX': '/usr'})
+    with app.chdir(this['build'], build_env.env):
+        call(['env'])
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
             get_upstream_version(defs, this)
