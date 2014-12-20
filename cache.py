@@ -37,8 +37,7 @@ def cache_key(this):
     if defs.lookup(definition, 'cache') != []:
         return definition['cache']
 
-    safename = definition['name'].replace('/', '-')
-    hash_factors = {}
+    hash_factors = { 'arch': app.settings['arch'] }
 
     for factor in ['build-depends', 'contents']:
         for it in defs.lookup(definition, factor):
@@ -58,6 +57,7 @@ def cache_key(this):
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
+    safename = definition['name'].replace('/', '-')
     definition['cache'] = safename + "@" + hashlib.sha256(result).hexdigest()
     app.log(definition, 'Cache_key is', definition['cache'])
     return definition['cache']
