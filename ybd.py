@@ -30,8 +30,8 @@ import sandbox
 path, target = os.path.split(sys.argv[1])
 target = target.replace('.def', '')
 arch = sys.argv[2]
-with app.timer('TOTAL', 'YBD starts'):
-    with app.setup(target, arch):
+with app.setup(target, arch):
+    with app.timer('TOTAL', 'YBD starts'):
         defs = Definitions()
         definition = defs.get(target)
         with app.timer('CACHE-KEYS', 'Calculating'):

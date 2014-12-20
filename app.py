@@ -35,13 +35,16 @@ def log(component, message='', data=''):
         pass
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print('%s [%s] %s %s' % (timestamp, name, message, data))
+    logentry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
+    logfile = open(settings['logfile'], "a")
+    logfile.write(logentry)
+    print(logentry),
 
 
 def run_cmd(this, command):
     log(this, 'Running command\n\n', command)
-    with open(os.devnull, "w") as fnull:
-        if call(['sh', '-c', command], stdout=fnull, stderr=fnull):
+    with open(settings['logfile'], "a") as logfile:
+        if call(['sh', '-c', command], stdout=logfile, stderr=logfile):
             log(this, 'ERROR: in directory %s command failed:' % os.getcwd(),
                 command)
             raise SystemExit
@@ -65,6 +68,7 @@ def setup(target, arch):
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         settings['assembly'] = os.path.join(settings['staging'],
                                             target + '-' + timestamp)
+        settings['logfile'] = os.path.join(settings['assembly'], 'ybd.log')
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
                           'staging', 'assembly']:
