@@ -24,7 +24,7 @@ from subprocess import call
 from subprocess import check_output
 import string
 import definitions
-import urllib.request
+import urllib2
 import json
 
 
@@ -74,7 +74,7 @@ def get_tree(this):
         try:
             url = (app.settings['cache-server-url'] + 'repo='
                    + get_repo_url(this) + '&ref=' + ref)
-            with urllib.request.urlopen(url) as response:
+            with urllib2.urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
                 return tree
         except:
