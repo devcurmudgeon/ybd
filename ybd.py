@@ -24,7 +24,7 @@ import sys
 from definitions import Definitions
 import cache
 import app
-from build import assemble
+from assembly import assemble
 import sandbox
 
 path, target = os.path.split(sys.argv[1])
