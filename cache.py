@@ -44,7 +44,7 @@ def cache_key(this):
             component = defs.get(it)
 
             if definition['name'] == component['name']:
-                app.log(this, 'ERROR: recursion loop')
+                app.log(this, 'ERROR: recursion loop for', component['name'])
                 raise SystemExit
 
             hash_factors[component['name']] = cache_key(component)

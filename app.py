@@ -36,10 +36,10 @@ def log(component, message='', data=''):
         pass
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    logentry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
+    log_entry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
     logfile = open(settings['logfile'], "a")
-    logfile.write(logentry)
-    print(logentry),
+    logfile.write(log_entry)
+    print(log_entry),
 
 
 def run_cmd(this, command):
