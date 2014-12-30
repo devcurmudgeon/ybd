@@ -35,7 +35,8 @@ class Definitions():
 
         for dirname, dirnames, filenames in os.walk(os.getcwd()):
             for filename in filenames:
-                if not filename.endswith('.def'):
+                if not (filename.endswith('.def') or
+                        filename.endswith('.morph')):
                     continue
 
                 this = self._load(dirname, filename)
@@ -67,13 +68,27 @@ class Definitions():
             return
 
     def _load(self, path, name):
-        ''' Load a single definition file, and create a hash for it. '''
+        ''' Load a single definition file '''
         try:
             filename = os.path.join(path, name)
             with open(filename) as f:
                 text = f.read()
 
             definition = yaml.safe_load(text)
+
+            # handle old morph syntax...
+            if definition.get('chunks'):
+                definition['contents'] = definition.pop('chunks')
+            if definition.get('strata'):
+                definition['contents'] = definition.pop('strata')
+            dependencies = self.lookup(definition, 'build-depends')
+            for dependency in dependencies:
+                if dependency.get('morph'):
+                    path = dependency.pop('morph')
+                    dependency['name'] = os.path.splitext(
+                                         os.path.basename(path))[0]
+            definition['build-depends'] = dependencies
+
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
 
@@ -90,6 +105,9 @@ class Definitions():
                     return
 
                 for key in this:
+                    if key == 'morph':
+                        continue
+
                     if definition[key] != this[key]:
                         app.log(this, 'WARNING: multiple definitions of', key)
                         app.log(this, '%s | %s' % (definition[key], this[key]))

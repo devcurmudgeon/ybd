@@ -27,8 +27,7 @@ import app
 from assembly import assemble
 import sandbox
 
-path, target = os.path.split(sys.argv[1])
-target = target.replace('.def', '')
+target = os.path.splitext(os.path.basename(sys.argv[1]))[0]
 arch = sys.argv[2]
 with app.setup(target, arch):
     with app.timer('TOTAL', 'YBD starts'):
