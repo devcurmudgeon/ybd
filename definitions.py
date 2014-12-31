@@ -87,7 +87,6 @@ class Definitions():
                     path = dependency.pop('morph')
                     dependency['name'] = os.path.splitext(
                                          os.path.basename(path))[0]
-            definition['build-depends'] = dependencies
 
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
