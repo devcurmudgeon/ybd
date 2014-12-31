@@ -23,7 +23,7 @@ import app
 
 
 @contextlib.contextmanager
-def setup(dirname=None, env={}):
+def setup(this, env={}):
     currentdir = os.getcwd()
     currentenv = dict(os.environ)
     try:
@@ -37,14 +37,29 @@ def setup(dirname=None, env={}):
         call(['cp', '/etc/ld.so.cache', etcdir])
         call(['cp', '/etc/ld.so.conf', etcdir])
 
-        for key, value in (currentenv.items() + env.items()):
-            if env.get(key):
+        for key in env.keys():
+            msg = env[key] if not 'PASSWORD' in key else '(value hidden)'
+            if key not in currentenv.keys():
                 os.environ[key] = env[key]
-            if not env.get(key):
+                app.log(this, 'new environment variable %s' % key, msg)
+            elif env[key] != currentenv[key]:
+                os.environ[key] = env[key]
+                app.log(this, 'changed environment variable %s' % key, msg)
+
+        for key in currentenv.keys():
+            msg = currentenv[key] if not 'PASSWORD' in key else '(value hidden)'
+            if key not in env.keys():
                 os.environ.pop(key)
-        if dirname is not None:
-            os.chdir(dirname)
-            os.environ['PWD'] = dirname
+                app.log(this, 'unset environment variable %s' % key, msg)
+
+        with open(app.settings['logfile'], "a") as logfile:
+            call(['env'])
+            call(['env'], stdout=logfile, stderr=logfile)
+
+        if this.get('build'):
+            os.chdir(this['build'])
+            os.environ['PWD'] = this['build']
+
         yield
     finally:
         for key, value in currentenv.items():

@@ -63,7 +63,6 @@ def extra_env(this):
                                  app.settings['max_jobs'])
     if this.get('build-mode') == 'bootstrap':
         tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
-        print(tools_path)
         if os.path.exists(tools_path):
             env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
             app.log(this, 'path is', env['PATH'])
@@ -81,8 +80,7 @@ def build(this):
     defs = Definitions()
 
     build_env = BuildEnvironment(app.settings, extra_env(this))
-    with sandbox.setup(this['build'], build_env.env):
-        call(['env'])
+    with sandbox.setup(this, build_env.env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
             get_upstream_version(defs, this)
