@@ -58,8 +58,8 @@ def extra_env(this):
     env = {}
     env['DESTDIR'] = this.get('install')
     env['PREFIX'] = this.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' %  (this.get('max_jobs') or
-                                  app.settings['max_jobs'])
+    env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
+                                 app.settings['max_jobs'])
 
     return env
 
