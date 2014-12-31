@@ -94,13 +94,16 @@ def setup(target, arch):
 @contextlib.contextmanager
 def chdir(dirname=None, env={}):
     currentdir = os.getcwd()
-    currentenv = {}
+    currentenv = dict(os.environ)
     try:
+        for key, value in (currentenv.items() + env.items()):
+            if env.get(key):
+                os.environ[key] = env[key]
+            if not env.get(key):
+                os.environ.pop(key)
         if dirname is not None:
             os.chdir(dirname)
-        for key, value in env.items():
-            currentenv[key] = os.environ.get(key)
-            os.environ[key] = value
+            os.environ['PWD'] = dirname
         yield
     finally:
         for key, value in currentenv.items():

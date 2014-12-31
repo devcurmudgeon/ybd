@@ -68,6 +68,7 @@ class BuildEnvironment():
 
         env = {}
 
+        env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin'
         # apply the copied variables to the clean env
         for name in copied_vars:
             if copied_vars[name] is not None:
