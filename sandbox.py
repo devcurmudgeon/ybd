@@ -51,6 +51,64 @@ def chroot(dir, env):
         pass
 
 
+ def run_cmd(this, command):
+    # call(sandbox.containerised_cmdline(args))
+    app.log(this, 'running command', containerised_cmdline(command))
+
+
+def containerised_cmdline(args, cwd='.', root='/', binds=(),
+                          mount_proc=False, unshare_net=False,
+                          writable_paths=None, **kwargs):
+    '''
+    Describe how to run 'args' inside a linux-user-chroot container.
+
+    The subprocess will only be permitted to write to the paths we
+    specifically allow it to write to, listed in 'writeable paths'. All
+    other locations in the file system will be read-only.
+
+    The 'binds' parameter allows mounting of arbitrary file-systems,
+    such as tmpfs, before running commands, by setting it to a list of
+    (mount_point, mount_type, source) triples.
+
+    The 'root' parameter allows running the command in a chroot, allowing
+    the host file system to be hidden completely except for the paths
+    below 'root'.
+
+    The 'mount_proc' flag enables mounting of /proc inside 'root'.
+    Locations from the file system can be bind-mounted inside 'root' by
+    setting 'binds' to a list of (src, dest) pairs. The 'dest'
+    directory must be inside 'root'.
+
+    The subprocess will be run in a separate mount namespace. It can
+    optionally be run in a separate network namespace too by setting
+    'unshare_net'.
+
+    '''
+
+    if not root.endswith('/'):
+        root += '/'
+    if writable_paths is None:
+        writable_paths = (root,)
+
+    cmdargs = ['linux-user-chroot', '--chdir', cwd]
+    if unshare_net:
+        cmdargs.append('--unshare-net')
+    for src, dst in binds:
+        # linux-user-chroot's mount target paths are relative to the chroot
+        cmdargs.extend(('--mount-bind', src, os.path.relpath(dst, root)))
+    for d in invert_paths(os.walk(root), writable_paths):
+        if not os.path.islink(d):
+            cmdargs.extend(('--mount-readonly', os.path.relpath(d, root)))
+    if mount_proc:
+        proc_target = os.path.join(root, 'proc')
+        if not os.path.exists(proc_target):
+            os.makedirs(proc_target)
+        cmdargs.extend(('--mount-proc', 'proc'))
+    cmdargs.append(root)
+    cmdargs.extend(args)
+    return unshared_cmdline(cmdargs, root=root, **kwargs)
+
+
 def unshared_cmdline(args, root='/', mounts=()):
     '''Describe how to run 'args' inside a separate mount namespace.
 
@@ -110,64 +168,6 @@ def unshared_cmdline(args, root='/', mounts=()):
     cmdline = ['unshare', '--mount', '--', 'sh', '-ec', command, '-']
     cmdline.extend(cmdargs)
     return cmdline
-
-
-def run_cmd(this, command):
-    # call(sandbox.containerised_cmdline(args))
-    app.log(this, 'running command', containerised_cmdline(command))
-
-
-def containerised_cmdline(args, cwd='.', root='/', binds=(),
-                          mount_proc=False, unshare_net=False,
-                          writable_paths=None, **kwargs):
-    '''
-    Describe how to run 'args' inside a linux-user-chroot container.
-
-    The subprocess will only be permitted to write to the paths we
-    specifically allow it to write to, listed in 'writeable paths'. All
-    other locations in the file system will be read-only.
-
-    The 'binds' parameter allows mounting of arbitrary file-systems,
-    such as tmpfs, before running commands, by setting it to a list of
-    (mount_point, mount_type, source) triples.
-
-    The 'root' parameter allows running the command in a chroot, allowing
-    the host file system to be hidden completely except for the paths
-    below 'root'.
-
-    The 'mount_proc' flag enables mounting of /proc inside 'root'.
-    Locations from the file system can be bind-mounted inside 'root' by
-    setting 'binds' to a list of (src, dest) pairs. The 'dest'
-    directory must be inside 'root'.
-
-    The subprocess will be run in a separate mount namespace. It can
-    optionally be run in a separate network namespace too by setting
-    'unshare_net'.
-
-    '''
-
-    if not root.endswith('/'):
-        root += '/'
-    if writable_paths is None:
-        writable_paths = (root,)
-
-    cmdargs = ['linux-user-chroot', '--chdir', cwd]
-    if unshare_net:
-        cmdargs.append('--unshare-net')
-    for src, dst in binds:
-        # linux-user-chroot's mount target paths are relative to the chroot
-        cmdargs.extend(('--mount-bind', src, os.path.relpath(dst, root)))
-    for d in invert_paths(os.walk(root), writable_paths):
-        if not os.path.islink(d):
-            cmdargs.extend(('--mount-readonly', os.path.relpath(d, root)))
-    if mount_proc:
-        proc_target = os.path.join(root, 'proc')
-        if not os.path.exists(proc_target):
-            os.makedirs(proc_target)
-        cmdargs.extend(('--mount-proc', 'proc'))
-    cmdargs.append(root)
-    cmdargs.extend(args)
-    return unshared_cmdline(cmdargs, root=root, **kwargs)
 
 
 def invert_paths(tree_walker, paths):
