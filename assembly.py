@@ -61,7 +61,12 @@ def extra_env(this):
     env['PREFIX'] = this.get('prefix') or '/usr'
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
-
+    if this.get('build-mode') == 'bootstrap':
+        tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
+        print(tools_path)
+        if os.path.exists(tools_path):
+            env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
+            app.log(this, 'path is', env['PATH'])
     return env
 
 def build(this):
