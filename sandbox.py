@@ -23,37 +23,50 @@ import app
 
 
 @contextlib.contextmanager
-def setup(this):
+def setup(dirname=None, env={}):
+    currentdir = os.getcwd()
+    currentenv = dict(os.environ)
     try:
-        jail = app.settings['assembly']
+        root = app.settings['assembly']
         for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
-            call(['mkdir', '-p', os.path.join(jail, directory)])
-        devnull = os.path.join(jail, 'dev/null')
+            call(['mkdir', '-p', os.path.join(root, directory)])
+        devnull = os.path.join(root, 'dev/null')
         call(['sudo', 'mknod', devnull, 'c', '1', '3'])
         call(['sudo', 'chmod', '666', devnull])
-        etcdir = os.path.join(jail, 'etc')
+        etcdir = os.path.join(root, 'etc')
         call(['cp', '/etc/ld.so.cache', etcdir])
         call(['cp', '/etc/ld.so.conf', etcdir])
 
+        for key, value in (currentenv.items() + env.items()):
+            if env.get(key):
+                os.environ[key] = env[key]
+            if not env.get(key):
+                os.environ.pop(key)
+        if dirname is not None:
+            os.chdir(dirname)
+            os.environ['PWD'] = dirname
         yield
-
     finally:
-        pass
+        for key, value in currentenv.items():
+            if value:
+                os.environ[key] = value
+            else:
+                del os.environ[key]
+        os.chdir(currentdir)
 
 
-@contextlib.contextmanager
-def chroot(dir, env):
-    print('Chrooting %s' % dir)
-    try:
-        yield
+def run_cmd(this, command):
+    if this.get('build-mode') != 'bootstrap':
+        command = containerised_cmdline(command)
 
-    finally:
-        pass
+    app.log(this, 'Running command\n\n', command)
 
-
- def run_cmd(this, command):
-    # call(sandbox.containerised_cmdline(args))
-    app.log(this, 'running command', containerised_cmdline(command))
+    with open(app.settings['logfile'], "a") as logfile:
+        if call(['sh', '-c', command], stdout=logfile, stderr=logfile):
+            app.log(this, 'ERROR: in directory %s command failed:\n\n'
+                    % os.getcwd(), command)
+            raise SystemExit
+        return
 
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),

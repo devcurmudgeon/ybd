@@ -42,15 +42,6 @@ def log(component, message='', data=''):
     print(log_entry),
 
 
-def run_cmd(this, command):
-    log(this, 'Running command\n\n', command)
-    with open(settings['logfile'], "a") as logfile:
-        if call(['sh', '-c', command], stdout=logfile, stderr=logfile):
-            log(this, 'ERROR: in directory %s command failed:' % os.getcwd(),
-                command)
-            raise SystemExit
-
-
 @contextlib.contextmanager
 def setup(target, arch):
     try:
@@ -92,27 +83,16 @@ def setup(target, arch):
 
 
 @contextlib.contextmanager
-def chdir(dirname=None, env={}):
+def chdir(dirname=None):
     currentdir = os.getcwd()
-    currentenv = dict(os.environ)
     try:
-        for key, value in (currentenv.items() + env.items()):
-            if env.get(key):
-                os.environ[key] = env[key]
-            if not env.get(key):
-                os.environ.pop(key)
         if dirname is not None:
             os.chdir(dirname)
             os.environ['PWD'] = dirname
         yield
     finally:
-        for key, value in currentenv.items():
-            if value:
-                os.environ[key] = value
-            else:
-                del os.environ[key]
         os.chdir(currentdir)
-
+        os.environ['PWD'] = currentdir
 
 @contextlib.contextmanager
 def timer(this, start_message=''):

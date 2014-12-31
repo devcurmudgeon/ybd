@@ -25,6 +25,7 @@ import repos
 import app
 import buildsystem
 from buildenvironment import BuildEnvironment
+import sandbox
 from subprocess import check_output
 from subprocess import call
 
@@ -75,7 +76,7 @@ def build(this):
     defs = Definitions()
 
     build_env = BuildEnvironment(app.settings, extra_env(this))
-    with app.chdir(this['build'], build_env.env):
+    with sandbox.setup(this['build'], build_env.env):
         call(['env'])
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
@@ -83,13 +84,13 @@ def build(this):
             get_build_system_commands(defs, this)
 
             for command in defs.lookup(this, 'configure-commands'):
-                app.run_cmd(this, command)
+                sandbox.run_cmd(this, command)
 
             for command in defs.lookup(this, 'build-commands'):
-                app.run_cmd(this, command)
+                sandbox.run_cmd(this, command)
 
             for command in defs.lookup(this, 'install-commands'):
-                app.run_cmd(this, command)
+                sandbox.run_cmd(this, command)
 
         cache.cache(this)
 
