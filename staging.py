@@ -106,6 +106,7 @@ class StagingArea(object):
         print(sandbox.containerised_cmdline(args))
 
     def install_artifact(self, component):
+        app.log(component, 'Installing artifact')
         unpackdir = self._unpack_artifact(component)
         self._hardlink_all_files(unpackdir, app.settings['assembly'])
 
