@@ -190,7 +190,7 @@ def fetch(repo):
 def checkout(this):
     # checkout the required version of this from git
     with app.chdir(this['build']):
-        app.log(this, 'Git checkout')
+        app.log(this, 'Git checkout %s into %s' %(this['repo'], this['build']))
         if not this.get('git'):
             this['git'] = (os.path.join(app.settings['gits'],
                            get_repo_name(this)))
