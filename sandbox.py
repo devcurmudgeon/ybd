@@ -30,31 +30,21 @@ def setup(this, env={}):
         root = app.settings['assembly']
         for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
             call(['mkdir', '-p', os.path.join(root, directory)])
+
         devnull = os.path.join(root, 'dev/null')
-        call(['sudo', 'mknod', devnull, 'c', '1', '3'])
-        call(['sudo', 'chmod', '666', devnull])
+        if not os.path.exists(devnull):
+            call(['sudo', 'mknod', devnull, 'c', '1', '3'])
+            call(['sudo', 'chmod', '666', devnull])
+
         etcdir = os.path.join(root, 'etc')
         call(['cp', '/etc/ld.so.cache', etcdir])
         call(['cp', '/etc/ld.so.conf', etcdir])
 
-        for key in env.keys():
-            msg = env[key] if not 'PASSWORD' in key else '(value hidden)'
-            if key not in currentenv.keys():
-                os.environ[key] = env[key]
-                app.log(this, 'new environment variable %s' % key, msg)
-            elif env[key] != currentenv[key]:
-                os.environ[key] = env[key]
-                app.log(this, 'changed environment variable %s' % key, msg)
-
-        for key in currentenv.keys():
-            msg = currentenv[key] if not 'PASSWORD' in key else '(value hidden)'
-            if key not in env.keys():
-                os.environ.pop(key)
-                app.log(this, 'unset environment variable %s' % key, msg)
-
-        with open(app.settings['logfile'], "a") as logfile:
-            call(['env'])
-            call(['env'], stdout=logfile, stderr=logfile)
+        for key, value in (currentenv.items() + env.items()):
+            if env.get(key):
+                 os.environ[key] = env[key]
+            if not env.get(key):
+                 os.environ.pop(key)
 
         if this.get('build'):
             os.chdir(this['build'])
@@ -69,17 +59,19 @@ def setup(this, env={}):
                 del os.environ[key]
         os.chdir(currentdir)
 
-
 def run_cmd(this, command):
-    if this.get('build-mode') != 'bootstrap':
-        command = containerised_cmdline(command)
+    if this.get('build-mode') == 'bootstrap':
+        cmd_list = ['sh', '-c'] + [command]
+    else:
+        cmd_list = containerised_cmdline([command])
 
-    app.log(this, 'Running command\n\n', command)
-
+    app.log(this, 'Running command')
+    app.log_env(this['name'] + '\n' + ' '.join(cmd_list))
     with open(app.settings['logfile'], "a") as logfile:
-        if call(['sh', '-c', command], stdout=logfile, stderr=logfile):
-            app.log(this, 'ERROR: in directory %s command failed:\n\n'
-                    % os.getcwd(), command)
+        if call(cmd_list, stdout=logfile, stderr=logfile):
+            app.log(this, 'ERROR: in directory', os.getcwd())
+            app.log(this, 'ERROR: command failed:\n\n', ' '.join(cmd_list))
+            app.log_env()
             raise SystemExit
         return
 
