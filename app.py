@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-#
-# Copyright (C) 2014  Codethink Limited
+# Copyright (C) 2014-2015  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +43,7 @@ def log_env(message=''):
     logfile = open(settings['logfile'], "a")
     for key in sorted(os.environ.keys()):
         msg = os.environ[key] if not 'PASSWORD' in key else '(value hidden)'
-        logfile.write('%s=%s' % (key, msg))
+        logfile.write('%s=%s\n' % (key, msg))
         print('%s=%s' % (key, msg))
     logfile.write(message)
     print(message)
