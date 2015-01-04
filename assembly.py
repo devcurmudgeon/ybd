@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-#
-# Copyright (C) 2014  Codethink Limited
+# Copyright (C) 2014-2015  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +26,20 @@ from buildenvironment import BuildEnvironment
 import sandbox
 from subprocess import check_output
 from subprocess import call
+
+build_steps =  ['pre-configure-commands',
+                'configure-commands',
+                'post-configure-commands',
+                'pre-build-commands',
+                'build-commands',
+                'post-build-commands',
+                'pre-test-commands',
+                'test-commands',
+                'post-test-commands',
+                'pre-install-commands',
+                'install-commands',
+                'post-install-commands']
+
 
 def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
@@ -61,11 +73,11 @@ def extra_env(this):
     env['PREFIX'] = this.get('prefix') or '/usr'
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
+    env['MAKEFLAGS'] = '-j1'
     if this.get('build-mode') == 'bootstrap':
         tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
         if os.path.exists(tools_path):
             env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
-            app.log(this, 'path is', env['PATH'])
     return env
 
 def build(this):
@@ -86,14 +98,9 @@ def build(this):
             get_upstream_version(defs, this)
             get_build_system_commands(defs, this)
 
-            for command in defs.lookup(this, 'configure-commands'):
-                sandbox.run_cmd(this, command)
-
-            for command in defs.lookup(this, 'build-commands'):
-                sandbox.run_cmd(this, command)
-
-            for command in defs.lookup(this, 'install-commands'):
-                sandbox.run_cmd(this, command)
+            for build_step in build_steps:
+                for command in defs.lookup(this, build_step):
+                    sandbox.run_cmd(this, command)
 
         cache.cache(this)
 
@@ -114,9 +121,15 @@ def get_upstream_version(defs, this):
 
 
 def get_build_system_commands(defs, this):
+    if defs.lookup(this, 'build-system') == []:
+        for build_step in build_steps:
+            if defs.lookup(this, build_step) != []:
+                return
+
     file_list = check_output(['ls']).decode("utf-8").splitlines()
     build_system = buildsystem.detect_build_system(file_list)
-    for commands in ['configure-commands', 'build-commands',
-                     'install-commands']:
-        if defs.lookup(this, commands) == []:
-            this[commands] = build_system.commands[commands]
+
+    for build_step in build_steps:
+        if defs.lookup(this, build_step) == []:
+            if build_system.commands.get(build_step):
+                this[build_step] = build_system.commands.get(build_step)
