@@ -67,19 +67,6 @@ def assemble(target):
 
         build(this)
 
-def extra_env(this):
-    env = {}
-    env['DESTDIR'] = this.get('install')
-    env['PREFIX'] = this.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
-                                 app.settings['max_jobs'])
-    env['MAKEFLAGS'] = '-j1'
-    if this.get('build-mode') == 'bootstrap':
-        tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
-        if os.path.exists(tools_path):
-            env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
-    return env
-
 def build(this):
     ''' Do the actual creation of an artifact.
 
@@ -105,6 +92,21 @@ def build(this):
         cache.cache(this)
 
 
+def get_build_system_commands(defs, this):
+    if defs.lookup(this, 'build-system') == []:
+        for build_step in build_steps:
+            if defs.lookup(this, build_step) != []:
+                return
+
+    file_list = check_output(['ls']).decode("utf-8").splitlines()
+    build_system = buildsystem.detect_build_system(file_list)
+
+    for build_step in build_steps:
+        if defs.lookup(this, build_step) == []:
+            if build_system.commands.get(build_step):
+                this[build_step] = build_system.commands.get(build_step)
+
+
 def get_upstream_version(defs, this):
     last_tag = 'No tag found'
     try:
@@ -120,16 +122,15 @@ def get_upstream_version(defs, this):
                                                      last_tag))
 
 
-def get_build_system_commands(defs, this):
-    if defs.lookup(this, 'build-system') == []:
-        for build_step in build_steps:
-            if defs.lookup(this, build_step) != []:
-                return
-
-    file_list = check_output(['ls']).decode("utf-8").splitlines()
-    build_system = buildsystem.detect_build_system(file_list)
-
-    for build_step in build_steps:
-        if defs.lookup(this, build_step) == []:
-            if build_system.commands.get(build_step):
-                this[build_step] = build_system.commands.get(build_step)
+def extra_env(this):
+    env = {}
+    env['DESTDIR'] = this.get('install')
+    env['PREFIX'] = this.get('prefix') or '/usr'
+    env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
+                                 app.settings['max_jobs'])
+    env['MAKEFLAGS'] = '-j1'
+    if this.get('build-mode') == 'bootstrap':
+        tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
+        if os.path.exists(tools_path):
+            env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
+    return env
