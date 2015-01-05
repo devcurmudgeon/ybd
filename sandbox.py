@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Codethink Limited
+# Copyright (C) 2011-2015  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,10 +60,43 @@ def setup(this, env={}):
         os.chdir(currentdir)
 
 def run_cmd(this, command):
-    if this.get('build-mode') == 'bootstrap':
-        cmd_list = ['sh', '-c'] + [command]
+
+    to_mount_in_staging = ('dev/shm', 'tmpfs', 'none'),
+    to_mount_in_bootstrap = ()
+
+    temp_dir = app.settings.get("TMPDIR", "/tmp")
+    staging_dirs = [this['build'], this['install']]
+    do_not_mount_dirs = [os.path.join(this['build'], d)
+                         for d in staging_dirs]
+
+    use_chroot = True if this['build-mode'] == 'staging' else False
+    chroot_dir = this['assembly'] if use_chroot else '/'
+    if use_chroot:
+        staging_dirs += ["dev", "proc", temp_dir.lstrip('/')]
+        mounts = to_mount_in_staging
     else:
-        cmd_list = containerised_cmdline([command])
+        do_not_mount_dirs += [temp_dir]
+        mounts = [(os.path.join(self.dirname, target), type, source)
+                   for target, type, source in to_mount_in_bootstrap]
+    mount_proc = use_chroot
+
+    ccache_dir = this.get('ccache_dir', None)
+    if ccache_dir and not app.settings['no-ccache']:
+        ccache_target = os.path.join(
+                this['biuld'], os.environ('CCACHE_DIR').lstrip('/'))
+        binds = ((ccache_dir, ccache_target),)
+    else:
+        binds = ()
+
+    container_config=dict(
+        cwd='/',
+        root=chroot_dir,
+        mounts=mounts,
+        mount_proc=mount_proc,
+        binds=binds,
+        writable_paths=do_not_mount_dirs)
+
+    cmd_list = containerised_cmdline(command, **container_config)
 
     app.log(this, 'Running command')
     app.log_env(this['name'] + '\n' + ' '.join(cmd_list))
@@ -126,6 +159,7 @@ def containerised_cmdline(args, cwd='.', root='/', binds=(),
         cmdargs.extend(('--mount-proc', 'proc'))
     cmdargs.append(root)
     cmdargs.extend(args)
+
     return unshared_cmdline(cmdargs, root=root, **kwargs)
 
 
