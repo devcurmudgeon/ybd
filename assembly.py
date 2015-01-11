@@ -93,12 +93,7 @@ def build(this):
 
 
 def get_build_system_commands(defs, this):
-    if defs.lookup(this, 'build-system') == []:
-        for build_step in build_steps:
-            if defs.lookup(this, build_step) != []:
-                return
-
-    file_list = check_output(['ls']).decode("utf-8").splitlines()
+    file_list = check_output(['ls', this['build']]).decode("utf-8").splitlines()
     build_system = buildsystem.detect_build_system(file_list)
 
     for build_step in build_steps:
