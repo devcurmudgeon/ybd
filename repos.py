@@ -59,6 +59,21 @@ def get_repo_name(this):
 #    return re.split('[:/]', this['repo'])[-1]
 
 
+def get_upstream_version(this):
+    last_tag = 'No tag found'
+    try:
+        with open(os.devnull, "w") as fnull:
+            last_tag = check_output(['git', 'describe', '--abbrev=0',
+                                     '--tags', this['ref']],
+                                    stderr=fnull)[0:-1]
+    except:
+        pass
+
+    if this.get('ref') or last_tag:
+        app.log(this, 'Upstream version: %s (%s)' % (this.get('ref')[:8],
+                                                     last_tag))
+
+
 def get_tree(this):
     defs = definitions.Definitions()
 
@@ -202,3 +217,5 @@ def checkout(this):
                     stdout=fnull, stderr=fnull) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
+
+        get_upstream_version(this)

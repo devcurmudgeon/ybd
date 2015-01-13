@@ -82,9 +82,7 @@ def build(this):
     with sandbox.setup(this, build_env.env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
-            get_upstream_version(defs, this)
             get_build_system_commands(defs, this)
-
             for build_step in build_steps:
                 for command in defs.lookup(this, build_step):
                     sandbox.run_cmd(this, command)
@@ -100,21 +98,6 @@ def get_build_system_commands(defs, this):
         if defs.lookup(this, build_step) == []:
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)
-
-
-def get_upstream_version(defs, this):
-    last_tag = 'No tag found'
-    try:
-        with open(os.devnull, "w") as fnull:
-            last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                     '--tags', this['ref']],
-                                    stderr=fnull)[0:-1]
-    except:
-        pass
-
-    if defs.lookup(this, 'ref') or last_tag:
-        app.log(this, 'Upstream version: %s (%s)' % (this['ref'][:8],
-                                                     last_tag))
 
 
 def extra_env(this):
