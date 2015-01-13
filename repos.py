@@ -93,7 +93,7 @@ def get_tree(this):
                 tree = json.loads(response.read().decode())['tree']
                 return tree
         except:
-            app.log(this, 'WARNING: no tree from cache-server', tree)
+            app.log(this, 'WARNING: no tree from cache-server', ref)
             mirror(this)
 
     with app.chdir(this['git']), open(os.devnull, "w") as fnull:
