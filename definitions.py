@@ -81,12 +81,11 @@ class Definitions():
                 definition['contents'] = definition.pop('chunks')
             if definition.get('strata'):
                 definition['contents'] = definition.pop('strata')
-            dependencies = self.lookup(definition, 'build-depends')
-            for dependency in dependencies:
-                if dependency.get('morph'):
-                    path = dependency.pop('morph')
-                    dependency['name'] = os.path.splitext(
-                                         os.path.basename(path))[0]
+            for it in (self.lookup(definition, 'build-depends') +
+                       self.lookup(definition, 'contents')):
+                if it.get('morph'):
+                    path = it.pop('morph')
+                    it['name'] = os.path.splitext(os.path.basename(path))[0]
 
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
@@ -96,15 +95,16 @@ class Definitions():
     def _insert(self, this):
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
-                if (self.lookup(definition, 'ref') == []
-                        or self.lookup(this, 'ref') == []):
+                if (self.lookup(definition, 'ref') == [] or
+                    self.lookup(definition, 'ref') == None or
+                    self.lookup(this, 'ref') == []):
                     for key in this:
-                        definition[key] = this[key]
+                        definition[key] = self.lookup(this,key)
 
                     return
 
                 for key in this:
-                    if key == 'morph':
+                    if key == 'morph' or this[key] is None:
                         continue
 
                     if definition[key] != this[key]:
