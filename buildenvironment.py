@@ -93,7 +93,7 @@ class BuildEnvironment():
                             '/baserock/eglibc.meta',
                             '/baserock/gcc.meta') if os.path.exists(f)
             )
-            if not settings['no-distcc']:
+            if not settings.get('no-distcc'):
                 env['CCACHE_PREFIX'] = 'distcc'
 
         return env
