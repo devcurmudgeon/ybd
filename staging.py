@@ -36,7 +36,7 @@ class StagingArea(object):
         this['build'] = os.path.join(app.settings['assembly'], this['name']
                                      + '.build')
         this['install'] = os.path.join(app.settings['assembly'], this['name']
-                                       + '.install')
+                                       + '.inst')
         os.makedirs(this['build'])
         os.makedirs(this['install'])
         self.build = this['build']
