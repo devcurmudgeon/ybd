@@ -107,7 +107,7 @@ def run_cmd(this, command):
 
     log = os.path.join(app.settings['artifacts'], this['cache'] + '.build-log')
     with open(log, "a") as logfile:
-        app.log_env(logfile, ' '.join(cmd_list))
+        app.log_env(logfile, '\n'.join(cmd_list))
         if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', cmd_list)
