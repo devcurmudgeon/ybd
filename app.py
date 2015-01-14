@@ -35,26 +35,23 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
-    logfile = open(settings['logfile'], "a")
-    logfile.write(log_entry)
     print(log_entry),
 
 
-def log_env(message=''):
-    logfile = open(settings['logfile'], "a")
+def log_env(logfile, message=''):
     for key in sorted(os.environ.keys()):
         msg = os.environ[key] if 'PASSWORD' not in key else '(value hidden)'
         logfile.write('%s=%s\n' % (key, msg))
-        print('%s=%s' % (key, msg))
-    logfile.write(message)
-    print(message)
+    logfile.write(message + '\n')
+    logfile.flush()
 
 
 @contextlib.contextmanager
 def setup(target, arch):
     try:
         settings['arch'] = arch
-        settings['no-ccache'] = True
+        settings['no-ccache'] = False
+        settings['ccache_dir'] = '/src/cache/ccache'
         settings['cache-server-url'] = \
             'http://git.baserock.org:8080/1.0/sha1s?'
         settings['base'] = os.path.expanduser('~/.ybd/')

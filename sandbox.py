@@ -30,7 +30,7 @@ def setup(this, env={}):
     currentenv = dict(os.environ)
     try:
         root = app.settings['assembly']
-        for directory in ['dev', 'etc', 'lib', 'usr', 'bin']:
+        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
             call(['mkdir', '-p', os.path.join(root, directory)])
 
         devnull = os.path.join(root, 'dev/null')
@@ -42,7 +42,8 @@ def setup(this, env={}):
             if env.get(key):
                 os.environ[key] = env[key]
             if not env.get(key):
-                os.environ.pop(key)
+                if os.environ.get(key):
+                    os.environ.pop(key)
 
         os.chdir(app.settings['assembly'])
 
@@ -80,10 +81,15 @@ def run_cmd(this, command):
     mounts = ()
     mount_proc = False
 
-    ccache_dir = this.get('ccache_dir', None)
-    if ccache_dir and not app.settings['no-ccache']:
-        ccache_target = os.path.join(
-            this['biuld'], os.environ('CCACHE_DIR').lstrip('/'))
+    if not app.settings['no-ccache']:
+        ccache_dir = os.path.join(app.settings['ccache_dir'],
+                              os.path.basename(this.get('repo').split(":")[1]))
+        ccache_target = os.path.join(app.settings['assembly'],
+                                     os.environ['CCACHE_DIR'].lstrip('/'))
+        if not os.path.exists(ccache_dir):
+            os.mkdir(ccache_dir)
+        if not os.path.exists(ccache_target):
+            os.mkdir(ccache_target)
         binds = ((ccache_dir, ccache_target),)
     else:
         binds = ()
@@ -98,12 +104,13 @@ def run_cmd(this, command):
 
     cmd_list = containerised_cmdline(argv, **container_config)
 
-    print(' '.join(cmd_list))
-    with open(app.settings['logfile'], "a") as logfile:
-        if call(cmd_list, stdout=logfile):
+
+    log = os.path.join(app.settings['artifacts'], this['cache'] + '.build-log')
+    with open(log, "a") as logfile:
+        app.log_env(logfile, ' '.join(cmd_list))
+        if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', cmd_list)
-            app.log_env()
             raise SystemExit
         return
 
