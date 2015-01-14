@@ -19,15 +19,7 @@ import os
 
 class BuildEnvironment():
 
-    '''Represents the build environment for an artifact
-
-       This should be as consistent as possible across builds, but some
-       artifacts will require tweaks. The intention of this object is
-       to create one once and call populate() to create an initial state
-       and when changes are required, call clone() to get another instance
-       which can be modified.
-
-    '''
+    '''Represents the build environment for an artifact'''
 
     def __init__(self, settings, extra_env={}):
         '''Create a new BuildEnvironment object'''
