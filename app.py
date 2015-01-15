@@ -39,14 +39,16 @@ def log(component, message='', data=''):
     logfile.write(log_entry)
     print(log_entry),
 
+
 def log_env(message=''):
     logfile = open(settings['logfile'], "a")
     for key in sorted(os.environ.keys()):
-        msg = os.environ[key] if not 'PASSWORD' in key else '(value hidden)'
+        msg = os.environ[key] if 'PASSWORD' not in key else '(value hidden)'
         logfile.write('%s=%s\n' % (key, msg))
         print('%s=%s' % (key, msg))
     logfile.write(message)
     print(message)
+
 
 @contextlib.contextmanager
 def setup(target, arch):
@@ -79,7 +81,6 @@ def setup(target, arch):
         # the right flag in an environment variable.
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
-
         yield
 
     finally:
@@ -99,6 +100,7 @@ def chdir(dirname=None):
     finally:
         os.chdir(currentdir)
         os.environ['PWD'] = currentdir
+
 
 @contextlib.contextmanager
 def timer(this, start_message=''):

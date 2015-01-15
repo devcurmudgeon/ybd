@@ -27,18 +27,18 @@ import sandbox
 from subprocess import check_output
 from subprocess import call
 
-build_steps =  ['pre-configure-commands',
-                'configure-commands',
-                'post-configure-commands',
-                'pre-build-commands',
-                'build-commands',
-                'post-build-commands',
-                'pre-test-commands',
-                'test-commands',
-                'post-test-commands',
-                'pre-install-commands',
-                'install-commands',
-                'post-install-commands']
+build_steps = ['pre-configure-commands',
+               'configure-commands',
+               'post-configure-commands',
+               'pre-build-commands',
+               'build-commands',
+               'post-build-commands',
+               'pre-test-commands',
+               'test-commands',
+               'post-test-commands',
+               'pre-install-commands',
+               'install-commands',
+               'post-install-commands']
 
 
 def assemble(target):
@@ -67,6 +67,7 @@ def assemble(target):
 
         build(this)
 
+
 def build(this):
     ''' Do the actual creation of an artifact.
 
@@ -91,8 +92,8 @@ def build(this):
 
 
 def get_build_system_commands(defs, this):
-    file_list = check_output(['ls', this['build']]).decode("utf-8").splitlines()
-    build_system = buildsystem.detect_build_system(file_list)
+    files = check_output(['ls', this['build']]).decode("utf-8").splitlines()
+    build_system = buildsystem.detect_build_system(files)
 
     for build_step in build_steps:
         if defs.lookup(this, build_step) == []:
@@ -110,5 +111,5 @@ def extra_env(this):
     if this.get('build-mode') == 'bootstrap':
         tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
         if os.path.exists(tools_path):
-            env['PATH'] = '%s:%s' % ( tools_path, os.environ['PATH'] )
+            env['PATH'] = '%s:%s' % (tools_path, os.environ['PATH'])
     return env

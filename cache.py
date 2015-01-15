@@ -37,7 +37,7 @@ def cache_key(this):
     if defs.lookup(definition, 'cache') != []:
         return definition['cache']
 
-    hash_factors = { 'arch': app.settings['arch'] }
+    hash_factors = {'arch': app.settings['arch']}
 
     for factor in ['build-depends', 'contents']:
         for it in defs.lookup(definition, factor):

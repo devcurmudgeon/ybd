@@ -40,9 +40,9 @@ def setup(this, env={}):
 
         for key, value in (currentenv.items() + env.items()):
             if env.get(key):
-                 os.environ[key] = env[key]
+                os.environ[key] = env[key]
             if not env.get(key):
-                 os.environ.pop(key)
+                os.environ.pop(key)
 
         os.chdir(app.settings['assembly'])
 
@@ -54,6 +54,7 @@ def setup(this, env={}):
             else:
                 del os.environ[key]
         os.chdir(currentdir)
+
 
 def run_cmd(this, command):
 
@@ -74,7 +75,7 @@ def run_cmd(this, command):
     else:
         do_not_mount_dirs += [temp_dir]
         mounts = [(os.path.join(self.dirname, target), type, source)
-                   for target, type, source in to_mount_in_bootstrap]
+                  for target, type, source in to_mount_in_bootstrap]
     mount_proc = use_chroot
     mounts = ()
     mount_proc = False
@@ -82,12 +83,12 @@ def run_cmd(this, command):
     ccache_dir = this.get('ccache_dir', None)
     if ccache_dir and not app.settings['no-ccache']:
         ccache_target = os.path.join(
-                this['biuld'], os.environ('CCACHE_DIR').lstrip('/'))
+            this['biuld'], os.environ('CCACHE_DIR').lstrip('/'))
         binds = ((ccache_dir, ccache_target),)
     else:
         binds = ()
 
-    container_config=dict(
+    container_config = dict(
         cwd=this['build'],
         root=chroot_dir,
         mounts=mounts,

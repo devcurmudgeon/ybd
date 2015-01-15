@@ -96,10 +96,10 @@ class Definitions():
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
                 if (self.lookup(definition, 'ref') == [] or
-                    self.lookup(definition, 'ref') == None or
-                    self.lookup(this, 'ref') == []):
+                        self.lookup(definition, 'ref') is None or
+                        self.lookup(this, 'ref') == []):
                     for key in this:
-                        definition[key] = self.lookup(this,key)
+                        definition[key] = self.lookup(this, key)
 
                     return
 
