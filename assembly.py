@@ -86,6 +86,7 @@ def build(this):
             get_build_system_commands(defs, this)
             for build_step in build_steps:
                 for command in defs.lookup(this, build_step):
+                    app.log(this, 'Running', build_step)
                     sandbox.run_cmd(this, command)
 
         cache.cache(this)
