@@ -80,13 +80,14 @@ def build(this):
     defs = Definitions()
 
     build_env = BuildEnvironment(app.settings, extra_env(this))
-    with sandbox.setup(this, build_env.env):
+    with sandbox.setup(this, build_env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
             get_build_system_commands(defs, this)
             for build_step in build_steps:
-                for command in defs.lookup(this, build_step):
+                if defs.lookup(this, build_step):
                     app.log(this, 'Running', build_step)
+                for command in defs.lookup(this, build_step):
                     sandbox.run_cmd(this, command)
 
         cache.cache(this)
@@ -109,8 +110,4 @@ def extra_env(this):
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
     env['MAKEFLAGS'] = '-j1'
-    if this.get('build-mode') == 'bootstrap':
-        tools_path = os.path.join(app.settings['assembly'], 'tools/bin')
-        if os.path.exists(tools_path):
-            env['PATH'] = '%s:%s' % (tools_path, os.environ['PATH'])
     return env

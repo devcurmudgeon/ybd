@@ -38,12 +38,13 @@ def log(component, message='', data=''):
     print(log_entry),
 
 
-def log_env(logfile, message=''):
-    for key in sorted(os.environ.keys()):
-        msg = os.environ[key] if 'PASSWORD' not in key else '(value hidden)'
-        logfile.write('%s=%s\n' % (key, msg))
-    logfile.write(message + '\n')
-    logfile.flush()
+def log_env(log, message=''):
+    with open(log, "a") as logfile:
+        for key in sorted(os.environ.keys()):
+            msg = os.environ[key] if 'PASSWORD' not in key else '(value hidden)'
+            logfile.write('%s=%s\n' % (key, msg))
+        logfile.write(message + '\n')
+        logfile.flush()
 
 
 @contextlib.contextmanager
@@ -51,6 +52,7 @@ def setup(target, arch):
     try:
         settings['arch'] = arch
         settings['no-ccache'] = False
+        settings['no-distcc'] = True
         settings['ccache_dir'] = '/src/cache/ccache'
         settings['cache-server-url'] = \
             'http://git.baserock.org:8080/1.0/sha1s?'
@@ -92,11 +94,9 @@ def chdir(dirname=None):
     try:
         if dirname is not None:
             os.chdir(dirname)
-            os.environ['PWD'] = dirname
         yield
     finally:
         os.chdir(currentdir)
-        os.environ['PWD'] = currentdir
 
 
 @contextlib.contextmanager

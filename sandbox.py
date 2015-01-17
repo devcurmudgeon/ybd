@@ -21,29 +21,41 @@ import textwrap
 from subprocess import call
 import app
 
-
 @contextlib.contextmanager
-def setup(this, env={}):
+def setup(this, build_env):
 
+    _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     currentdir = os.getcwd()
 
     currentenv = dict(os.environ)
     try:
-        root = app.settings['assembly']
+        assembly_dir = app.settings['assembly']
         for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
-            call(['mkdir', '-p', os.path.join(root, directory)])
+            call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
-        devnull = os.path.join(root, 'dev/null')
+        devnull = os.path.join(assembly_dir, 'dev/null')
         if not os.path.exists(devnull):
             call(['sudo', 'mknod', devnull, 'c', '1', '3'])
             call(['sudo', 'chmod', '666', devnull])
 
-        for key, value in (currentenv.items() + env.items()):
-            if env.get(key):
-                os.environ[key] = env[key]
-            if not env.get(key):
-                if os.environ.get(key):
-                    os.environ.pop(key)
+        if this['build-mode'] == 'staging':
+            path = build_env.extra_path + _base_path
+        else:
+            rel_path = build_env.extra_path
+            full_path = [os.path.normpath(assembly_dir + p) for p in rel_path]
+            path = full_path + os.environ['PATH'].split(':')
+
+            tools_path = os.path.join(assembly_dir, 'tools/bin')
+            if os.path.isdir(tools_path):
+                path = [tools_path] + path
+
+        build_env.env['PATH'] = ':'.join(path)
+
+        for key, value in (currentenv.items() + build_env.env.items()):
+            if key in build_env.env:
+                 os.environ[key] = build_env.env[key]
+            else:
+	             os.environ.pop(key)
 
         os.chdir(app.settings['assembly'])
 
@@ -65,34 +77,33 @@ def run_cmd(this, command):
 
     temp_dir = app.settings.get("TMPDIR", "/tmp")
     staging_dirs = [this['build'], this['install']]
-    do_not_mount_dirs = [os.path.join(this['build'], d)
-                         for d in staging_dirs]
 
     use_chroot = True if this['build-mode'] == 'staging' else False
     chroot_dir = this['assembly'] if use_chroot else '/'
+
     if use_chroot:
         staging_dirs += ["dev", "proc", temp_dir.lstrip('/')]
-        mounts = to_mount_in_staging or None
-    else:
+        mounts = to_mount_in_staging
+
+    do_not_mount_dirs = [os.path.join(this['build'], d) for d in staging_dirs]
+
+    if not use_chroot:
         do_not_mount_dirs += [temp_dir]
         mounts = [(os.path.join(self.dirname, target), type, source)
                   for target, type, source in to_mount_in_bootstrap]
     mount_proc = use_chroot
-    mounts = ()
-    mount_proc = False
 
+    binds = ()
     if not app.settings['no-ccache']:
         ccache_dir = os.path.join(app.settings['ccache_dir'],
                               os.path.basename(this.get('repo').split(":")[1]))
         ccache_target = os.path.join(app.settings['assembly'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))
-        if not os.path.exists(ccache_dir):
+        if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
-        if not os.path.exists(ccache_target):
+        if not os.path.isdir(ccache_target):
             os.mkdir(ccache_target)
         binds = ((ccache_dir, ccache_target),)
-    else:
-        binds = ()
 
     container_config = dict(
         cwd=this['build'],
@@ -104,15 +115,15 @@ def run_cmd(this, command):
 
     cmd_list = containerised_cmdline(argv, **container_config)
 
-
     log = os.path.join(app.settings['artifacts'], this['cache'] + '.build-log')
     with open(log, "a") as logfile:
-        app.log_env(logfile, '\n'.join(cmd_list))
+        logfile.write("# # %s\n" % command )
+    app.log_env(log, '\n'.join(cmd_list))
+    with open(log, "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', cmd_list)
             raise SystemExit
-        return
 
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
