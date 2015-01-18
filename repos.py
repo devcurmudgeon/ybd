@@ -26,7 +26,7 @@ import string
 import definitions
 import urllib2
 import json
-
+import time
 
 def get_repo_url(this):
     url = this['repo']
@@ -219,3 +219,25 @@ def checkout(this):
                 raise SystemExit
 
         get_upstream_version(this)
+        set_mtime_recursively(this['build'])
+
+
+def set_mtime_recursively(root):  # pragma: no cover
+    '''Set the mtime for every file in a directory tree to the same.
+
+    We do this because git checkout does not set the mtime to anything,
+    and some projects (binutils, gperf for example) include formatted
+    documentation and try to randomly build things or not because of
+    the timestamps. This should help us get more reliable  builds.
+
+    '''
+
+    now = time.time()
+    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
+                                               topdown=False):
+        for basename in basenames:
+            pathname = os.path.join(dirname, basename)
+            # we need the following check to ignore broken symlinks
+            if os.path.exists(pathname):
+                os.utime(pathname, (now, now))
+        os.utime(dirname, (now, now))
