@@ -31,7 +31,8 @@ def setup(this, build_env):
     currentenv = dict(os.environ)
     try:
         assembly_dir = app.settings['assembly']
-        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
+#        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
+        for directory in ['tmp']:
             call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
         devnull = os.path.join(assembly_dir, 'dev/null')
@@ -39,7 +40,7 @@ def setup(this, build_env):
             call(['sudo', 'mknod', devnull, 'c', '1', '3'])
             call(['sudo', 'chmod', '666', devnull])
 
-        if this['build-mode'] == 'staging':
+        if this.get('build-mode', 'staging') == 'staging':
             path = build_env.extra_path + _base_path
         else:
             rel_path = build_env.extra_path
@@ -79,8 +80,8 @@ def run_cmd(this, command):
     temp_dir = app.settings.get("TMPDIR", "/tmp")
     staging_dirs = [this['build'], this['install']]
 
-    use_chroot = True if this['build-mode'] == 'staging' else False
-    chroot_dir = this['assembly'] if use_chroot else '/'
+    use_chroot = True if this.get('build-mode', 'staging') == 'staging' else False
+    chroot_dir = app.settings['assembly'] if use_chroot else '/'
 
     if use_chroot:
         staging_dirs += ["dev", "proc", temp_dir.lstrip('/')]
