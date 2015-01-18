@@ -94,8 +94,27 @@ def build(this):
 
 
 def get_build_system_commands(defs, this):
-    files = check_output(['ls', this['build']]).decode("utf-8").splitlines()
-    build_system = buildsystem.detect_build_system(files)
+    build_system = None
+    has_commands = False
+
+    # if bs is unspecified and all steps are empty, detect bs and use its commands
+    # if bs is specified, use its commands for empty steps
+
+    # this logic is rather convoluted, because there are examples of morph files
+    # where build-system is unspecified. it boils down to:
+    #     if bs is specified, or all steps are empty, fill any empty steps
+
+    for bs in buildsystem.build_systems:
+        if this.get('build-system') == bs.name:
+            build_system = bs
+
+    if not build_system:
+        for build_step in build_steps:
+            if defs.lookup(this, build_step) != []:
+                return
+
+        files = check_output(['ls', this['build']]).decode("utf-8").splitlines()
+        build_system = buildsystem.detect_build_system(files)
 
     for build_step in build_steps:
         if defs.lookup(this, build_step) == []:
