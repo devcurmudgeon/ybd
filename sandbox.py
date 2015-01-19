@@ -20,7 +20,7 @@ import os
 import textwrap
 from subprocess import call
 import app
-
+from definitions import Definitions
 
 @contextlib.contextmanager
 def setup(this, build_env):
@@ -32,7 +32,7 @@ def setup(this, build_env):
     try:
         assembly_dir = app.settings['assembly']
 #        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
-        for directory in ['tmp']:
+        for directory in ['dev', 'tmp']:
             call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
         devnull = os.path.join(assembly_dir, 'dev/null')
@@ -40,16 +40,21 @@ def setup(this, build_env):
             call(['sudo', 'mknod', devnull, 'c', '1', '3'])
             call(['sudo', 'chmod', '666', devnull])
 
+        defs = Definitions()
+        prefixes = set(defs.get(a).get('prefix') for a in
+                       defs.lookup(this, 'build-depends'))
+
+        extra_path = []
+        for d in prefixes:
+            bin_path = os.path.join(d, 'bin')
+            extra_path += [bin_path]
+
         if this.get('build-mode', 'staging') == 'staging':
-            path = build_env.extra_path + _base_path
+            path = extra_path + build_env.extra_path + _base_path
         else:
-            rel_path = build_env.extra_path
+            rel_path = extra_path + build_env.extra_path
             full_path = [os.path.normpath(assembly_dir + p) for p in rel_path]
             path = full_path + os.environ['PATH'].split(':')
-
-            tools_path = os.path.join(assembly_dir, 'tools/bin')
-            if os.path.isdir(tools_path):
-                path = [tools_path] + path
 
         build_env.env['PATH'] = ':'.join(path)
 
@@ -80,20 +85,21 @@ def run_cmd(this, command):
     temp_dir = app.settings.get("TMPDIR", "/tmp")
     staging_dirs = [this['build'], this['install']]
 
-    use_chroot = True if this.get('build-mode', 'staging') == 'staging' else False
-    chroot_dir = app.settings['assembly'] if use_chroot else '/'
+    use_chroot = False if this.get('build-mode') != 'staging' else True
+    chroot_dir = os.environ['DESTDIR'] if use_chroot else '/'
 
     if use_chroot:
+        chdir = os.path.join('/', os.path.basename(this['build']))
         staging_dirs += ["dev", "proc", temp_dir.lstrip('/')]
         mounts = to_mount_in_staging
 
     do_not_mount_dirs = [os.path.join(this['build'], d) for d in staging_dirs]
 
     if not use_chroot:
+        chdir = this['build']
         do_not_mount_dirs += [temp_dir]
         mounts = [(os.path.join(self.dirname, target), type, source)
                   for target, type, source in to_mount_in_bootstrap]
-    mount_proc = use_chroot
 
     binds = ()
     if not app.settings['no-ccache']:
@@ -109,10 +115,10 @@ def run_cmd(this, command):
         binds = ((ccache_dir, ccache_target),)
 
     container_config = dict(
-        cwd=this['build'],
+        cwd=chdir,
         root=chroot_dir,
         mounts=mounts,
-        mount_proc=mount_proc,
+        mount_proc=use_chroot,
         binds=binds,
         writable_paths=do_not_mount_dirs)
 

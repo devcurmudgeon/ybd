@@ -97,7 +97,7 @@ def get_build_system_commands(defs, this):
     build_system = None
     has_commands = False
 
-    # if bs is unspecified and all steps are empty, detect bs and use its commands
+    # if bs is unspecified and all steps are empty, detect bs & use its commands
     # if bs is specified, use its commands for empty steps
 
     # this logic is rather convoluted, because there are examples of morph files
@@ -124,7 +124,12 @@ def get_build_system_commands(defs, this):
 
 def extra_env(this):
     env = {}
-    env['DESTDIR'] = this.get('install')
+    if this.get('build-mode') == 'bootstrap':
+        env['DESTDIR'] = this.get('install')
+    else:
+        env['DESTDIR'] = os.path.join('/',
+                                      os.path.basename(this.get('install')))
+
     env['PREFIX'] = this.get('prefix') or '/usr'
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
