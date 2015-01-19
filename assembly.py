@@ -124,6 +124,28 @@ def get_build_system_commands(defs, this):
 
 def extra_env(this):
     env = {}
+    extra_path = []
+    _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
+    defs = Definitions()
+
+    prefixes = set(defs.get(a).get('prefix') for a in
+                   defs.lookup(this, 'build-depends'))
+    for d in prefixes:
+        bin_path = os.path.join(d, 'bin')
+        extra_path += [bin_path]
+
+    ccache_path = ['/usr/lib/ccache'] if not app.settings['no-ccache'] else []
+
+    if this.get('build-mode', 'staging') == 'staging':
+        path = extra_path + ccache_path + _base_path
+    else:
+        rel_path = extra_path + ccache_path
+        full_path = [os.path.normpath(app.settings['assembly'] + p)
+                     for p in rel_path]
+        path = full_path + os.environ['PATH'].split(':')
+
+    env['PATH'] = ':'.join(path)
+
     if this.get('build-mode') == 'bootstrap':
         env['DESTDIR'] = this.get('install')
     else:
@@ -131,6 +153,7 @@ def extra_env(this):
                                       os.path.basename(this.get('install')))
 
     env['PREFIX'] = this.get('prefix') or '/usr'
+
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
     env['MAKEFLAGS'] = '-j1'

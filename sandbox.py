@@ -25,7 +25,6 @@ from definitions import Definitions
 @contextlib.contextmanager
 def setup(this, build_env):
 
-    _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     currentdir = os.getcwd()
 
     currentenv = dict(os.environ)
@@ -39,24 +38,6 @@ def setup(this, build_env):
         if not os.path.exists(devnull):
             call(['sudo', 'mknod', devnull, 'c', '1', '3'])
             call(['sudo', 'chmod', '666', devnull])
-
-        defs = Definitions()
-        prefixes = set(defs.get(a).get('prefix') for a in
-                       defs.lookup(this, 'build-depends'))
-
-        extra_path = []
-        for d in prefixes:
-            bin_path = os.path.join(d, 'bin')
-            extra_path += [bin_path]
-
-        if this.get('build-mode', 'staging') == 'staging':
-            path = extra_path + build_env.extra_path + _base_path
-        else:
-            rel_path = extra_path + build_env.extra_path
-            full_path = [os.path.normpath(assembly_dir + p) for p in rel_path]
-            path = full_path + os.environ['PATH'].split(':')
-
-        build_env.env['PATH'] = ':'.join(path)
 
         for key, value in (currentenv.items() + build_env.env.items()):
             if key in build_env.env:
