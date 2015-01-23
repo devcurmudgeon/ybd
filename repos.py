@@ -28,6 +28,7 @@ import urllib2
 import json
 import time
 
+
 def get_repo_url(this):
     url = this['repo']
     url = url.replace('upstream:', 'git://git.baserock.org/delta/')

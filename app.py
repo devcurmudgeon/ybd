@@ -41,7 +41,7 @@ def log(component, message='', data=''):
 def log_env(log, message=''):
     with open(log, "a") as logfile:
         for key in sorted(os.environ.keys()):
-            msg = os.environ[key] if 'PASSWORD' not in key else '(value hidden)'
+            msg = os.environ[key] if 'PASSWORD' not in key else '(hidden)'
             logfile.write('%s=%s\n' % (key, msg))
         logfile.write(message + '\n')
         logfile.flush()

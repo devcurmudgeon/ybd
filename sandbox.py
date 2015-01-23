@@ -21,6 +21,7 @@ import textwrap
 from subprocess import call
 import app
 
+
 @contextlib.contextmanager
 def setup(this, build_env):
 
@@ -53,9 +54,9 @@ def setup(this, build_env):
 
         for key, value in (currentenv.items() + build_env.env.items()):
             if key in build_env.env:
-                 os.environ[key] = build_env.env[key]
+                os.environ[key] = build_env.env[key]
             else:
-	             os.environ.pop(key)
+                os.environ.pop(key)
 
         os.chdir(app.settings['assembly'])
 
@@ -96,7 +97,8 @@ def run_cmd(this, command):
     binds = ()
     if not app.settings['no-ccache']:
         ccache_dir = os.path.join(app.settings['ccache_dir'],
-                              os.path.basename(this.get('repo').split(":")[1]))
+                                  os.path.basename(
+                                  this.get('repo').split(":")[1]))
         ccache_target = os.path.join(app.settings['assembly'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))
         if not os.path.isdir(ccache_dir):
@@ -117,7 +119,7 @@ def run_cmd(this, command):
 
     log = os.path.join(app.settings['artifacts'], this['cache'] + '.build-log')
     with open(log, "a") as logfile:
-        logfile.write("# # %s\n" % command )
+        logfile.write("# # %s\n" % command)
     app.log_env(log, '\n'.join(cmd_list))
     with open(log, "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
