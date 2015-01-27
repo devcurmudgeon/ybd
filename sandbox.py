@@ -21,6 +21,7 @@ import textwrap
 from subprocess import call
 import app
 from definitions import Definitions
+import pdb
 
 @contextlib.contextmanager
 def setup(this, build_env):
@@ -60,40 +61,22 @@ def setup(this, build_env):
 def run_cmd(this, command):
 
     argv = ['sh', '-c', command]
-    to_mount_in_staging = ('dev/shm', 'tmpfs', 'none'),
-    to_mount_in_bootstrap = ()
-
-    temp_dir = app.settings.get("TMPDIR", "/tmp")
-    staging_dirs = [this['build'], this['install']]
-
-    use_chroot = False if this.get('build-mode') != 'staging' else True
-    chroot_dir = os.environ['DESTDIR'] if use_chroot else '/'
+    use_chroot = True if this.get('build-mode') != 'bootstrap' else False
+    do_not_mount_dirs = [this['build'], this['install']]
 
     if use_chroot:
+        chroot_dir = app.settings['assembly']
         chdir = os.path.join('/', os.path.basename(this['build']))
-        staging_dirs += ["dev", "proc", temp_dir.lstrip('/')]
-        mounts = to_mount_in_staging
-
-    do_not_mount_dirs = [os.path.join(this['build'], d) for d in staging_dirs]
-
-    if not use_chroot:
+        do_not_mount_dirs += [os.path.join(app.settings['assembly'], d)
+                              for d in  ["dev", "proc", 'tmp']]
+        mounts = ('dev/shm', 'tmpfs', 'none'),
+    else:
+        chroot_dir = '/'
         chdir = this['build']
-        do_not_mount_dirs += [temp_dir]
-        mounts = [(os.path.join(self.dirname, target), type, source)
-                  for target, type, source in to_mount_in_bootstrap]
+        do_not_mount_dirs += [app.settings.get("TMPDIR", "/tmp")]
+        mounts = []
 
-    binds = ()
-    if not app.settings['no-ccache']:
-        ccache_dir = os.path.join(app.settings['ccache_dir'],
-                                  os.path.basename(
-                                  this.get('repo').split(":")[1]))
-        ccache_target = os.path.join(app.settings['assembly'],
-                                     os.environ['CCACHE_DIR'].lstrip('/'))
-        if not os.path.isdir(ccache_dir):
-            os.mkdir(ccache_dir)
-        if not os.path.isdir(ccache_target):
-            os.mkdir(ccache_target)
-        binds = ((ccache_dir, ccache_target),)
+    binds = get_binds(this)
 
     container_config = dict(
         cwd=chdir,
@@ -114,6 +97,24 @@ def run_cmd(this, command):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', cmd_list)
             raise SystemExit
+
+
+def get_binds(this):
+    if app.settings['no-ccache']:
+        binds = ()
+    else:
+        ccache_dir = os.path.join(app.settings['ccache_dir'],
+                                  os.path.basename(
+                                  this.get('repo').split(":")[1]))
+        ccache_target = os.path.join(app.settings['assembly'],
+                                     os.environ['CCACHE_DIR'].lstrip('/'))
+        if not os.path.isdir(ccache_dir):
+            os.mkdir(ccache_dir)
+        if not os.path.isdir(ccache_target):
+            os.mkdir(ccache_target)
+        binds = ((ccache_dir, ccache_target),)
+
+    return binds
 
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
