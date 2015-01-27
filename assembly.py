@@ -131,8 +131,9 @@ def extra_env(this):
     prefixes = set(defs.get(a).get('prefix') for a in
                    defs.lookup(this, 'build-depends'))
     for d in prefixes:
-        bin_path = os.path.join(d, 'bin')
-        extra_path += [bin_path]
+        if d:
+            bin_path = os.path.join(d, 'bin')
+            extra_path += [bin_path]
 
     ccache_path = ['/usr/lib/ccache'] if not app.settings['no-ccache'] else []
 
