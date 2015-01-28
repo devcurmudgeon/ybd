@@ -27,6 +27,7 @@ import sandbox
 from subprocess import check_output
 from subprocess import call
 
+
 build_steps = ['pre-configure-commands',
                'configure-commands',
                'post-configure-commands',
@@ -128,11 +129,17 @@ def extra_env(this):
     _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     defs = Definitions()
 
-    prefixes = set(defs.get(a).get('prefix') for a in
-                   defs.lookup(this, 'build-depends'))
-    for d in prefixes:
-        if d:
-            bin_path = os.path.join(d, 'bin')
+    prefixes = [this.get('prefix', '/usr')]
+
+    for name in defs.lookup(this, 'build-depends'):
+        dependency = defs.get(name)
+        prefixes.append(dependency.get('prefix'))
+
+    prefixes = set(prefixes)
+
+    for prefix in prefixes:
+        if prefix:
+            bin_path = os.path.join(prefix, 'bin')
             extra_path += [bin_path]
 
     ccache_path = ['/usr/lib/ccache'] if not app.settings['no-ccache'] else []
