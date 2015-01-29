@@ -92,7 +92,7 @@ def build(this):
                     sandbox.run_cmd(this, command)
 
         cache.cache(this)
-
+        sandbox.cleanup(this)
 
 def get_build_system_commands(defs, this):
     build_system = None

@@ -21,7 +21,8 @@ import textwrap
 from subprocess import call
 import app
 from definitions import Definitions
-import pdb
+import shutil
+
 
 @contextlib.contextmanager
 def setup(this, build_env):
@@ -57,6 +58,10 @@ def setup(this, build_env):
                 del os.environ[key]
         os.chdir(currentdir)
 
+def cleanup(this):
+    if this['build'] and this['install']:
+        shutil.rmtree(this['build'])
+        shutil.rmtree(this['install'])
 
 def run_cmd(this, command):
 
