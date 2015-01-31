@@ -42,12 +42,6 @@ class StagingArea(object):
         self.build = this['build']
         self.install = this['install']
 
-        self.dirname = this['name']
-        self.builddirname = None
-        self.destdirname = None
-        self._bind_readonly_mount = None
-
-        self.use_chroot = use_chroot
         self.env = build_env.env
         self.env.update(extra_env)
 
