@@ -84,12 +84,13 @@ def build(this):
     with sandbox.setup(this, build_env):
         if defs.lookup(this, 'repo') != []:
             repos.checkout(this)
-            get_build_system_commands(defs, this)
-            for build_step in build_steps:
-                if defs.lookup(this, build_step):
-                    app.log(this, 'Running', build_step)
-                for command in defs.lookup(this, build_step):
-                    sandbox.run_cmd(this, command)
+
+        get_build_system_commands(defs, this)
+        for build_step in build_steps:
+            if defs.lookup(this, build_step):
+                app.log(this, 'Running', build_step)
+            for command in defs.lookup(this, build_step):
+                sandbox.run_cmd(this, command)
 
         cache.cache(this)
         sandbox.cleanup(this)

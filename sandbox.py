@@ -109,8 +109,7 @@ def get_binds(this):
         binds = ()
     else:
         ccache_dir = os.path.join(app.settings['ccache_dir'],
-                                  os.path.basename(
-                                  this.get('repo').split(":")[1]))
+                                  os.path.basename(this['name']))
         ccache_target = os.path.join(app.settings['assembly'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))
         if not os.path.isdir(ccache_dir):
