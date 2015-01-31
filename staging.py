@@ -59,10 +59,10 @@ class StagingArea(object):
             path = full_path + os.environ['PATH'].split(':')
         self.env['PATH'] = ':'.join(path)
 
-    def install_artifact(self, component):
+    def install_artifact(self, component, installdir):
         app.log(component, 'Installing artifact')
         unpackdir = self._unpack_artifact(component)
-        self._hardlink_all_files(unpackdir, app.settings['assembly'])
+        self._hardlink_all_files(unpackdir, installdir)
 
     def _unpack_artifact(self, component):
         cachefile = cache.get_cache(component)
