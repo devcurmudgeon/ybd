@@ -101,6 +101,7 @@ def run_cmd(this, command):
         if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', cmd_list)
+            app.log(this, 'ERROR: log file at', log)
             raise SystemExit
 
 
