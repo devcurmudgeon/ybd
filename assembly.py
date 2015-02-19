@@ -44,14 +44,14 @@ build_steps = ['pre-configure-commands',
 
 def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
+    if cache.get_cache(target):
+        app.log(target, 'Cache found', cache.get_cache(target))
+        return
+
     defs = Definitions()
     this = defs.get(target)
     if defs.lookup(this, 'repo') != [] and defs.lookup(this, 'tree') == []:
         this['tree'] = repos.get_tree(this)
-
-    if cache.get_cache(this):
-        app.log(this, 'Cache found', cache.get_cache(this))
-        return
 
     with app.timer(this, 'Starting assembly'):
         build_env = BuildEnvironment(app.settings)
