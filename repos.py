@@ -61,18 +61,19 @@ def get_repo_name(this):
 
 
 def get_upstream_version(this):
-    last_tag = 'No tag found'
     try:
         with open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                     '--tags', this['ref']],
-                                    stderr=fnull)[0:-1]
+                                     '--tags', this['ref']], stderr=fnull)[0:-1]
+        commits = check_output(['git', 'rev-list', last_tag + '..', '--count'])
+        result = last_tag + " + " + commits[0:-1] + " commits"
+
     except:
-        pass
+        result = 'No tag found'
 
     if this.get('ref') or last_tag:
         app.log(this, 'Upstream version: %s (%s)' % (this.get('ref')[:8],
-                                                     last_tag))
+                                                     result))
 
 
 def get_tree(this):
