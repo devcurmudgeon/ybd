@@ -28,20 +28,6 @@ from subprocess import check_output
 from subprocess import call
 
 
-build_steps = ['pre-configure-commands',
-               'configure-commands',
-               'post-configure-commands',
-               'pre-build-commands',
-               'build-commands',
-               'post-build-commands',
-               'pre-test-commands',
-               'test-commands',
-               'post-test-commands',
-               'pre-install-commands',
-               'install-commands',
-               'post-install-commands']
-
-
 def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
     if cache.get_cache(target):
@@ -85,7 +71,7 @@ def build(this):
         repos.checkout(this)
 
     get_build_system_commands(defs, this)
-    for build_step in build_steps:
+    for build_step in buildsystem.build_steps:
         if defs.lookup(this, build_step):
             app.log(this, 'Running', build_step)
         for command in defs.lookup(this, build_step):
@@ -111,14 +97,14 @@ def get_build_system_commands(defs, this):
             build_system = bs
 
     if not build_system:
-        for build_step in build_steps:
+        for build_step in buildsystem.build_steps:
             if defs.lookup(this, build_step) != []:
                 return
 
         files = check_output(['ls', this['build']]).decode("utf-8").splitlines()
         build_system = buildsystem.detect_build_system(files)
 
-    for build_step in build_steps:
+    for build_step in buildsystem.build_steps:
         if defs.lookup(this, build_step) == []:
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)

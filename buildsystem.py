@@ -20,6 +20,20 @@
 import os
 
 
+build_steps = ['pre-configure-commands',
+               'configure-commands',
+               'post-configure-commands',
+               'pre-build-commands',
+               'build-commands',
+               'post-build-commands',
+               'pre-test-commands',
+               'test-commands',
+               'post-test-commands',
+               'pre-install-commands',
+               'install-commands',
+               'post-install-commands']
+
+
 class BuildSystem(object):
 
     '''An abstraction of an upstream build system.
