@@ -25,6 +25,7 @@ import hashlib
 import json
 import definitions
 import repos
+import buildsystem
 
 
 def cache_key(this):
@@ -49,10 +50,8 @@ def cache_key(this):
 
             hash_factors[component['name']] = cache_key(component)
 
-    for factor in ['tree', 'configure-commands', 'build-commands',
-                   'install-commands']:
-
-        if defs.lookup(definition, factor) != []:
+    for factor in ['tree'] + buildsystem.build_steps:
+        if definition.get(factor):
             hash_factors[factor] = definition[factor]
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
