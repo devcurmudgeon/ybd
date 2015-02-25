@@ -182,23 +182,19 @@ def clean_env(this):
             bin_path = os.path.join(prefix, 'bin')
             extra_path += [bin_path]
 
-    if this.get('build-mode', 'staging') == 'staging':
-        path = extra_path + ccache_path + _base_path
-    else:
+    if this.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
         full_path = [os.path.normpath(app.settings['assembly'] + p)
                      for p in rel_path]
         path = full_path + os.environ['PATH'].split(':')
-    env['PATH'] = ':'.join(path)
-
-    if this.get('build-mode') == 'bootstrap':
         env['DESTDIR'] = this.get('install')
     else:
+        path = extra_path + ccache_path + _base_path
         env['DESTDIR'] = os.path.join('/',
                                       os.path.basename(this.get('install')))
 
+    env['PATH'] = ':'.join(path)
     env['PREFIX'] = this.get('prefix') or '/usr'
-
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
 #    env['MAKEFLAGS'] = '-j1'
