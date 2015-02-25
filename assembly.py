@@ -67,8 +67,7 @@ def assemble(target):
             assemble(defs.get(component))
             stage.install_artifact(component, this['install'])
 
-        build_env = clean_env(this)
-        with sandbox.setup(this, build_env):
+        with sandbox.setup(this):
             build(this)
 
 
@@ -123,69 +122,3 @@ def get_build_system_commands(defs, this):
         if defs.lookup(this, build_step) == []:
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)
-
-
-def clean_env(this):
-    env = {}
-    extra_path = []
-    _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    defs = Definitions()
-
-    if app.settings['no-ccache']:
-        ccache_path = []
-    else:
-        ccache_path = ['/usr/lib/ccache']
-        env['CCACHE_DIR'] = '/tmp/ccache'
-        env['CCACHE_EXTRAFILES'] = ':'.join(
-            f for f in ('/baserock/binutils.meta',
-                        '/baserock/eglibc.meta',
-                        '/baserock/gcc.meta') if os.path.exists(f))
-        if not app.settings.get('no-distcc'):
-            env['CCACHE_PREFIX'] = 'distcc'
-
-    prefixes = [this.get('prefix', '/usr')]
-
-    for name in defs.lookup(this, 'build-depends'):
-        dependency = defs.get(name)
-        prefixes.append(defs.lookup(dependency, 'prefix'))
-    prefixes = set(prefixes)
-    for prefix in prefixes:
-        if prefix:
-            bin_path = os.path.join(prefix, 'bin')
-            extra_path += [bin_path]
-
-    if this.get('build-mode', 'staging') == 'staging':
-        path = extra_path + ccache_path + _base_path
-    else:
-        rel_path = extra_path + ccache_path
-        full_path = [os.path.normpath(app.settings['assembly'] + p)
-                     for p in rel_path]
-        path = full_path + os.environ['PATH'].split(':')
-    env['PATH'] = ':'.join(path)
-
-    if this.get('build-mode') == 'bootstrap':
-        env['DESTDIR'] = this.get('install')
-    else:
-        env['DESTDIR'] = os.path.join('/',
-                                      os.path.basename(this.get('install')))
-
-    env['PREFIX'] = this.get('prefix') or '/usr'
-
-    env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
-                                 app.settings['max_jobs'])
-#    env['MAKEFLAGS'] = '-j1'
-
-    env['TERM'] = 'dumb'
-    env['SHELL'] = '/bin/sh'
-    env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
-    env['LC_ALL'] = 'C'
-    env['HOME'] = '/tmp/'
-
-    arch = app.settings['arch']
-    cpu = 'i686' if arch == 'x86_32' else arch
-    abi = 'eabi' if arch.startswith('arm') else ''
-    env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
-    env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
-    env['MORPH_ARCH'] = arch
-
-    return env
