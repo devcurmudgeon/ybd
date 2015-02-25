@@ -23,6 +23,7 @@ import app
 from definitions import Definitions
 import shutil
 import utils
+import cache
 
 
 @contextlib.contextmanager
@@ -30,6 +31,15 @@ def setup(this):
 
     currentdir = os.getcwd()
     currentenv = dict(os.environ)
+    this['assembly'] = os.path.join(app.settings['assembly'], this['name'])
+    this['build'] = os.path.join(this['assembly'], this['name']+ '.build')
+    this['install'] = os.path.join(this['assembly'], this['name'] + '.inst')
+    this['tmp'] = os.path.join(this['assembly'], 'tmp')
+    for directory in ['assembly', 'build', 'install', 'tmp']:
+        os.makedirs(this[directory])
+    this['log'] = os.path.join(app.settings['artifacts'],
+                               this['cache'] + '.build-log')
+
     try:
         build_env = clean_env(this)
         assembly_dir = app.settings['assembly']
@@ -63,6 +73,26 @@ def cleanup(this):
     if this['build'] and this['install']:
         shutil.rmtree(this['build'])
         shutil.rmtree(this['install'])
+
+
+def install_artifact(component, installdir):
+    app.log(component, 'Installing artifact')
+    unpackdir = unpack_artifact(component)
+    utils.hardlink_all_files(unpackdir, installdir)
+
+
+def unpack_artifact(component):
+    cachefile = cache.get_cache(component)
+    if cachefile:
+        unpackdir = cachefile + '.unpacked'
+        if not os.path.exists(unpackdir):
+            os.makedirs(unpackdir)
+            call(['tar', 'xf', cachefile, '--directory', unpackdir])
+        return unpackdir
+
+    app.log(component, 'Cached artifact not found')
+    raise SystemExit
+
 
 def run_cmd(this, command):
 

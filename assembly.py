@@ -40,19 +40,17 @@ def assemble(target):
         this['tree'] = repos.get_tree(this)
 
     with app.timer(this, 'Starting assembly'):
-        build_env = BuildEnvironment(app.settings)
-        stage = StagingArea(this, build_env)
         with sandbox.setup(this):
             for dependency in defs.lookup(this, 'build-depends'):
                 assemble(defs.get(dependency))
-                stage.install_artifact(dependency, app.settings['assembly'])
+                sandbox.install_artifact(dependency, app.settings['assembly'])
 
             # if we're distbuilding, wait here for all dependencies to complete
             # how do we know when that happens?
 
             for component in defs.lookup(this, 'contents'):
                 assemble(defs.get(component))
-                stage.install_artifact(component, this['install'])
+                sandbox.install_artifact(component, this['install'])
 
             build(this)
 
