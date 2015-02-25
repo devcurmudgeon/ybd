@@ -42,9 +42,9 @@ def setup(this, build_env):
             call(['sudo', 'mknod', devnull, 'c', '1', '3'])
             call(['sudo', 'chmod', '666', devnull])
 
-        for key, value in (currentenv.items() + build_env.env.items()):
-            if key in build_env.env:
-                os.environ[key] = build_env.env[key]
+        for key, value in (currentenv.items() + build_env.items()):
+            if key in build_env:
+                os.environ[key] = build_env[key]
             else:
                 os.environ.pop(key)
 

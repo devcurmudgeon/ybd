@@ -67,7 +67,9 @@ def assemble(target):
             assemble(defs.get(component))
             stage.install_artifact(component, this['install'])
 
-        build(this)
+        build_env = clean_env(this)
+        with sandbox.setup(this, build_env):
+            build(this)
 
 
 def build(this):
@@ -80,21 +82,19 @@ def build(this):
     app.log(this, 'Start build')
 
     defs = Definitions()
+    if defs.lookup(this, 'repo') != []:
+        repos.checkout(this)
 
-    build_env = BuildEnvironment(app.settings, extra_env(this))
-    with sandbox.setup(this, build_env):
-        if defs.lookup(this, 'repo') != []:
-            repos.checkout(this)
+    get_build_system_commands(defs, this)
+    for build_step in build_steps:
+        if defs.lookup(this, build_step):
+            app.log(this, 'Running', build_step)
+        for command in defs.lookup(this, build_step):
+            sandbox.run_cmd(this, command)
 
-        get_build_system_commands(defs, this)
-        for build_step in build_steps:
-            if defs.lookup(this, build_step):
-                app.log(this, 'Running', build_step)
-            for command in defs.lookup(this, build_step):
-                sandbox.run_cmd(this, command)
+    cache.cache(this)
+    sandbox.cleanup(this)
 
-        cache.cache(this)
-        sandbox.cleanup(this)
 
 def get_build_system_commands(defs, this):
     build_system = None
@@ -125,26 +125,34 @@ def get_build_system_commands(defs, this):
                 this[build_step] = build_system.commands.get(build_step)
 
 
-def extra_env(this):
+def clean_env(this):
     env = {}
     extra_path = []
     _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     defs = Definitions()
 
+    if app.settings['no-ccache']:
+        ccache_path = []
+    else:
+        ccache_path = ['/usr/lib/ccache']
+        env['CCACHE_DIR'] = '/tmp/ccache'
+        env['CCACHE_EXTRAFILES'] = ':'.join(
+            f for f in ('/baserock/binutils.meta',
+                        '/baserock/eglibc.meta',
+                        '/baserock/gcc.meta') if os.path.exists(f))
+        if not app.settings.get('no-distcc'):
+            env['CCACHE_PREFIX'] = 'distcc'
+
     prefixes = [this.get('prefix', '/usr')]
 
     for name in defs.lookup(this, 'build-depends'):
         dependency = defs.get(name)
-        prefixes.append(dependency.get('prefix'))
-
+        prefixes.append(defs.lookup(dependency, 'prefix'))
     prefixes = set(prefixes)
-
     for prefix in prefixes:
         if prefix:
             bin_path = os.path.join(prefix, 'bin')
             extra_path += [bin_path]
-
-    ccache_path = ['/usr/lib/ccache'] if not app.settings['no-ccache'] else []
 
     if this.get('build-mode', 'staging') == 'staging':
         path = extra_path + ccache_path + _base_path
@@ -153,7 +161,6 @@ def extra_env(this):
         full_path = [os.path.normpath(app.settings['assembly'] + p)
                      for p in rel_path]
         path = full_path + os.environ['PATH'].split(':')
-
     env['PATH'] = ':'.join(path)
 
     if this.get('build-mode') == 'bootstrap':
@@ -166,5 +173,19 @@ def extra_env(this):
 
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
-    env['MAKEFLAGS'] = '-j1'
+#    env['MAKEFLAGS'] = '-j1'
+
+    env['TERM'] = 'dumb'
+    env['SHELL'] = '/bin/sh'
+    env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
+    env['LC_ALL'] = 'C'
+    env['HOME'] = '/tmp/'
+
+    arch = app.settings['arch']
+    cpu = 'i686' if arch == 'x86_32' else arch
+    abi = 'eabi' if arch.startswith('arm') else ''
+    env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
+    env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
+    env['MORPH_ARCH'] = arch
+
     return env
