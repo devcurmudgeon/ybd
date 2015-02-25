@@ -82,8 +82,6 @@ def build(this):
 
 
 def get_build_system_commands(defs, this):
-    build_system = None
-    has_commands = False
 
     # if bs is unspecified and all steps are empty, detect bs & use its commands
     # if bs is specified, use its commands for empty steps
@@ -92,6 +90,7 @@ def get_build_system_commands(defs, this):
     # where build-system is unspecified. it boils down to:
     #     if bs is specified, or all steps are empty, fill any empty steps
 
+    build_system = None
     for bs in buildsystem.build_systems:
         if this.get('build-system') == bs.name:
             build_system = bs
