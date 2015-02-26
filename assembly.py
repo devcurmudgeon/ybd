@@ -41,16 +41,18 @@ def assemble(target):
 
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
-            for dependency in defs.lookup(this, 'build-depends'):
-                assemble(defs.get(dependency))
-                sandbox.install_artifact(dependency, app.settings['assembly'])
+            for it in defs.lookup(this, 'build-depends'):
+                dependency = defs.get(it)
+                assemble(dependency)
+                sandbox.install_artifact(this, dependency, this['assembly'])
 
             # if we're distbuilding, wait here for all dependencies to complete
             # how do we know when that happens?
 
-            for component in defs.lookup(this, 'contents'):
+            for it in defs.lookup(this, 'contents'):
+                component = defs.get(it)
                 assemble(defs.get(component))
-                sandbox.install_artifact(component, this['install'])
+                sandbox.install_artifact(this, component, this['assembly'])
 
             build(this)
 

@@ -24,7 +24,7 @@ from definitions import Definitions
 import shutil
 import utils
 import cache
-
+from repos import get_repo_url
 
 @contextlib.contextmanager
 def setup(this):
@@ -75,8 +75,8 @@ def cleanup(this):
         shutil.rmtree(this['install'])
 
 
-def install_artifact(component, installdir):
-    app.log(component, 'Installing artifact')
+def install_artifact(this, component, installdir):
+    app.log(this, 'Installing %s in' % component['name'], installdir)
     unpackdir = unpack_artifact(component)
     utils.hardlink_all_files(unpackdir, installdir)
 
@@ -140,9 +140,9 @@ def get_binds(this):
     if app.settings['no-ccache']:
         binds = ()
     else:
-        ccache_dir = os.path.join(app.settings['ccache_dir'],
-                                  os.path.basename(this['name']))
-        ccache_target = os.path.join(app.settings['assembly'],
+        name = os.path.basename(get_repo_url(this))
+        ccache_dir = os.path.join(app.settings['ccache_dir'], name)
+        ccache_target = os.path.join(this['assembly'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
@@ -156,7 +156,6 @@ def get_binds(this):
 def clean_env(this):
     env = {}
     extra_path = []
-    _base_path = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
     defs = Definitions()
 
     if app.settings['no-ccache']:
@@ -171,7 +170,7 @@ def clean_env(this):
         if not app.settings.get('no-distcc'):
             env['CCACHE_PREFIX'] = 'distcc'
 
-    prefixes = [this.get('prefix', '/usr')]
+    prefixes = []
 
     for name in defs.lookup(this, 'build-depends'):
         dependency = defs.get(name)
@@ -184,12 +183,12 @@ def clean_env(this):
 
     if this.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
-        full_path = [os.path.normpath(app.settings['assembly'] + p)
+        full_path = [os.path.normpath(this['assembly'] + p)
                      for p in rel_path]
-        path = full_path + os.environ['PATH'].split(':')
+        path = full_path + app.settings['base-path']
         env['DESTDIR'] = this.get('install')
     else:
-        path = extra_path + ccache_path + _base_path
+        path = extra_path + ccache_path + app.settings['base-path']
         env['DESTDIR'] = os.path.join('/',
                                       os.path.basename(this.get('install')))
 
@@ -203,7 +202,7 @@ def clean_env(this):
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
     env['LC_ALL'] = 'C'
-    env['HOME'] = '/tmp/'
+    env['HOME'] = '/tmp'
 
     arch = app.settings['arch']
     cpu = 'i686' if arch == 'x86_32' else arch

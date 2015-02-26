@@ -53,6 +53,8 @@ def setup(target, arch):
         settings['arch'] = arch
         settings['no-ccache'] = False
         settings['no-distcc'] = True
+        settings['base-path'] = ['/usr/bin', '/bin', '/usr/sbin', '/sbin' ]
+
         settings['ccache_dir'] = '/src/cache/ccache'
         settings['cache-server-url'] = \
             'http://git.baserock.org:8080/1.0/sha1s?'
