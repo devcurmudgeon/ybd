@@ -69,11 +69,6 @@ def setup(this):
                 del os.environ[key]
         os.chdir(currentdir)
 
-def cleanup(this):
-    if this['build'] and this['install']:
-        shutil.rmtree(this['build'])
-        shutil.rmtree(this['install'])
-
 
 def install_artifact(this, component, installdir):
     app.log(this, 'Installing %s in' % component['name'], installdir)
@@ -94,9 +89,10 @@ def unpack_artifact(component):
     raise SystemExit
 
 
-def run_cmd(this, command):
-
-    argv = ['sh', '-c', command]
+def run_sandboxed(this, command):
+    log = this['log']
+    with open(log, "a") as logfile:
+        logfile.write("# # %s\n" % command)
     use_chroot = True if this.get('build-mode') != 'bootstrap' else False
     do_not_mount_dirs = [this['build'], this['install']]
 
@@ -122,11 +118,14 @@ def run_cmd(this, command):
         binds=binds,
         writable_paths=do_not_mount_dirs)
 
+    argv = ['sh', '-c', command]
     cmd_list = utils.containerised_cmdline(argv, **container_config)
 
-    log = os.path.join(app.settings['artifacts'], this['cache'] + '.build-log')
-    with open(log, "a") as logfile:
-        logfile.write("# # %s\n" % command)
+    run_logged(this, cmd_list)
+
+
+def run_logged(this, cmd_list):
+    log = this['log']
     app.log_env(log, '\n'.join(cmd_list))
     with open(log, "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
@@ -196,7 +195,7 @@ def clean_env(this):
     env['PREFIX'] = this.get('prefix') or '/usr'
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
-#    env['MAKEFLAGS'] = '-j1'
+    env['MAKEFLAGS'] = '-j1'
 
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
