@@ -58,10 +58,10 @@ def assemble(target):
 
 
 def build(this):
-    ''' Do the actual creation of an artifact.
+    '''Actually create an artifact and add it to the cache
 
+    This is what actually runs ./configure, make, make install (for example)
     By the time we get here, all dependencies for 'this' have been assembled.
-
     '''
 
     app.log(this, 'Start build')
@@ -81,13 +81,15 @@ def build(this):
 
 
 def get_build_system_commands(defs, this):
+    '''Get commands specified in this, plus commmands implied by build_system
 
-    # if bs is unspecified and all steps are empty, detect bs & use its commands
-    # if bs is specified, use its commands for empty steps
+    If bs is unspecified and all steps are empty, detect bs & use its commands
+    If bs is specified, use its commands for empty steps
 
-    # this logic is rather convoluted, because there are examples of morph files
-    # where build-system is unspecified. it boils down to:
-    #     if bs is specified, or all steps are empty, fill any empty steps
+    This logic is rather convoluted, because there are examples of morph files
+    where build-system is unspecified. It boils down to:
+        if bs is specified, or all steps are empty, fill any empty steps
+    '''
 
     build_system = None
     for bs in buildsystem.build_systems:
