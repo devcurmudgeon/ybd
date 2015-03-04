@@ -62,10 +62,12 @@ def get_repo_name(this):
 
 def get_upstream_version(this):
     try:
-        with open(os.devnull, "w") as fnull:
+        this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
+        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
                                      '--tags', this['ref']], stderr=fnull)[0:-1]
-        commits = check_output(['git', 'rev-list', last_tag + '..', '--count'])
+            commits = check_output(['git', 'rev-list',
+                                    last_tag + '..' + this['ref'], '--count'])
 
         result = "%s (%s + %s commits)" % (this.get('ref')[:8], last_tag,
                                            commits[0:-1])
@@ -78,16 +80,8 @@ def get_upstream_version(this):
 
 
 def get_tree(this):
-    defs = definitions.Definitions()
-
-    if defs.lookup(this, 'repo') == []:
-        return None
-
-    if defs.lookup(this, 'git') == []:
-        this['git'] = (os.path.join(app.settings['gits'],
-                       get_repo_name(this)))
-
-    ref = defs.lookup(this, 'ref')
+    ref = this.get('ref')
+    this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
     if not os.path.exists(this['git']):
         try:
             url = (app.settings['cache-server-url'] + 'repo='
@@ -209,9 +203,7 @@ def checkout(this):
     # checkout the required version of this from git
     with app.chdir(this['build']):
         app.log(this, 'Git checkout %s in %s' % (this['repo'], this['build']))
-        if not this.get('git'):
-            this['git'] = (os.path.join(app.settings['gits'],
-                           get_repo_name(this)))
+        this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
         if not os.path.exists(this['git']):
             mirror(this)
         copy_repo(this['git'], this['build'])
@@ -221,7 +213,6 @@ def checkout(this):
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
 
-        app.log(this, 'Upstream version:', get_upstream_version(this))
         set_mtime_recursively(this['build'])
 
 

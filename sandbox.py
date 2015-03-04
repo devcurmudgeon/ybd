@@ -26,6 +26,7 @@ import utils
 import cache
 from repos import get_repo_url
 
+
 @contextlib.contextmanager
 def setup(this):
 
@@ -69,6 +70,11 @@ def setup(this):
                 if os.environ.get(key):
                     os.environ.pop(key)
         os.chdir(currentdir)
+
+
+def remove(this):
+    if this['assembly'] != '/' and os.path.isdir(this['assembly']):
+        shutil.rmtree(this['assembly'])
 
 
 def install_artifact(this, component, installdir):
@@ -131,7 +137,7 @@ def run_logged(this, cmd_list):
     with open(log, "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
-            app.log(this, 'ERROR: command failed:\n\n', cmd_list)
+            app.log(this, 'ERROR: command failed:\n\n', ' '.join(cmd_list))
             app.log(this, 'ERROR: log file at', log)
             raise SystemExit
 

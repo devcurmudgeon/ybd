@@ -35,7 +35,7 @@ def cache_key(this):
     if definition.get('cache'):
         return definition['cache']
 
-    if defs.lookup(definition, 'tree') == []:
+    if definition.get('repo') and not definition.get('tree'):
         definition['tree'] = repos.get_tree(definition)
 
     hash_factors = {'arch': app.settings['arch']}

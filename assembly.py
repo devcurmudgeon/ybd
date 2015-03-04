@@ -36,8 +36,6 @@ def assemble(target):
 
     defs = Definitions()
     this = defs.get(target)
-    if this.get('repo') and not this.get('tree'):
-        this['tree'] = repos.get_tree(this)
 
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
@@ -54,7 +52,12 @@ def assemble(target):
                 assemble(defs.get(component))
                 sandbox.install_artifact(this, component, this['assembly'])
 
+            if this.get('repo'):
+	           app.log(this, 'Upstream version:',
+	                   repos.get_upstream_version(this))
             build(this)
+            cache.cache(this)
+            sandbox.remove(this)
 
 
 def build(this):
@@ -65,7 +68,6 @@ def build(this):
     '''
 
     app.log(this, 'Start build')
-
     defs = Definitions()
     if defs.lookup(this, 'repo') != []:
         repos.checkout(this)
@@ -76,8 +78,6 @@ def build(this):
             app.log(this, 'Running', build_step)
         for command in defs.lookup(this, build_step):
             sandbox.run_sandboxed(this, command)
-
-    cache.cache(this)
 
 
 def get_build_system_commands(defs, this):
