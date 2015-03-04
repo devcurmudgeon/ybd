@@ -66,14 +66,15 @@ def get_upstream_version(this):
             last_tag = check_output(['git', 'describe', '--abbrev=0',
                                      '--tags', this['ref']], stderr=fnull)[0:-1]
         commits = check_output(['git', 'rev-list', last_tag + '..', '--count'])
-        result = last_tag + " + " + commits[0:-1] + " commits"
 
+        result = "%s (%s + %s commits)" % (this.get('ref')[:8], last_tag,
+                                           commits[0:-1])
     except:
-        result = 'No tag found'
+        result = '(No tag found)'
+        if this.get('ref'):
+            result = this.get('ref')[:8] + " " + result
 
-    if this.get('ref') or last_tag:
-        app.log(this, 'Upstream version: %s (%s)' % (this.get('ref')[:8],
-                                                     result))
+    return result
 
 
 def get_tree(this):
@@ -220,7 +221,7 @@ def checkout(this):
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
 
-        get_upstream_version(this)
+        app.log(this, 'Upstream version:', get_upstream_version(this))
         set_mtime_recursively(this['build'])
 
 
