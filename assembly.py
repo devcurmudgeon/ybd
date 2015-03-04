@@ -36,7 +36,7 @@ def assemble(target):
 
     defs = Definitions()
     this = defs.get(target)
-    if defs.lookup(this, 'repo') != [] and defs.lookup(this, 'tree') == []:
+    if this.get('repo') and not this.get('tree'):
         this['tree'] = repos.get_tree(this)
 
     with app.timer(this, 'Starting assembly'):
