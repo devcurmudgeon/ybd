@@ -29,17 +29,17 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-cp /src/cache/artifacts/*$1*build-log /src/logs/morph-reference/
-sed -i 's|src/tmp/staging/[^/]*|STAGING|g' /src/logs/morph-reference/*
+cp /src/cache/artifacts/*$1-build-log ./$1.morph-build-log
+sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.morph-build-log
 
-cp /src/cache/ybd-artifacts/$1*build-log /src/logs/ybd
-sed -i 's|src/staging/[^/]*/[^/]*|STAGING|g' /src/logs/ybd/$1*
-diff /src/logs/morph-reference/*.$1* /src/logs/ybd/$1* | less
+cp /src/cache/ybd-artifacts/$1@*.build-log ./$1.ybd-build-log
+sed -i 's|src/staging/[^/]*/[^/]*|STAGING|g' ./$1.ybd-build-log
+diff ./$1.morph-build-log ./$1.ybd-build-log | less
 
 echo 'morph' ; tar -tf /src/cache/artifacts/*$1-misc | wc -l
 echo 'ybd  ' ; tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | wc -l
 
-tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > /src/ybd/ybd.output
-tar -tf /src/cache/artifacts/*$1-misc | sort > /src/ybd/morph.output
+tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./ybd.output
+tar -tf /src/cache/artifacts/*$1-misc | sort > ./morph.output
 
-diff /src/ybd/ybd.output /src/ybd/morph.output
+diff ./ybd.output ./morph.output
