@@ -66,7 +66,8 @@ def setup(this):
             if value:
                 os.environ[key] = value
             else:
-                del os.environ[key]
+                if os.environ.get(key):
+                    os.environ.pop(key)
         os.chdir(currentdir)
 
 
@@ -93,7 +94,7 @@ def run_sandboxed(this, command):
     log = this['log']
     with open(log, "a") as logfile:
         logfile.write("# # %s\n" % command)
-    use_chroot = True if this.get('build-mode') != 'bootstrap' else False
+    use_chroot = False if this.get('build-mode') == 'bootstrap' else True
     do_not_mount_dirs = [this['build'], this['install']]
 
     if use_chroot:
@@ -173,7 +174,7 @@ def clean_env(this):
 
     for name in defs.lookup(this, 'build-depends'):
         dependency = defs.get(name)
-        prefixes.append(defs.lookup(dependency, 'prefix'))
+        prefixes.append(dependency.get('prefix'))
     prefixes = set(prefixes)
     for prefix in prefixes:
         if prefix:
