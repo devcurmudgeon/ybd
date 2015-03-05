@@ -43,7 +43,7 @@ def setup(this):
 
     try:
         build_env = clean_env(this)
-        assembly_dir = app.settings['assembly']
+        assembly_dir = this['assembly']
 #        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
         for directory in ['dev', 'tmp']:
             call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
@@ -59,7 +59,7 @@ def setup(this):
             else:
                 os.environ.pop(key)
 
-        os.chdir(app.settings['assembly'])
+        os.chdir(this['assembly'])
 
         yield
     finally:
@@ -104,9 +104,9 @@ def run_sandboxed(this, command):
     do_not_mount_dirs = [this['build'], this['install']]
 
     if use_chroot:
-        chroot_dir = app.settings['assembly']
+        chroot_dir = this['assembly']
         chdir = os.path.join('/', os.path.basename(this['build']))
-        do_not_mount_dirs += [os.path.join(app.settings['assembly'], d)
+        do_not_mount_dirs += [os.path.join(this['assembly'], d)
                               for d in  ["dev", "proc", 'tmp']]
         mounts = ('dev/shm', 'tmpfs', 'none'),
     else:
