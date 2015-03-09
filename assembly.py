@@ -18,11 +18,9 @@
 import os
 from definitions import Definitions
 import cache
-from staging import StagingArea
 import repos
 import app
 import buildsystem
-from buildenvironment import BuildEnvironment
 import sandbox
 from subprocess import check_output
 from subprocess import call
