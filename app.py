@@ -73,7 +73,7 @@ def setup(target, arch):
         settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
-                          'staging', 'assembly']:
+                          'staging', 'assembly', 'ccache_dir']:
             if not os.path.exists(settings[directory]):
                 os.mkdir(settings[directory])
 
