@@ -29,7 +29,6 @@ from subprocess import call
 def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
     if cache.get_cache(target):
-        app.log(target, 'Cache found', cache.get_cache(target))
         return
 
     defs = Definitions()
