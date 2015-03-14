@@ -34,7 +34,7 @@ sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.morph-build-log
 
 cp /src/cache/ybd-artifacts/$1@*.build-log ./$1.ybd-build-log
 sed -i 's|src/staging/[^/]*/[^/]*|STAGING|g' ./$1.ybd-build-log
-diff ./$1.morph-build-log ./$1.ybd-build-log | less
+diff -U0 ./$1.morph-build-log ./$1.ybd-build-log | less
 
 echo 'morph' ; tar -tf /src/cache/artifacts/*$1-misc | wc -l
 echo 'ybd  ' ; tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | wc -l
@@ -42,4 +42,4 @@ echo 'ybd  ' ; tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | wc -l
 tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./ybd.output
 tar -tf /src/cache/artifacts/*$1-misc | sort > ./morph.output
 
-diff ./ybd.output ./morph.output
+diff -U0 ./morph.output ./ybd.output
