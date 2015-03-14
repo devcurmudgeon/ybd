@@ -26,6 +26,8 @@ import json
 import definitions
 import repos
 import buildsystem
+import utils
+from subprocess import call
 
 
 def cache_key(this):
@@ -66,6 +68,20 @@ def cache(this):
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
     shutil.make_archive(cachefile, 'gztar', this['install'])
     app.log(this, 'Now cached as', cache_key(this))
+
+
+def unpack(this):
+    cachefile = get_cache(this)
+    if cachefile:
+        unpackdir = cachefile + '.unpacked'
+        if not os.path.exists(unpackdir):
+            os.makedirs(unpackdir)
+            call(['tar', 'xf', cachefile, '--directory', unpackdir])
+            utils.set_mtime_recursively(unpackdir)
+        return unpackdir
+
+    app.log(component, 'Cached artifact not found')
+    raise SystemExit
 
 
 def get_cache(this):

@@ -18,6 +18,7 @@
 import os
 import textwrap
 import stat
+import time
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
                           mount_proc=False, unshare_net=False,
@@ -252,3 +253,21 @@ def hardlink_all_files(srcpath, destpath):
                       ' type.' % srcpath)
 
 
+def set_mtime_recursively(root, set_time=0):
+    '''Set the mtime for every file in a directory tree to the same.
+
+    We do this because git checkout does not set the mtime to anything,
+    and some projects (binutils, gperf for example) include formatted
+    documentation and try to randomly build things or not because of
+    the timestamps. This should help us get more reliable  builds.
+
+    '''
+
+    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
+                                               topdown=False):
+        for basename in basenames:
+            pathname = os.path.join(dirname, basename)
+            # we need the following check to ignore broken symlinks
+            if os.path.exists(pathname):
+                os.utime(pathname, (set_time, set_time))
+        os.utime(dirname, (set_time, set_time))

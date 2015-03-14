@@ -78,22 +78,9 @@ def remove(this):
 
 
 def install_artifact(this, component, installdir):
-    app.log(this, 'Installing %s in' % component['name'], installdir)
-    unpackdir = unpack_artifact(component)
+    app.log(this, 'Installing %s in' % component['cache'], installdir)
+    unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, installdir)
-
-
-def unpack_artifact(component):
-    cachefile = cache.get_cache(component)
-    if cachefile:
-        unpackdir = cachefile + '.unpacked'
-        if not os.path.exists(unpackdir):
-            os.makedirs(unpackdir)
-            call(['tar', 'xf', cachefile, '--directory', unpackdir])
-        return unpackdir
-
-    app.log(component, 'Cached artifact not found')
-    raise SystemExit
 
 
 def run_sandboxed(this, command):
@@ -203,7 +190,6 @@ def clean_env(this):
     env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
                                  app.settings['max_jobs'])
     env['MAKEFLAGS'] = '-j1'
-
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
