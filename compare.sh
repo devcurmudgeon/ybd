@@ -39,7 +39,13 @@ diff -U0 ./$1.morph-build-log ./$1.ybd-build-log | less
 echo 'morph' ; tar -tf /src/cache/artifacts/*$1-misc | wc -l
 echo 'ybd  ' ; tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | wc -l
 
-tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./ybd.output
-tar -tf /src/cache/artifacts/*$1-misc | sort > ./morph.output
+tar -tf /src/cache/artifacts/*$1-misc | sort > ./$1.morph.output
+tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./$1.ybd.output
 
-diff -U0 ./morph.output ./ybd.output
+diff -U0 ./$1.morph.output ./$1.ybd.output | less
+
+# to compare staging areas (assuming pdb to stop)
+# ls -Rl /src/tmp/staging/* | sort | uniq > ./$1.morph.stage
+# ls -Rl /src/staging/*/$1/ | sort | uniq > ./$1.ybd.sandbox
+# diff -U0 ./$1.morph.stage ./$1.ybd.sandbox | less
+# or just diff the directories directly?
