@@ -44,7 +44,6 @@ def setup(this):
     try:
         build_env = clean_env(this)
         assembly_dir = this['assembly']
-#        for directory in ['dev', 'etc', 'lib', 'usr', 'bin', 'tmp']:
         for directory in ['dev', 'tmp']:
             call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
