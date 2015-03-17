@@ -59,6 +59,7 @@ def setup(this):
                 os.environ.pop(key)
 
         os.chdir(this['assembly'])
+        app.log(this, 'Assembly sandbox is at', this['assembly'])
 
         yield
     finally:
@@ -77,14 +78,13 @@ def remove(this):
 
 
 def install_artifact(this, component, installdir):
-    app.log(this, 'Installing %s in' % component['cache'], installdir)
+    app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, installdir)
 
 
 def run_sandboxed(this, command):
-    log = this['log']
-    with open(log, "a") as logfile:
+    with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
     use_chroot = False if this.get('build-mode') == 'bootstrap' else True
     do_not_mount_dirs = [this['build'], this['install']]
@@ -114,17 +114,18 @@ def run_sandboxed(this, command):
     argv = ['sh', '-c', command]
     cmd_list = utils.containerised_cmdline(argv, **container_config)
 
-    run_logged(this, cmd_list)
+    run_logged(this, cmd_list, container_config)
 
 
-def run_logged(this, cmd_list):
-    log = this['log']
-    app.log_env(log, '\n'.join(cmd_list))
-    with open(log, "a") as logfile:
+def run_logged(this, cmd_list, config):
+    app.log_env(this['log'], '\n'.join(cmd_list))
+    with open(this['log'], "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: in directory', os.getcwd())
             app.log(this, 'ERROR: command failed:\n\n', ' '.join(cmd_list))
-            app.log(this, 'ERROR: log file at', log)
+            app.log(this, 'ERROR: Containerisation settings:\n\n', config)
+            app.log(this, 'ERROR: Path:\n\n', os.environ['PATH'])
+            app.log(this, 'ERROR: log file is at', this['log'])
             raise SystemExit
 
 
