@@ -253,13 +253,11 @@ def hardlink_all_files(srcpath, destpath):
                       ' type.' % srcpath)
 
 
-def set_mtime_recursively(root, set_time=0):
+def set_mtime_recursively(root, set_time=1321009871.0):
     '''Set the mtime for every file in a directory tree to the same.
 
-    We do this because git checkout does not set the mtime to anything,
-    and some projects (binutils, gperf for example) include formatted
-    documentation and try to randomly build things or not because of
-    the timestamps. This should help us get more reliable  builds.
+    The magic number default is 11-11-2011 11:11:11
+    The aim is to make builds more predictable.
 
     '''
 
