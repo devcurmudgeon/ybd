@@ -45,7 +45,8 @@ tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./$1.ybd.output
 diff -U0 ./$1.morph.output ./$1.ybd.output | less
 
 # to compare staging areas (assuming pdb to stop)
-# ls -Rl /src/tmp/staging/* | sort | uniq > ./$1.morph.stage
-# ls -Rl /src/staging/*/$1/ | sort | uniq > ./$1.ybd.sandbox
+# ls -R /src/tmp/staging/* | sort | uniq > ./$1.morph.stage
+# sed
+# ls -R /src/staging/*/$1/ | sort | uniq > ./$1.ybd.sandbox
+# sed
 # diff -U0 ./$1.morph.stage ./$1.ybd.sandbox | less
-# or just diff the directories directly?
