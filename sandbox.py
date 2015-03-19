@@ -80,10 +80,10 @@ def remove(this):
         shutil.rmtree(this['assembly'])
 
 
-def install_artifact(this, component, installdir):
+def install_artifact(this, component):
     app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
-    utils.hardlink_all_files(unpackdir, installdir)
+    utils.hardlink_all_files(unpackdir, this['assembly'])
 
 
 def run_sandboxed(this, command):

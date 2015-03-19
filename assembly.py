@@ -39,19 +39,15 @@ def assemble(target):
             for it in defs.lookup(this, 'build-depends'):
                 dependency = defs.get(it)
                 assemble(dependency)
-                sandbox.install_artifact(this, dependency, this['assembly'])
+                sandbox.install_artifact(this, dependency)
 
             # if we're distbuilding, wait here for all dependencies to complete
             # how do we know when that happens?
 
             for it in defs.lookup(this, 'contents'):
                 component = defs.get(it)
-                assemble(defs.get(component))
-                sandbox.install_artifact(this, component, this['assembly'])
-
-            if this.get('repo'):
-	           app.log(this, 'Upstream version:',
-	                   repos.get_upstream_version(this))
+                assemble(component)
+                sandbox.install_artifact(this, component)
 
             build(this)
             if this.get('devices'):
@@ -69,7 +65,8 @@ def build(this):
 
     app.log(this, 'Start build')
     defs = Definitions()
-    if defs.lookup(this, 'repo') != []:
+    if this.get('repo'):
+        app.log(this, 'Upstream version:', repos.get_upstream_version(this))
         repos.checkout(this)
 
     get_build_system_commands(defs, this)
