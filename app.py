@@ -22,8 +22,9 @@ import shutil
 from subprocess import check_output
 from subprocess import call
 from multiprocessing import cpu_count
-settings = {}
 
+
+settings = {}
 
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
@@ -56,24 +57,22 @@ def setup(target, arch):
         settings['base-path'] = ['/usr/bin', '/bin', '/usr/sbin', '/sbin' ]
 
         settings['ccache_dir'] = '/src/cache/ccache'
-        settings['cache-server-url'] = \
-            'http://git.baserock.org:8080/1.0/sha1s?'
+        settings['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
+
         settings['base'] = os.path.expanduser('~/.ybd/')
         if os.path.exists('/src'):
             settings['base'] = '/src'
+
         settings['caches'] = os.path.join(settings['base'], 'cache')
         settings['artifacts'] = os.path.join(settings['caches'],
                                              'ybd-artifacts')
         settings['gits'] = os.path.join(settings['caches'], 'gits')
-        settings['staging'] = os.path.join(settings['base'], 'staging')
-        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        settings['assembly'] = os.path.join(settings['staging'],
-                                            target + '-' + timestamp)
-        settings['logfile'] = os.path.join(settings['assembly'], 'ybd.log')
-        settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
+
+        settings['tmp'] = os.path.join(settings['base'], 'tmp')
+        settings['staging'] = os.path.join(settings['tmp'], 'staging')
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
-                          'staging', 'assembly', 'ccache_dir']:
+                          'tmp', 'staging', 'ccache_dir']:
             if not os.path.exists(settings[directory]):
                 os.mkdir(settings[directory])
 
@@ -82,13 +81,11 @@ def setup(target, arch):
         # the right flag in an environment variable.
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
+        settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
         yield
 
     finally:
-        # assuming success, we can remove the 'assembly' directory
-        # shutil.rmtree(settings['assembly'])
-        log(target, 'Assembly directory is still at', settings['assembly'])
-
+        log(target, 'DONE')
 
 @contextlib.contextmanager
 def chdir(dirname=None):

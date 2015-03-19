@@ -25,6 +25,7 @@ import shutil
 import utils
 import cache
 from repos import get_repo_url
+import tempfile
 
 
 @contextlib.contextmanager
@@ -32,15 +33,16 @@ def setup(this):
 
     currentdir = os.getcwd()
     currentenv = dict(os.environ)
-    this['assembly'] = os.path.join(app.settings['assembly'], this['name'])
+
+    tempfile.tempdir = app.settings['staging']
+    this['assembly'] = tempfile.mkdtemp()
     this['build'] = os.path.join(this['assembly'], this['name']+ '.build')
     this['install'] = os.path.join(this['assembly'], this['name'] + '.inst')
     this['tmp'] = os.path.join(this['assembly'], 'tmp')
-    for directory in ['assembly', 'build', 'install', 'tmp']:
+    for directory in ['build', 'install', 'tmp']:
         os.makedirs(this[directory])
     this['log'] = os.path.join(app.settings['artifacts'],
                                this['cache'] + '.build-log')
-
     try:
         build_env = clean_env(this)
         assembly_dir = this['assembly']
@@ -70,7 +72,7 @@ def setup(this):
                 if os.environ.get(key):
                     os.environ.pop(key)
         os.chdir(currentdir)
-
+        app.log(this, 'Assembly directory is still at', this['assembly'])
 
 def remove(this):
     if this['assembly'] != '/' and os.path.isdir(this['assembly']):

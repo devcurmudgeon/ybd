@@ -33,7 +33,7 @@ cp /src/cache/artifacts/*$1-build-log ./$1.morph-build-log
 sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.morph-build-log
 
 cp /src/cache/ybd-artifacts/$1@*.build-log ./$1.ybd-build-log
-sed -i 's|src/staging/[^/]*/[^/]*|STAGING|g' ./$1.ybd-build-log
+sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.ybd-build-log
 diff -U0 ./$1.morph-build-log ./$1.ybd-build-log | less
 
 echo 'morph' ; tar -tf /src/cache/artifacts/*$1-misc | wc -l
