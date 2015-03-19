@@ -26,6 +26,7 @@ import utils
 import cache
 from repos import get_repo_url
 import tempfile
+import stat
 
 
 @contextlib.contextmanager
@@ -206,3 +207,21 @@ def clean_env(this):
     env['MORPH_ARCH'] = arch
 
     return env
+
+
+def create_devices(this):
+    perms_mask = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
+    for device in this['devices']:
+        destfile = os.path.join(this['install'], './' + device['filename'])
+        mode = int(device['permissions'], 8) & perms_mask
+        if device['type'] == 'c':
+            mode = mode | stat.S_IFCHR
+        elif dev['type'] == 'b':
+            mode = mode | stat.S_IFBLK
+        else:
+            raise IOError('Cannot create device node %s,'
+                          'unrecognized device type "%s"'
+                          % (destfile, device['type']))
+        app.log(this, "Creating device node", destfile)
+        os.mknod(destfile, mode, os.makedev(device['major'], device['minor']))
+        os.chown(destfile, device['uid'], device['gid'])

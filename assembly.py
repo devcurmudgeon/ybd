@@ -52,7 +52,10 @@ def assemble(target):
             if this.get('repo'):
 	           app.log(this, 'Upstream version:',
 	                   repos.get_upstream_version(this))
+
             build(this)
+            if this.get('devices'):
+                sandbox.create_devices(this)
             cache.cache(this)
             sandbox.remove(this)
 
