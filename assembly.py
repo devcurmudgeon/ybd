@@ -49,7 +49,11 @@ def assemble(target):
                 assemble(component)
                 sandbox.install_artifact(this, component)
 
+            if this.get('build-mode') == 'staging':
+                sandbox.ldconfig(this)
+
             build(this)
+
             if this.get('devices'):
                 sandbox.create_devices(this)
             cache.cache(this)

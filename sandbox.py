@@ -86,6 +86,18 @@ def install_artifact(this, component):
     utils.hardlink_all_files(unpackdir, this['assembly'])
 
 
+def ldconfig(this):
+    conf = os.path.join(this['assembly'], 'etc', 'ld.so.conf')
+    if os.path.exists(conf):
+        path = os.environ['PATH']
+        os.environ['PATH'] = '%s:/sbin:/usr/sbin:/usr/local/sbin' % path
+        cmd_list = ['ldconfig', '-r', this['assembly']]
+        run_logged(this, cmd_list)
+        os.environ['PATH'] = path
+    else:
+        app.log(this, 'No %s, not running ldconfig' % conf)
+
+
 def run_sandboxed(this, command):
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
@@ -120,7 +132,7 @@ def run_sandboxed(this, command):
     run_logged(this, cmd_list, container_config)
 
 
-def run_logged(this, cmd_list, config):
+def run_logged(this, cmd_list, config=''):
     app.log_env(this['log'], '\n'.join(cmd_list))
     with open(this['log'], "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
