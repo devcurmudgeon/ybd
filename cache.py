@@ -66,6 +66,7 @@ def cache_key(this):
 
 def cache(this):
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
+    utils.set_mtime_recursively(this['install'])
     shutil.make_archive(cachefile, 'gztar', this['install'])
     app.log(this, 'Now cached as', cache_key(this))
 
@@ -77,7 +78,6 @@ def unpack(this):
         if not os.path.exists(unpackdir):
             os.makedirs(unpackdir)
             call(['tar', 'xf', cachefile, '--directory', unpackdir])
-            utils.set_mtime_recursively(unpackdir)
         return unpackdir
 
     app.log(component, 'Cached artifact not found')
