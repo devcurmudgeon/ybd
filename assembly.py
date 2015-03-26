@@ -46,11 +46,15 @@ def assemble(target):
 
             for it in defs.lookup(this, 'contents'):
                 component = defs.get(it)
+                if component.get('build-mode') == 'bootstrap':
+                    continue
                 assemble(component)
                 sandbox.install_artifact(this, component)
 
-            if this.get('build-mode') == 'staging':
+            if this.get('build-mode') != 'bootstrap':
                 sandbox.ldconfig(this)
+            else:
+                app.log(this, "No ldconfig because bootstrap mode is engaged")
 
             build(this)
 
