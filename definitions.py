@@ -52,8 +52,8 @@ class Definitions():
                         component['build-depends'] = (
                             self.lookup(component, 'build-depends'))
                         for dependency in self.lookup(this, 'build-depends'):
-                            component['build-depends'].extend(
-                                [self.lookup(dependency, 'name')])
+                            component['build-depends'].insert(0,
+                                self.lookup(dependency, 'name'))
                         self._insert(component)
 
             if '.git' in dirnames:
