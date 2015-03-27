@@ -207,7 +207,7 @@ def clean_env(this):
 
     env['PATH'] = ':'.join(path)
     env['PREFIX'] = this.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (this.get('max_jobs') or
+    env['MAKEFLAGS'] = '-j%s' % (this.get('max-jobs') or
                                  app.settings['max_jobs'])
     env['MAKEFLAGS'] = '-j1'
     env['TERM'] = 'dumb'
