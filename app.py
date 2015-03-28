@@ -84,8 +84,12 @@ def setup(target, arch):
         settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
         yield
 
-    finally:
-        log(target, 'DONE')
+    except:
+        log(target, 'ERROR: Stopped')
+        raise SystemExit
+
+    log(target, 'DONE')
+
 
 @contextlib.contextmanager
 def chdir(dirname=None):
