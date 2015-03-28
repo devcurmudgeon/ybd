@@ -39,17 +39,14 @@ def assemble(target):
             for it in defs.lookup(this, 'build-depends'):
                 dependency = defs.get(it)
                 assemble(dependency)
-                sandbox.install_artifact(this, dependency)
-
-            # if we're distbuilding, wait here for all dependencies to complete
-            # how do we know when that happens?
+                sandbox.install(this, dependency)
 
             for it in defs.lookup(this, 'contents'):
                 component = defs.get(it)
                 if component.get('build-mode') == 'bootstrap':
                     continue
                 assemble(component)
-                sandbox.install_artifact(this, component)
+                sandbox.install(this, component)
 
             if this.get('build-mode') != 'bootstrap':
                 sandbox.ldconfig(this)

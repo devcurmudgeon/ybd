@@ -75,17 +75,18 @@ def setup(this):
         os.chdir(currentdir)
         app.log(this, 'Assembly directory is still at', this['assembly'])
 
+
 def remove(this):
     if this['assembly'] != '/' and os.path.isdir(this['assembly']):
         shutil.rmtree(this['assembly'])
 
 
-def install_artifact(this, component, permit_bootstrap=True):
+def install(this, component, permit_bootstrap=True):
     if (component.get('build-mode', 'staging') == 'bootstrap' and
         permit_bootstrap == False):
         return
     for subcomponent in component.get('contents', []):
-        install_artifact(this, subcomponent, False)
+        install(this, subcomponent, False)
     app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
