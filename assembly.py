@@ -110,6 +110,6 @@ def get_build_system_commands(defs, this):
         build_system = buildsystem.detect_build_system(files)
 
     for build_step in buildsystem.build_steps:
-        if defs.lookup(this, build_step) == []:
+        if this.get(build_step, None) is None:
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)
