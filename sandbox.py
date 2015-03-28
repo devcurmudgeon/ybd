@@ -82,8 +82,7 @@ def remove(this):
 
 
 def install(this, component, permit_bootstrap=True):
-    if (component.get('build-mode', 'staging') == 'bootstrap' and
-        permit_bootstrap == False):
+    if component.get('build-mode') == 'bootstrap' and permit_bootstrap == False:
         return
     for subcomponent in component.get('contents', []):
         install(this, subcomponent, False)
@@ -105,6 +104,7 @@ def ldconfig(this):
 
 
 def run_sandboxed(this, command):
+    app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
     use_chroot = False if this.get('build-mode') == 'bootstrap' else True
@@ -142,8 +142,8 @@ def run_logged(this, cmd_list, config=''):
     app.log_env(this['log'], '\n'.join(cmd_list))
     with open(this['log'], "a") as logfile:
         if call(cmd_list, stdout=logfile, stderr=logfile):
-            app.log(this, 'ERROR: in directory', os.getcwd())
-            app.log(this, 'ERROR: command failed:\n\n', ' '.join(cmd_list))
+            app.log(this, 'ERROR: command failed in directory %s:\n\n' %
+                    os.getcwd(), ' '.join(cmd_list))
             app.log(this, 'ERROR: Containerisation settings:\n\n', config)
             app.log(this, 'ERROR: Path:\n\n', os.environ['PATH'])
             app.log(this, 'ERROR: log file is at', this['log'])
