@@ -34,14 +34,15 @@ class Definitions():
             return
 
         for dirname, dirnames, filenames in os.walk(os.getcwd()):
+            if '.git' in dirnames:
+                dirnames.remove('.git')
+
             for filename in filenames:
-                if not (filename.endswith('.def') or
-                        filename.endswith('.morph')):
+                if not filename.endswith(('.def', '.morph')):
                     continue
 
                 this = self._load(dirname, filename)
-                name = self.lookup(this, 'name')
-                if name != []:
+                if this.get('name'):
                     self._insert(this)
 
                     for dependency in self.lookup(this, 'build-depends'):
@@ -55,10 +56,6 @@ class Definitions():
                             component['build-depends'].insert(0,
                                 self.lookup(dependency, 'name'))
                         self._insert(component)
-
-            if '.git' in dirnames:
-                dirnames.remove('.git')
-
         try:
             self.__trees = self._load(os.getcwd(), ".trees")
             for definition in self.__definitions:
@@ -81,11 +78,12 @@ class Definitions():
                 definition['contents'] = definition.pop('chunks')
             if definition.get('strata'):
                 definition['contents'] = definition.pop('strata')
-            for it in (self.lookup(definition, 'build-depends') +
+
+            for subcomponent in (self.lookup(definition, 'build-depends') +
                        self.lookup(definition, 'contents')):
-                if it.get('morph'):
-                    path = it.pop('morph')
-                    it['name'] = os.path.splitext(os.path.basename(path))[0]
+                if subcomponent.get('morph'):
+                    name = os.path.basename(subcomponent.pop('morph'))
+                    subcomponent['name'] = os.path.splitext(name)[0]
 
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
@@ -95,12 +93,9 @@ class Definitions():
     def _insert(self, this):
         for i, definition in enumerate(self.__definitions):
             if definition['name'] == this['name']:
-                if (self.lookup(definition, 'ref') == [] or
-                        self.lookup(definition, 'ref') is None or
-                        self.lookup(this, 'ref') == []):
+                if definition.get('ref') is None or this.get('ref') is None:
                     for key in this:
-                        definition[key] = self.lookup(this, key)
-
+                        definition[key] = this[key]
                     return
 
                 for key in this:
