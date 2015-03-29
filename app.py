@@ -58,7 +58,7 @@ def setup(target, arch):
 
         settings['ccache_dir'] = '/src/cache/ccache'
         settings['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
-
+        settings['tar-url'] = 'http://git.baserock.org/tarballs'
         settings['base'] = os.path.expanduser('~/.ybd/')
         if os.path.exists('/src'):
             settings['base'] = '/src'

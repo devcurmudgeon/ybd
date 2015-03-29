@@ -166,10 +166,8 @@ def mirror(this):
             app.log(this, 'Try fetching tarball')
             repo_url = get_repo_url(this)
             tar_file = quote_url(repo_url) + '.tar'
-            tar_url = os.path.join("http://git.baserock.org/tarballs",
-                                   tar_file)
             with open(os.devnull, "w") as fnull:
-                call(['wget', tar_url], stdout=fnull, stderr=fnull)
+                call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
                 call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
                 os.remove(tar_file)
                 call(['git', 'config', 'remote.origin.url', repo_url],
@@ -208,8 +206,8 @@ def checkout(this):
             mirror(this)
         copy_repo(this['git'], this['build'])
         with open(os.devnull, "w") as fnull:
-            if call(['git', 'checkout', this['ref']],
-                    stdout=fnull, stderr=fnull) != 0:
+            if call(['git', 'checkout', this['ref']], stdout=fnull,
+                    stderr=fnull) != 0:
                 app.log(this, 'ERROR: git checkout failed for', this['tree'])
                 raise SystemExit
 
