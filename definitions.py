@@ -41,19 +41,19 @@ class Definitions():
                 if not filename.endswith(('.def', '.morph')):
                     continue
 
-                this = self._load(dirname, filename)
-                if this.get('name'):
-                    self._insert(this)
+                definition = self._load(os.path.join(dirname, filename))
+                if definition.get('name'):
+                    self._insert(definition)
 
-                    for dependency in this.get('build-depends', []):
+                    for dependency in definition.get('build-depends', []):
                         if dependency.get('repo'):
                             self._insert(dependency)
 
-                    for component in this.get('contents', []):
-                        component['build-depends'] = component.get('build-depends', [])
-                        for dependency in this.get('build-depends', []):
-                            component['build-depends'].insert(0, dependency)
-                        self._insert(component)
+                    for this in definition.get('contents', []):
+                        this['build-depends'] = this.get('build-depends', [])
+                        for dependency in definition.get('build-depends', []):
+                            this['build-depends'].insert(0, dependency)
+                        self._insert(this)
         try:
             self.__trees = self._load(os.getcwd(), ".trees")
             for definition in self.__definitions:
@@ -62,10 +62,9 @@ class Definitions():
         except:
             return
 
-    def _load(self, path, name):
+    def _load(self, filename):
         ''' Load a single definition file '''
         try:
-            filename = os.path.join(path, name)
             with open(filename) as f:
                 text = f.read()
 
