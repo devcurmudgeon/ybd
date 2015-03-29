@@ -81,19 +81,19 @@ def remove(this):
         shutil.rmtree(this['assembly'])
 
 
-def install(this, component):
+def install(this, component, permit_bootstrap=True):
     for subcomponent in component.get('contents', []):
-        install_artifact(this, subcomponent)
+        install_artifact(this, subcomponent, False)
     for dependency in component.get('build-depends', []):
-        install_artifact(this, dependency)
-    install_artifact(this, component)
+        install_artifact(this, dependency, False)
+    install_artifact(this, component, permit_bootstrap)
 
 
-def install_artifact(this, component):
+def install_artifact(this, component, permit_bootstrap=True):
     component = Definitions().get(component)
-    if component.get('build-mode') == 'bootstrap':
+    if component.get('build-mode') == 'bootstrap' and permit_bootstrap == False:
         return
-#    app.log(this, 'Installing %s' % component['cache'])
+    app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
 
