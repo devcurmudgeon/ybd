@@ -27,6 +27,9 @@ import definitions
 import urllib2
 import json
 import utils
+import ConfigParser
+import StringIO
+import re
 
 
 def get_repo_url(this):
@@ -162,23 +165,22 @@ def mirror(this):
     # try tarball first
     try:
         os.makedirs(this['git'])
-        with app.chdir(this['git']):
+        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
             app.log(this, 'Try fetching tarball')
             repo_url = get_repo_url(this)
             tar_file = quote_url(repo_url) + '.tar'
-            with open(os.devnull, "w") as fnull:
-                call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
-                call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
-                os.remove(tar_file)
-                call(['git', 'config', 'remote.origin.url', repo_url],
-                     stdout=fnull, stderr=fnull)
-                call(['git', 'config', 'remote.origin.mirror', 'true'],
-                     stdout=fnull, stderr=fnull)
-                if call(['git', 'config', 'remote.origin.fetch',
-                         '+refs/*:refs/*'],
-                        stdout=fnull, stderr=fnull) != 0:
-                    raise BaseException('Did not get a valid git repo')
-                call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
+            call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
+            call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
+            os.remove(tar_file)
+            call(['git', 'config', 'remote.origin.url', repo_url],
+                 stdout=fnull, stderr=fnull)
+            call(['git', 'config', 'remote.origin.mirror', 'true'],
+                 stdout=fnull, stderr=fnull)
+            if call(['git', 'config', 'remote.origin.fetch',
+                     '+refs/*:refs/*'],
+                    stdout=fnull, stderr=fnull) != 0:
+                raise BaseException('Did not get a valid git repo')
+            call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
         app.log(this, 'Using git clone', get_repo_url(this))
         try:
@@ -209,4 +211,43 @@ def checkout(this):
             app.log(this, 'ERROR: git checkout failed for', this['tree'])
             raise SystemExit
 
+        if os.path.exists(".gitmodules"):
+            checkout_submodules(this)
+
         utils.set_mtime_recursively(this['build'])
+
+
+def checkout_submodules(this):
+    app.log(this, 'Git submodules')
+    with open('.gitmodules', "r") as gitfile:
+        # drop indentation in sections, as RawConfigParser cannot handle it
+        content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
+    io = StringIO.StringIO(content)
+    parser = ConfigParser.RawConfigParser()
+    parser.readfp(io)
+
+    for section in parser.sections():
+        # validate section name against the 'submodule "foo"' pattern
+        name = re.sub(r'submodule "(.*)"', r'\1', section)
+        url = parser.get(section, 'url')
+        path = parser.get(section, 'path')
+
+        try:
+            # list objects in the parent repo tree to find the commit
+            # object that corresponds to the submodule
+            commit = call(['git', 'ls-tree', this['ref'], path])
+
+            # read the commit hash from the output
+            fields = commit.split()
+            if len(fields) >= 2 and fields[1] == 'commit':
+                submodule_commit = commit.split()[2]
+
+                # fail if the commit hash is invalid
+                if len(submodule_commit) != 40:
+                    raise Exception
+            else:
+                app.log(this, 'Skipping submodule "%s" as %s:%s has '
+                        'a non-commit object for it' % (name, repo, ref))
+        except:
+            app.log(this, "ERROR: Git submodules problem")
+            raise SystemExit
