@@ -71,8 +71,7 @@ def build(this):
     app.log(this, 'Start build')
     defs = Definitions()
     if this.get('repo'):
-        app.log(this, 'Upstream version:', repos.get_upstream_version(this))
-        repos.checkout(this)
+        repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
     get_build_system_commands(defs, this)
     for build_step in buildsystem.build_steps:

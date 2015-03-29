@@ -57,31 +57,26 @@ def get_repo_name(repo):
     return ''.join([transl(x) for x in get_repo_url(repo)])
 
 
-def get_upstream_version(this):
+def get_upstream_version(repo, ref):
     try:
-        this['git'] = (os.path.join(app.settings['gits'],
-                                    get_repo_name(this['repo'])))
-        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
+        gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                     '--tags', this['ref']], stderr=fnull)[0:-1]
-            commits = check_output(['git', 'rev-list',
-                                    last_tag + '..' + this['ref'], '--count'])
+                                      '--tags', ref], stderr=fnull)[0:-1]
+            commits = check_output(['git', 'rev-list', last_tag + '..' + ref,
+                                    '--count'])
 
-        result = "%s (%s + %s commits)" % (this.get('ref')[:8], last_tag,
-                                           commits[0:-1])
+        result = "%s (%s + %s commits)" % (ref[:8], last_tag, commits[0:-1])
     except:
-        result = '(No tag found)'
-        if this.get('ref'):
-            result = this.get('ref')[:8] + " " + result
+        result = ref[:8] + " " + "(No tag found)"
 
     return result
 
 
 def get_tree(this):
-    ref = this.get('ref')
-    this['git'] = (os.path.join(app.settings['gits'],
-                   get_repo_name(this['repo'])))
-    if not os.path.exists(this['git']):
+    ref = this['ref']
+    gitdir = os.path.join(app.settings['gits'], get_repo_name(this['repo']))
+    if not os.path.exists(gitdir):
         try:
             url = (app.settings['cache-server-url'] + 'repo='
                    + get_repo_url(this['repo']) + '&ref=' + ref)
@@ -90,9 +85,9 @@ def get_tree(this):
                 return tree
         except:
             app.log(this, 'WARNING: no tree from cache-server', ref)
-            mirror(this)
+            mirror(this['name'], this['repo'])
 
-    with app.chdir(this['git']), open(os.devnull, "w") as fnull:
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
                 stderr=fnull):
             # can't resolve this ref. is it upstream?
@@ -156,14 +151,15 @@ def copy_repo(repo, destdir):
              stderr=fnull)
 
 
-def mirror(this):
+def mirror(name, repo):
     # try tarball first
+    gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+    repo_url = get_repo_url(repo)
     try:
-        os.makedirs(this['git'])
-        repo_url = get_repo_url(this['repo'])
+        os.makedirs(gitdir)
         tar_file = get_repo_name(repo_url) + '.tar'
-        app.log(this, 'Try fetching tarball %s' % tar_file)
-        with app.chdir(this['git']), open(os.devnull, "w") as fnull:
+        app.log(name, 'Try fetching tarball %s' % tar_file)
+        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
             os.remove(tar_file)
@@ -177,16 +173,16 @@ def mirror(this):
                 raise BaseException('Did not get a valid git repo')
             call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
-        app.log(this, 'Using git clone from ', repo_url)
+        app.log(name, 'Using git clone from ', repo_url)
         try:
             with open(os.devnull, "w") as fnull:
-                call(['git', 'clone', '--mirror', '-n', repo_url, this['git']],
+                call(['git', 'clone', '--mirror', '-n', repo_url, gitdir],
                      stdout=fnull, stderr=fnull)
         except:
-            app.log(this, 'ERROR: failed to clone', repo)
+            app.log(name, 'ERROR: failed to clone', repo)
             raise SystemExit
 
-    app.log(this, 'Git repo is mirrored at', this['git'])
+    app.log(name, 'Git repo is mirrored at', gitdir)
 
 
 def fetch(repo):
@@ -194,23 +190,20 @@ def fetch(repo):
         call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
 
 
-def checkout(this):
+def checkout(name, repo, ref, checkoutdir):
     # checkout the required version of this from git
-    with app.chdir(this['build']), open(os.devnull, "w") as fnull:
-        app.log(this, 'Git checkout %s in %s' % (this['repo'], this['build']))
-        this['git'] = (os.path.join(app.settings['gits'],
-                       get_repo_name(this['repo'])))
-        if not os.path.exists(this['git']):
-            mirror(this)
-        copy_repo(this['git'], this['build'])
-        if call(['git', 'checkout', this['ref']], stdout=fnull, stderr=fnull):
-            app.log(this, 'ERROR: git checkout failed for', this['tree'])
+    app.log(name, 'Upstream version:', get_upstream_version(repo, ref))
+    app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
+    with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
+        gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+        if not os.path.exists(gitdir):
+            mirror(name, repo)
+        copy_repo(gitdir, checkoutdir)
+        if call(['git', 'checkout', ref], stdout=fnull, stderr=fnull):
+            app.log(name, 'ERROR: git checkout failed for', ref)
             raise SystemExit
 
-        if os.path.exists(".gitmodules"):
-            checkout_submodules(this)
-
-        utils.set_mtime_recursively(this['build'])
+        utils.set_mtime_recursively(checkoutdir)
 
 
 def checkout_submodules(this):
