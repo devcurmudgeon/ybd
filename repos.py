@@ -199,16 +199,14 @@ def fetch(repo):
 
 def checkout(this):
     # checkout the required version of this from git
-    with app.chdir(this['build']):
+    with app.chdir(this['build']), open(os.devnull, "w") as fnull:
         app.log(this, 'Git checkout %s in %s' % (this['repo'], this['build']))
         this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
         if not os.path.exists(this['git']):
             mirror(this)
         copy_repo(this['git'], this['build'])
-        with open(os.devnull, "w") as fnull:
-            if call(['git', 'checkout', this['ref']], stdout=fnull,
-                    stderr=fnull) != 0:
-                app.log(this, 'ERROR: git checkout failed for', this['tree'])
-                raise SystemExit
+        if call(['git', 'checkout', this['ref']], stdout=fnull, stderr=fnull):
+            app.log(this, 'ERROR: git checkout failed for', this['tree'])
+            raise SystemExit
 
         utils.set_mtime_recursively(this['build'])
