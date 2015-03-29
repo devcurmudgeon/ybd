@@ -191,23 +191,26 @@ def fetch(repo):
 
 
 def checkout(name, repo, ref, checkoutdir):
-    # checkout the required version of this from git
+    gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+    if not os.path.exists(gitdir):
+        mirror(name, repo)
     app.log(name, 'Upstream version:', get_upstream_version(repo, ref))
     app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
+    # checkout the required version of this from git
     with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
-        gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
-        if not os.path.exists(gitdir):
-            mirror(name, repo)
         copy_repo(gitdir, checkoutdir)
         if call(['git', 'checkout', ref], stdout=fnull, stderr=fnull):
             app.log(name, 'ERROR: git checkout failed for', ref)
             raise SystemExit
 
-        utils.set_mtime_recursively(checkoutdir)
+        if os.path.exists('.gitmodules'):
+            checkout_submodules(name, ref)
+
+    utils.set_mtime_recursively(checkoutdir)
 
 
-def checkout_submodules(this):
-    app.log(this, 'Git submodules')
+def checkout_submodules(name, ref):
+    app.log(name, 'Git submodules')
     with open('.gitmodules', "r") as gitfile:
         # drop indentation in sections, as RawConfigParser cannot handle it
         content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
@@ -217,14 +220,14 @@ def checkout_submodules(this):
 
     for section in parser.sections():
         # validate section name against the 'submodule "foo"' pattern
-        name = re.sub(r'submodule "(.*)"', r'\1', section)
+        submodule = re.sub(r'submodule "(.*)"', r'\1', section)
         url = parser.get(section, 'url')
         path = parser.get(section, 'path')
 
         try:
             # list objects in the parent repo tree to find the commit
             # object that corresponds to the submodule
-            commit = call(['git', 'ls-tree', this['ref'], path])
+            commit = check_output(['git', 'ls-tree', ref, path])
 
             # read the commit hash from the output
             fields = commit.split()
@@ -234,9 +237,14 @@ def checkout_submodules(this):
                 # fail if the commit hash is invalid
                 if len(submodule_commit) != 40:
                     raise Exception
+
+                fulldir = os.path.join(os.getcwd(), path)
+                checkout(submodule, url, submodule_commit, fulldir)
+
             else:
                 app.log(this, 'Skipping submodule "%s" as %s:%s has '
-                        'a non-commit object for it' % (name, repo, ref))
+                        'a non-commit object for it' % (name, url))
+
         except:
-            app.log(this, "ERROR: Git submodules problem")
+            app.log(name, "ERROR: Git submodules problem")
             raise SystemExit
