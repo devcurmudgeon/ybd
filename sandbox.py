@@ -161,7 +161,7 @@ def get_binds(this):
     if app.settings['no-ccache']:
         binds = ()
     else:
-        name = os.path.basename(get_repo_url(this))
+        name = os.path.basename(get_repo_url(this['repo']))
         ccache_dir = os.path.join(app.settings['ccache_dir'], name)
         ccache_target = os.path.join(this['assembly'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))

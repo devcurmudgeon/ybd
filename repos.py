@@ -32,9 +32,8 @@ import StringIO
 import re
 
 
-def get_repo_url(this):
-    url = this['repo']
-    url = url.replace('upstream:', 'git://git.baserock.org/delta/')
+def get_repo_url(repo):
+    url = repo.replace('upstream:', 'git://git.baserock.org/delta/')
     url = url.replace('baserock:baserock/',
                       'git://git.baserock.org/baserock/baserock/')
     url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
@@ -45,8 +44,8 @@ def get_repo_url(this):
     return url
 
 
-def quote_url(url):
-    ''' Convert URIs to strings that only contain digits, letters, % and _.
+def get_repo_name(repo):
+    ''' Convert URIs to strings that only contain digits, letters, _ and %.
 
     NOTE: When changing the code of this function, make sure to also apply
     the same to the quote_url() function of lorry. Otherwise the git tarballs
@@ -55,17 +54,13 @@ def quote_url(url):
     '''
     valid_chars = string.digits + string.ascii_letters + '%_'
     transl = lambda x: x if x in valid_chars else '_'
-    return ''.join([transl(x) for x in url])
-
-
-def get_repo_name(this):
-    return quote_url(get_repo_url(this))
-#    return re.split('[:/]', this['repo'])[-1]
+    return ''.join([transl(x) for x in get_repo_url(repo)])
 
 
 def get_upstream_version(this):
     try:
-        this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
+        this['git'] = (os.path.join(app.settings['gits'],
+                                    get_repo_name(this['repo'])))
         with app.chdir(this['git']), open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
                                      '--tags', this['ref']], stderr=fnull)[0:-1]
@@ -84,11 +79,12 @@ def get_upstream_version(this):
 
 def get_tree(this):
     ref = this.get('ref')
-    this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
+    this['git'] = (os.path.join(app.settings['gits'],
+                   get_repo_name(this['repo'])))
     if not os.path.exists(this['git']):
         try:
             url = (app.settings['cache-server-url'] + 'repo='
-                   + get_repo_url(this) + '&ref=' + ref)
+                   + get_repo_url(this['repo']) + '&ref=' + ref)
             with urllib2.urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
                 return tree
@@ -156,8 +152,7 @@ def copy_repo(repo, destdir):
             ref_fh.write("%s\n" % (refline))
     # Finally run a remote update to clear up the refs ready for use.
     with open(os.devnull, "w") as fnull:
-        call(['git', 'remote', 'update', 'origin', '--prune'],
-             stdout=fnull,
+        call(['git', 'remote', 'update', 'origin', '--prune'], stdout=fnull,
              stderr=fnull)
 
 
@@ -165,10 +160,10 @@ def mirror(this):
     # try tarball first
     try:
         os.makedirs(this['git'])
+        repo_url = get_repo_url(this['repo'])
+        tar_file = get_repo_name(repo_url) + '.tar'
+        app.log(this, 'Try fetching tarball %s' % tar_file)
         with app.chdir(this['git']), open(os.devnull, "w") as fnull:
-            app.log(this, 'Try fetching tarball')
-            repo_url = get_repo_url(this)
-            tar_file = quote_url(repo_url) + '.tar'
             call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
             os.remove(tar_file)
@@ -182,13 +177,13 @@ def mirror(this):
                 raise BaseException('Did not get a valid git repo')
             call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
-        app.log(this, 'Using git clone', get_repo_url(this))
+        app.log(this, 'Using git clone from ', repo_url)
         try:
             with open(os.devnull, "w") as fnull:
-                call(['git', 'clone', '--mirror', '-n', get_repo_url(this),
-                      this['git']], stdout=fnull, stderr=fnull)
+                call(['git', 'clone', '--mirror', '-n', repo_url, this['git']],
+                     stdout=fnull, stderr=fnull)
         except:
-            app.log(this, 'ERROR: failed to clone', get_repo_url(this))
+            app.log(this, 'ERROR: failed to clone', repo)
             raise SystemExit
 
     app.log(this, 'Git repo is mirrored at', this['git'])
@@ -203,7 +198,8 @@ def checkout(this):
     # checkout the required version of this from git
     with app.chdir(this['build']), open(os.devnull, "w") as fnull:
         app.log(this, 'Git checkout %s in %s' % (this['repo'], this['build']))
-        this['git'] = (os.path.join(app.settings['gits'], get_repo_name(this)))
+        this['git'] = (os.path.join(app.settings['gits'],
+                       get_repo_name(this['repo'])))
         if not os.path.exists(this['git']):
             mirror(this)
         copy_repo(this['git'], this['build'])
