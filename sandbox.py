@@ -93,7 +93,7 @@ def install_artifact(this, component):
     component = Definitions().get(component)
     if component.get('build-mode') == 'bootstrap':
         return
-    app.log(this, 'Installing %s' % component['cache'])
+#    app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
 
@@ -193,7 +193,7 @@ def clean_env(this):
 
     prefixes = []
 
-    for name in defs.lookup(this, 'build-depends'):
+    for name in this.get('build-depends', []):
         dependency = defs.get(name)
         prefixes.append(dependency.get('prefix'))
     prefixes = set(prefixes)

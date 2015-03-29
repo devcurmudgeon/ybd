@@ -36,12 +36,12 @@ def assemble(target):
 
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
-            for it in defs.lookup(this, 'build-depends'):
+            for it in this.get('build-depends', []):
                 dependency = defs.get(it)
                 assemble(dependency)
                 sandbox.install(this, dependency)
 
-            for it in defs.lookup(this, 'contents'):
+            for it in this.get('contents', []):
                 component = defs.get(it)
                 if component.get('build-mode') == 'bootstrap':
                     continue
@@ -58,7 +58,7 @@ def assemble(target):
             if this.get('devices'):
                 sandbox.create_devices(this)
             cache.cache(this)
-            sandbox.remove(this)
+#            sandbox.remove(this)
 
 
 def build(this):
@@ -76,9 +76,9 @@ def build(this):
 
     get_build_system_commands(defs, this)
     for build_step in buildsystem.build_steps:
-        if defs.lookup(this, build_step):
+        if this.get(build_step):
             app.log(this, 'Running', build_step)
-        for command in defs.lookup(this, build_step):
+        for command in this.get(build_step, []):
             sandbox.run_sandboxed(this, command)
 
 
@@ -100,7 +100,7 @@ def get_build_system_commands(defs, this):
 
     if not build_system:
         for build_step in buildsystem.build_steps:
-            if defs.lookup(this, build_step) != []:
+            if this.get(build_step):
                 return
 
         files = check_output(['ls', this['build']]).decode("utf-8").splitlines()

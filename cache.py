@@ -43,7 +43,7 @@ def cache_key(this):
     hash_factors = {'arch': app.settings['arch']}
 
     for factor in ['build-depends', 'contents']:
-        for it in defs.lookup(definition, factor):
+        for it in definition.get(factor, []):
             component = defs.get(it)
 
             if definition['name'] == component['name']:
@@ -69,6 +69,10 @@ def cache(this):
     utils.set_mtime_recursively(this['install'])
     shutil.make_archive(cachefile, 'gztar', this['install'])
     app.log(this, 'Now cached as', cache_key(this))
+
+
+def checksum(this):
+    call(['tar', 'cf', '-', this['install'], '|', cachefile + '.checksum' ])
 
 
 def unpack(this):

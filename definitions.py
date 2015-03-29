@@ -45,16 +45,14 @@ class Definitions():
                 if this.get('name'):
                     self._insert(this)
 
-                    for dependency in self.lookup(this, 'build-depends'):
-                        if self.lookup(dependency, 'repo') != []:
+                    for dependency in this.get('build-depends', []):
+                        if dependency.get('repo'):
                             self._insert(dependency)
 
-                    for component in self.lookup(this, 'contents'):
-                        component['build-depends'] = (
-                            self.lookup(component, 'build-depends'))
-                        for dependency in self.lookup(this, 'build-depends'):
-                            component['build-depends'].insert(0,
-                                self.lookup(dependency, 'name'))
+                    for component in this.get('contents', []):
+                        component['build-depends'] = component.get('build-depends', [])
+                        for dependency in this.get('build-depends', []):
+                            component['build-depends'].insert(0, dependency)
                         self._insert(component)
         try:
             self.__trees = self._load(os.getcwd(), ".trees")
@@ -78,9 +76,8 @@ class Definitions():
                 definition['contents'] = definition.pop('chunks')
             if definition.get('strata'):
                 definition['contents'] = definition.pop('strata')
-
-            for subcomponent in (self.lookup(definition, 'build-depends') +
-                       self.lookup(definition, 'contents')):
+            for subcomponent in (definition.get('build-depends', []) +
+                                 definition.get('contents', [])):
                 if subcomponent.get('morph'):
                     name = os.path.basename(subcomponent.pop('morph'))
                     subcomponent['name'] = os.path.splitext(name)[0]
@@ -110,21 +107,15 @@ class Definitions():
 
     def get(self, this):
         for definition in self.__definitions:
-            if (definition['name'] == this or
-                    definition['name'] == self.lookup(this, 'name')):
+            if (definition['name'] == this):
+                return definition
+
+        for definition in self.__definitions:
+            if (definition['name'] == this['name']):
                 return definition
 
         app.log(this, 'ERROR: no definition found for', this)
         raise SystemExit
-
-    def lookup(self, thing, value):
-        ''' Look up value from thing, return [] if none. '''
-        val = []
-        try:
-            val = thing[value]
-        except:
-            pass
-        return val
 
     def version(self, this):
         try:
