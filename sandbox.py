@@ -39,8 +39,9 @@ def setup(this):
     this['assembly'] = tempfile.mkdtemp()
     this['build'] = os.path.join(this['assembly'], this['name']+ '.build')
     this['install'] = os.path.join(this['assembly'], this['name'] + '.inst')
+    this['baserockdir'] = os.path.join(this['install'], 'baserock')
     this['tmp'] = os.path.join(this['assembly'], 'tmp')
-    for directory in ['build', 'install', 'tmp']:
+    for directory in ['build', 'install', 'tmp', 'baserockdir']:
         os.makedirs(this[directory])
     this['log'] = os.path.join(app.settings['artifacts'],
                                this['cache'] + '.build-log')
@@ -83,6 +84,9 @@ def remove(this):
 
 def install(this, component, permit_bootstrap=True):
     component = Definitions().get(component)
+    if os.path.exists(os.path.join(this['assembly'], 'baserock',
+                                   component['name'] + '.meta')):
+        return
     for subcomponent in component.get('contents', []):
         install_artifact(this, subcomponent, False)
     for dependency in component.get('build-depends', []):

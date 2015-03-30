@@ -54,9 +54,10 @@ def assemble(target):
                 app.log(this, "No ldconfig because bootstrap mode is engaged")
 
             build(this)
-
             if this.get('devices'):
                 sandbox.create_devices(this)
+            do_manifest(this)
+
             cache.cache(this)
 #            sandbox.remove(this)
 
@@ -73,7 +74,7 @@ def build(this):
     if this.get('repo'):
         repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
-    get_build_system_commands(defs, this)
+    get_build_commands(this)
     for build_step in buildsystem.build_steps:
         if this.get(build_step):
             app.log(this, 'Running', build_step)
@@ -81,7 +82,7 @@ def build(this):
             sandbox.run_sandboxed(this, command)
 
 
-def get_build_system_commands(defs, this):
+def get_build_commands(this):
     '''Get commands specified in this, plus commmands implied by build_system
 
     If bs is unspecified and all steps are empty, detect bs & use its commands
@@ -109,3 +110,9 @@ def get_build_system_commands(defs, this):
         if this.get(build_step, None) is None:
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)
+
+
+def do_manifest(this):
+    metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
+    with app.chdir(this['install']), open(metafile, "w") as f:
+        call(['find'], stdout=f, stderr=f)
