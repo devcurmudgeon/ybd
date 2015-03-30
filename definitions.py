@@ -25,12 +25,12 @@ from subprocess import check_output
 
 
 class Definitions():
-    __definitions = []
+    __definitions = {}
     __trees = {}
 
     def __init__(self):
         ''' Load all definitions from `cwd` tree. '''
-        if self.__definitions != []:
+        if self.__definitions != {}:
             return
 
         for dirname, dirnames, filenames in os.walk(os.getcwd()):
@@ -42,18 +42,9 @@ class Definitions():
                     continue
 
                 definition = self._load(os.path.join(dirname, filename))
+
                 if definition.get('name'):
-                    self._insert(definition)
-
-                    for dependency in definition.get('build-depends', []):
-                        if dependency.get('repo'):
-                            self._insert(dependency)
-
-                    for this in definition.get('contents', []):
-                        this['build-depends'] = this.get('build-depends', [])
-                        for dependency in definition.get('build-depends', []):
-                            this['build-depends'].insert(0, dependency)
-                        self._insert(this)
+                    self._tidy(definition)
         try:
             self.__trees = self._load(os.getcwd(), ".trees")
             for definition in self.__definitions:
@@ -61,6 +52,7 @@ class Definitions():
 
         except:
             return
+
 
     def _load(self, filename):
         ''' Load a single definition file '''
@@ -86,35 +78,45 @@ class Definitions():
 
         return definition
 
+    def _tidy(self, this):
+        for index, dependency in enumerate(this.get('build-depends', [])):
+            if type(dependency) is dict:
+                 this['build-depends'][index] = dependency['name']
+
+        for index, component in enumerate(this.get('contents', [])):
+            if type(component) is dict and component.get('repo'):
+                self._insert(component)
+                component['build-depends'] = (this.get('build-depends', []) +
+                                              component.get('build-depends', []))
+                this['contents'][index] = component['name']
+
+        self._insert(this)
+
     def _insert(self, this):
-        for i, definition in enumerate(self.__definitions):
-            if definition['name'] == this['name']:
-                if definition.get('ref') is None or this.get('ref') is None:
-                    for key in this:
-                        definition[key] = this[key]
-                    return
-
+        definition = self.__definitions.get(this['name'])
+        if definition:
+            if definition.get('ref') is None or this.get('ref') is None:
                 for key in this:
-                    if key == 'morph' or this[key] is None:
-                        continue
+                    definition[key] = this[key]
 
-                    if definition[key] != this[key]:
-                        app.log(this, 'WARNING: multiple definitions of', key)
-                        app.log(this, '%s | %s' % (definition[key], this[key]))
+            for key in this:
+                if key == 'morph' or this[key] is None:
+                    continue
 
-        self.__definitions.append(this)
+                if definition.get(key) != this[key]:
+                    app.log(this, 'WARNING: multiple definitions of', key)
+                    app.log(this, '%s | %s' % (definition.get(key), this[key]))
+        else:
+            self.__definitions[this['name']] = this
+            definition = self.__definitions.get(this['name'])
+
+        return definition
 
     def get(self, this):
-        for definition in self.__definitions:
-            if (definition['name'] == this):
-                return definition
+        if type(this) is str:
+            return self.__definitions.get(this)
 
-        for definition in self.__definitions:
-            if (definition['name'] == this['name']):
-                return definition
-
-        app.log(this, 'ERROR: no definition found for', this)
-        raise SystemExit
+        return self.__definitions.get(this['name'])
 
     def version(self, this):
         try:
@@ -125,7 +127,7 @@ class Definitions():
     def save_trees(self):
         self.__trees = {}
         for definition in self.__definitions:
-            if definition.get('tree') is not None:
+            if type(definition) is dict and definition.get('tree') is not None:
                 self.__trees[definition['name']] = definition.get('tree')
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.dump(self.__trees, default_flow_style=False))
