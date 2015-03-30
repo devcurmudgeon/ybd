@@ -34,6 +34,10 @@ def cache_key(this):
     defs = definitions.Definitions()
     definition = defs.get(this)
 
+    if definition is None:
+        app.log(this, 'ERROR: No definition found for', this)
+        raise SystemExit
+
     if definition.get('cache'):
         return definition['cache']
 
