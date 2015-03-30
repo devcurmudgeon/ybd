@@ -84,7 +84,7 @@ def unpack(this):
             call(['tar', 'xf', cachefile, '--directory', unpackdir])
         return unpackdir
 
-    app.log(component, 'Cached artifact not found')
+    app.log(this, 'ERROR: Cached artifact not found')
     raise SystemExit
 
 
