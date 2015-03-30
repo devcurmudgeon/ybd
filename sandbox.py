@@ -74,7 +74,6 @@ def setup(this):
                 if os.environ.get(key):
                     os.environ.pop(key)
         os.chdir(currentdir)
-        app.log(this, 'Assembly directory is still at', this['assembly'])
 
 
 def remove(this):

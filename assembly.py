@@ -59,7 +59,7 @@ def assemble(target):
             do_manifest(this)
 
             cache.cache(this)
-#            sandbox.remove(this)
+            sandbox.remove(this)
 
 
 def build(this):

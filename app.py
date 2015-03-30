@@ -85,9 +85,7 @@ def setup(target, arch):
         yield
 
     finally:
-        log(target, 'ERROR: Stopped')
-
-    log(target, 'DONE')
+        log(target, 'Finished')
 
 
 @contextlib.contextmanager
