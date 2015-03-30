@@ -194,7 +194,7 @@ def checkout(name, repo, ref, checkoutdir):
     gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
-    app.log(name, 'Upstream version:', get_upstream_version(repo, ref))
+    app.log(name, 'Upstream version %s' % repo, get_upstream_version(repo, ref))
     app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
     # checkout the required version of this from git
     with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
@@ -239,7 +239,7 @@ def checkout_submodules(name, ref):
                     raise Exception
 
                 fulldir = os.path.join(os.getcwd(), path)
-                checkout(submodule, url, submodule_commit, fulldir)
+                checkout(name, url, submodule_commit, fulldir)
 
             else:
                 app.log(this, 'Skipping submodule "%s" as %s:%s has '
