@@ -106,9 +106,6 @@ class Definitions():
                     app.log(this, '%s | %s' % (definition.get(key), this[key]))
         else:
             self.__definitions[this['name']] = this
-            definition = self.__definitions.get(this['name'])
-
-        return definition
 
     def get(self, this):
         if type(this) is str:
