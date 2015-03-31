@@ -188,11 +188,22 @@ def fetch(repo):
     with app.chdir(repo), open(os.devnull, "w") as fnull:
         call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
 
+def mirror_has_ref(gitdir, ref):
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        out = call(['git', 'cat-file', '-t', ref], stdout=fnull, stderr=fnull)
+        return out == 0
+
+def update_mirror(name, repo, gitdir):
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        app.log(name, 'Refreshing mirror for %s' % repo)
+        call(['git', 'remote', 'update', 'origin'], stdout=fnull, stderr=fnull)
 
 def checkout(name, repo, ref, checkoutdir):
     gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
+    elif not mirror_has_ref(gitdir, ref):
+        update_mirror(name, repo, gitdir)
     app.log(name, 'Upstream version %s' % repo, get_upstream_version(repo, ref))
     app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
     # checkout the required version of this from git
