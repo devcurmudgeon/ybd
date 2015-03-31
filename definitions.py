@@ -32,7 +32,6 @@ class Definitions():
         ''' Load all definitions from `cwd` tree. '''
         if self.__definitions != {}:
             return
-
         for dirname, dirnames, filenames in os.walk(os.getcwd()):
             if '.git' in dirnames:
                 dirnames.remove('.git')
@@ -42,14 +41,13 @@ class Definitions():
                     continue
 
                 definition = self._load(os.path.join(dirname, filename))
-
                 if definition.get('name'):
                     self._tidy(definition)
-        try:
-            self.__trees = self._load(os.getcwd(), ".trees")
-            for definition in self.__definitions:
-                definition['tree'] = self.__trees.get(definition['name'])
 
+        try:
+            self.__trees = self._load(".trees")
+            for name in self.__definitions:
+                self.__definitions[name]['tree'] = self.__trees.get(name)
         except:
             return
 
@@ -127,7 +125,7 @@ class Definitions():
     def save_trees(self):
         self.__trees = {}
         for name in self.__definitions:
-            if self.__definitions.get(name).get('tree') is not None:
-                self.__trees[name] = self.__definitions.get(name).get('tree')
+            if self.__definitions[name].get('tree') is not None:
+                self.__trees[name] = self.__definitions[name]['tree']
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.dump(self.__trees, default_flow_style=False))
