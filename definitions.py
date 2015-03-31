@@ -82,10 +82,10 @@ class Definitions():
                  this['build-depends'][index] = dependency['name']
 
         for index, component in enumerate(this.get('contents', [])):
-            if type(component) is dict and component.get('repo'):
-                self._insert(component)
+            if type(component) is dict:
                 component['build-depends'] = (this.get('build-depends', []) +
                                               component.get('build-depends', []))
+                self._insert(component)
                 this['contents'][index] = component['name']
 
         self._insert(this)
