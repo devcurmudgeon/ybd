@@ -81,23 +81,23 @@ def remove(this):
         shutil.rmtree(this['assembly'])
 
 
-def install(this, component, permit_bootstrap=True):
-    component = Definitions().get(component)
+def install(this, component):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
+
     app.log(this, 'Installing %s' % component['cache'])
-    for subcomponent in component.get('contents', []):
-        install_artifact(this, subcomponent, False)
-    for dependency in component.get('build-depends', []):
-        install(this, dependency, False)
-    install_artifact(this, component, permit_bootstrap)
+    for it in component.get('build-depends', []):
+        dependency = Definitions().get(it)
+        if (dependency.get('build-mode', 'staging') ==
+            component.get('build-mode', 'staging')):
+            install(this, dependency)
 
+    for it in component.get('contents', []):
+        subcomponent = Definitions().get(it)
+        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            install(this, subcomponent)
 
-def install_artifact(this, component, permit_bootstrap=True):
-    component = Definitions().get(component)
-    if component.get('build-mode') == 'bootstrap' and permit_bootstrap == False:
-        return
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
 
