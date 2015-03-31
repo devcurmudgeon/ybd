@@ -33,7 +33,6 @@ from subprocess import call
 def cache_key(this):
     defs = definitions.Definitions()
     definition = defs.get(this)
-
     if definition is None:
         app.log(this, 'ERROR: No definition found for', this)
         raise SystemExit
@@ -46,15 +45,11 @@ def cache_key(this):
 
     hash_factors = {'arch': app.settings['arch']}
 
-    for factor in ['build-depends', 'contents']:
-        for it in definition.get(factor, []):
-            component = defs.get(it)
+    for factor in definition.get('build-depends', []):
+        hash_factors[factor] = cache_key(factor)
 
-            if definition['name'] == component['name']:
-                app.log(this, 'ERROR: recursion loop for', component['name'])
-                raise SystemExit
-
-            hash_factors[component['name']] = cache_key(component)
+    for factor in definition.get('contents', []):
+        hash_factors[factor] = cache_key(factor)
 
     for factor in ['tree'] + buildsystem.build_steps:
         if definition.get(factor):
