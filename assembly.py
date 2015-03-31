@@ -43,10 +43,9 @@ def assemble(target):
 
             for it in this.get('contents', []):
                 component = defs.get(it)
-                if component.get('build-mode') == 'bootstrap':
-                    continue
-                assemble(component)
-                sandbox.install(this, component)
+                if component.get('build-mode') != 'bootstrap':
+                    assemble(component)
+                    sandbox.install(this, component)
 
             if this.get('build-mode') != 'bootstrap':
                 sandbox.ldconfig(this)
