@@ -220,7 +220,7 @@ def clean_env(this):
     env['PATH'] = ':'.join(path)
     env['PREFIX'] = this.get('prefix') or '/usr'
     env['MAKEFLAGS'] = '-j%s' % (this.get('max-jobs') or
-                                 app.settings['max_jobs'])
+                                 app.settings['max-jobs'])
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'

@@ -83,7 +83,7 @@ def setup(target, arch):
         # the right flag in an environment variable.
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
-        settings['max_jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
+        settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
         yield
 
     finally:
