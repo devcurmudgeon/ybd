@@ -126,8 +126,8 @@ class Definitions():
 
     def save_trees(self):
         self.__trees = {}
-        for definition in self.__definitions:
-            if type(definition) is dict and definition.get('tree') is not None:
-                self.__trees[definition['name']] = definition.get('tree')
+        for name in self.__definitions:
+            if self.__definitions.get(name).get('tree') is not None:
+                self.__trees[name] = self.__definitions.get(name).get('tree')
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.dump(self.__trees, default_flow_style=False))
