@@ -29,17 +29,17 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-cp /src/cache/artifacts/*$1-build-log ./$1.morph-build-log
+cp /src/cache/artifacts/*.$1-build-log ./$1.morph-build-log
 sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.morph-build-log
 
 cp /src/cache/ybd-artifacts/$1@*.build-log ./$1.ybd-build-log
 sed -i 's|src/tmp/staging/[^/]*|STAGING|g' ./$1.ybd-build-log
 diff -U0 ./$1.morph-build-log ./$1.ybd-build-log | less
 
-echo 'morph' ; tar -tf /src/cache/artifacts/*$1-misc | wc -l
+echo 'morph' ; tar -tf /src/cache/artifacts/*.$1-misc | wc -l
 echo 'ybd  ' ; tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | wc -l
 
-tar -tf /src/cache/artifacts/*$1-misc | sort > ./$1.morph.output
+tar -tf /src/cache/artifacts/*.$1-misc | sort > ./$1.morph.output
 tar -tf /src/cache/ybd-artifacts/$1@*tar.gz | cut -c3- | sort > ./$1.ybd.output
 
 diff -U0 ./$1.morph.output ./$1.ybd.output | less
