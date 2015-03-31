@@ -86,6 +86,7 @@ def install(this, component, permit_bootstrap=True):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
+    app.log(this, 'Installing %s' % component['cache'])
     for subcomponent in component.get('contents', []):
         install_artifact(this, subcomponent, False)
     for dependency in component.get('build-depends', []):
@@ -97,7 +98,6 @@ def install_artifact(this, component, permit_bootstrap=True):
     component = Definitions().get(component)
     if component.get('build-mode') == 'bootstrap' and permit_bootstrap == False:
         return
-    app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
 
