@@ -199,7 +199,7 @@ def clean_env(this):
 
     for name in this.get('build-depends', []):
         dependency = defs.get(name)
-        prefixes.append(dependency.get('prefix'))
+        prefixes.append(dependency.get('prefix', '/usr'))
     prefixes = set(prefixes)
     for prefix in prefixes:
         if prefix:
