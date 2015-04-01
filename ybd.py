@@ -27,11 +27,12 @@ import app
 from assembly import assemble
 import sandbox
 
-target = os.path.splitext(os.path.basename(sys.argv[1]))[0]
+target = sys.argv[1]
 arch = sys.argv[2]
 with app.setup(target, arch):
     with app.timer('TOTAL', 'YBD starts'):
+        defs = Definitions(target)
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(target)
-        Definitions().save_trees()
+        defs.save_trees()
         assemble(target)
