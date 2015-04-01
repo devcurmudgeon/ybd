@@ -37,20 +37,15 @@ class Definitions():
                 dirnames.remove('.git')
 
             for filename in filenames:
-                if not filename.endswith(('.def', '.morph')):
-                    continue
-
-                definition = self._load(dirname, filename)
-                if definition.get('name'):
+                if filename.endswith(('.def', '.morph')):
+                    definition = self._load(dirname, filename)
                     self._tidy(definition)
-
         try:
             self.__trees = self._load(".trees")
             for name in self.__definitions:
                 self.__definitions[name]['tree'] = self.__trees.get(name)
         except:
             return
-
 
     def _load(self, dirname, filename):
         ''' Load a single definition file '''
@@ -78,15 +73,13 @@ class Definitions():
 
     def _tidy(self, this):
         for index, dependency in enumerate(this.get('build-depends', [])):
-            if type(dependency) is dict:
-                 this['build-depends'][index] = dependency['name']
+            this['build-depends'][index] = dependency['name']
 
         for index, component in enumerate(this.get('contents', [])):
-            if type(component) is dict:
-                component['build-depends'] = (this.get('build-depends', []) +
-                                              component.get('build-depends', []))
-                self._insert(component)
-                this['contents'][index] = component['name']
+            component['build-depends'] = (this.get('build-depends', []) +
+                                          component.get('build-depends', []))
+            self._insert(component)
+            this['contents'][index] = component['name']
 
         self._insert(this)
 
@@ -98,9 +91,6 @@ class Definitions():
                     definition[key] = this[key]
 
             for key in this:
-                if key == 'morph' or this[key] is None:
-                    continue
-
                 if definition.get(key) != this[key]:
                     app.log(this, 'WARNING: multiple definitions of', key)
                     app.log(this, '%s | %s' % (definition.get(key), this[key]))
