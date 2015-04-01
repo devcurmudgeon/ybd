@@ -40,7 +40,7 @@ class Definitions():
                 if not filename.endswith(('.def', '.morph')):
                     continue
 
-                definition = self._load(os.path.join(dirname, filename))
+                definition = self._load(dirname, filename)
                 if definition.get('name'):
                     self._tidy(definition)
 
@@ -52,10 +52,10 @@ class Definitions():
             return
 
 
-    def _load(self, filename):
+    def _load(self, dirname, filename):
         ''' Load a single definition file '''
         try:
-            with open(filename) as f:
+            with open(os.path.join(dirname, filename)) as f:
                 text = f.read()
 
             definition = yaml.safe_load(text)
