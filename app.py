@@ -23,6 +23,8 @@ from subprocess import check_output
 from subprocess import call
 from multiprocessing import cpu_count
 
+xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
+                 os.path.join(os.path.expanduser('~'), '.cache')
 
 settings = {}
 
@@ -56,7 +58,7 @@ def setup(target, arch):
         settings['no-distcc'] = True
         settings['base-path'] = ['/usr/bin', '/bin', '/usr/sbin', '/sbin' ]
 
-        settings['ccache_dir'] = '/src/cache/ccache'
+        settings['ccache_dir'] = os.path.join(xdg_cache_home, 'ybd', 'ccache')
         settings['cache-server-url'] = 'http://git.baserock.org:8080/1.0/sha1s?'
         settings['tar-url'] = 'http://git.baserock.org/tarballs'
         settings['base'] = os.path.expanduser('~/.ybd/')
