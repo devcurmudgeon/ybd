@@ -25,64 +25,27 @@ from subprocess import check_output
 
 
 class Definitions():
-    __files = {}
     __definitions = {}
     __trees = {}
 
-    def __init__(self, target=''):
+    def __init__(self):
         ''' Load all definitions from `cwd` tree. '''
         if self.__definitions != {}:
             return
-        for dirname, dirnames, filenames in os.walk('.'):
+        for dirname, dirnames, filenames in os.walk(os.getcwd()):
             if '.git' in dirnames:
                 dirnames.remove('.git')
 
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
-                    this = self._load(dirname, filename)
-                    path = os.path.join(dirname[2:], filename)
-                    self.__files[path] = this
-                    if path == target or this['name'] == target:
-                        target = path
-                        app.log(this, 'Target is', path)
-
-        if not self.__files.get(target):
-            app.log(target, 'ERROR: No definition found for', target)
-            raise SystemExit
-
-        self.define(target)
-
+                    definition = self._load(dirname, filename)
+                    self._tidy(definition)
         try:
             self.__trees = self._load(".trees")
             for name in self.__definitions:
                 self.__definitions[name]['tree'] = self.__trees.get(name)
         except:
             return
-
-    def define(self, target):
-        definition = self.__definitions.get(self.__files[target]['name'])
-        if definition:
-            return definition['name']
-        this = self.__files[target]
-        # handle old morph syntax...
-        for subset in ['chunks', 'strata']:
-            if this.get(subset):
-                this['contents'] = this.pop(subset)
-        for subset in ['build-depends', 'contents']:
-            for component in this.get(subset, []):
-                if type(component) is dict and component.get('morph'):
-                    component['path'] = component.pop('morph')
-                    self.define(component['path'])
-
-        for index, dependency in enumerate(this.get('build-depends', [])):
-            this['build-depends'][index] = self.define(dependency['path'])
-
-        for index, component in enumerate(this.get('contents', [])):
-            component['build-depends'] = (this.get('build-depends', []) +
-                                          component.get('build-depends', []))
-            this['contents'][index] = self._insert(component)
-
-        return self._insert(this)
 
     def _load(self, dirname, filename):
         ''' Load a single definition file '''
@@ -92,10 +55,33 @@ class Definitions():
 
             definition = yaml.safe_load(text)
 
+            # handle old morph syntax...
+            if definition.get('chunks'):
+                definition['contents'] = definition.pop('chunks')
+            if definition.get('strata'):
+                definition['contents'] = definition.pop('strata')
+            for subcomponent in (definition.get('build-depends', []) +
+                                 definition.get('contents', [])):
+                if subcomponent.get('morph'):
+                    name = os.path.basename(subcomponent.pop('morph'))
+                    subcomponent['name'] = os.path.splitext(name)[0]
+
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
 
         return definition
+
+    def _tidy(self, this):
+        for index, dependency in enumerate(this.get('build-depends', [])):
+            this['build-depends'][index] = dependency['name']
+
+        for index, component in enumerate(this.get('contents', [])):
+            component['build-depends'] = (this.get('build-depends', []) +
+                                          component.get('build-depends', []))
+            self._insert(component)
+            this['contents'][index] = component['name']
+
+        self._insert(this)
 
     def _insert(self, this):
         definition = self.__definitions.get(this['name'])
@@ -111,11 +97,10 @@ class Definitions():
         else:
             self.__definitions[this['name']] = this
 
-        return this['name']
-
     def get(self, this):
         if type(this) is str:
             return self.__definitions.get(this)
+
         return self.__definitions.get(this['name'])
 
     def version(self, this):
