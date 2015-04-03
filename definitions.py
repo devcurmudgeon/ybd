@@ -32,14 +32,14 @@ class Definitions():
         ''' Load all definitions from `cwd` tree. '''
         if self.__definitions != {}:
             return
-        for dirname, dirnames, filenames in os.walk(os.getcwd()):
+        for dirname, dirnames, filenames in os.walk('.'):
             if '.git' in dirnames:
                 dirnames.remove('.git')
 
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
-                    definition = self._load(dirname, filename)
-                    self._tidy(definition)
+                    definition = self._load(os.path.join(dirname, filename))
+
         try:
             self.__trees = self._load(".trees")
             for name in self.__definitions:
@@ -47,41 +47,46 @@ class Definitions():
         except:
             return
 
-    def _load(self, dirname, filename):
+    def _load(self, path):
         ''' Load a single definition file '''
         try:
-            with open(os.path.join(dirname, filename)) as f:
+            with open(path) as f:
                 text = f.read()
-
             definition = yaml.safe_load(text)
-
-            # handle old morph syntax...
-            if definition.get('chunks'):
-                definition['contents'] = definition.pop('chunks')
-            if definition.get('strata'):
-                definition['contents'] = definition.pop('strata')
-            for subcomponent in (definition.get('build-depends', []) +
-                                 definition.get('contents', [])):
-                if subcomponent.get('morph'):
-                    name = os.path.basename(subcomponent.pop('morph'))
-                    subcomponent['name'] = os.path.splitext(name)[0]
-
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
+            return None
 
-        return definition
+        definition['path'] = path[2:]
 
-    def _tidy(self, this):
-        for index, dependency in enumerate(this.get('build-depends', [])):
-            this['build-depends'][index] = dependency['name']
+        # handle morph syntax oddities...
+        for subset in ['chunks', 'strata']:
+            if definition.get(subset):
+                definition['contents'] = definition.pop(subset)
 
-        for index, component in enumerate(this.get('contents', [])):
-            component['build-depends'] = (this.get('build-depends', []) +
+        for component in (definition.get('build-depends', []) +
+                          definition.get('contents', [])):
+            if component.get('morph'):
+                component['path'] = component.pop('morph')
+                if component.get('name') is None:
+                    name = os.path.basename(component['path'])
+                    component['name'] = os.path.splitext(name)[0]
+            if component['name'] == definition['name']:
+                app.log(definition, 'WARNING: %s contains' % definition['name'],
+                        component['name'])
+
+        for index, dependency in enumerate(definition.get('build-depends', [])):
+            definition['build-depends'][index] = dependency['name']
+
+        for index, component in enumerate(definition.get('contents', [])):
+            component['build-depends'] = (definition.get('build-depends', []) +
                                           component.get('build-depends', []))
             self._insert(component)
-            this['contents'][index] = component['name']
+            definition['contents'][index] = component['name']
 
-        self._insert(this)
+        self._insert(definition)
+
+        return definition
 
     def _insert(self, this):
         definition = self.__definitions.get(this['name'])
