@@ -39,13 +39,16 @@ def assemble(target):
             for it in this.get('build-depends', []):
                 dependency = defs.get(it)
                 assemble(dependency)
-                sandbox.install(this, dependency)
+                sandbox.install(this, dependency,
+                                force_copy=this.get('kind', None) == "system")
 
             for it in this.get('contents', []):
                 component = defs.get(it)
                 if component.get('build-mode') != 'bootstrap':
                     assemble(component)
-                    sandbox.install(this, component)
+                    sandbox.install(this, component,
+                                    force_copy=this.get('kind',
+                                                        None) == "system")
 
             if this.get('build-mode') != 'bootstrap':
                 sandbox.ldconfig(this)
@@ -57,7 +60,7 @@ def assemble(target):
                 sandbox.create_devices(this)
             do_manifest(this)
 
-            cache.cache(this)
+            cache.cache(this, full_root=this.get('kind', None) == "system")
             sandbox.remove(this)
 
 
@@ -79,7 +82,8 @@ def build(this):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
             sandbox.run_sandboxed(this, command,
-                                  allow_parallel=('build' in build_step))
+                                  allow_parallel=('build' in build_step),
+                                  readwrite_root=(this.get('kind') == 'system'))
 
 
 def get_build_commands(this):
@@ -111,6 +115,32 @@ def get_build_commands(this):
             if build_system.commands.get(build_step):
                 this[build_step] = build_system.commands.get(build_step)
 
+    if this.get('kind', None) == "system":
+        # Systems must run their integration scripts as install commands
+        this['install-commands'] = gather_integration_commands(this)
+
+def gather_integration_commands(this):
+    # 1. iterate all subcomponents (recursively) looking for sys-int commands
+    # 2. gather them all up
+    # 3. asciibetically sort them
+    # 4. concat the lists
+
+    defs = Definitions()
+
+    def _gather_recursively(component, commands):
+        if 'system-integration' in component:
+            for product, integrations in component['system-integration'].iteritems():
+                for name, cmdseq in integrations.iteritems():
+                    commands["%s-%s" % (name, product)] = cmdseq
+        for subcomp in component.get('contents', []):
+            _gather_recursively(defs.get(subcomp), commands)
+
+    all_commands = {}
+    _gather_recursively(this, all_commands)
+    result = []
+    for key in sorted(all_commands.keys()):
+        result.extend(all_commands[key])
+    return None if result == [] else result
 
 def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')

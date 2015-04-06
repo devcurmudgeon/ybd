@@ -19,6 +19,7 @@ import os
 import textwrap
 import stat
 import time
+import shutil
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
                           mount_proc=False, unshare_net=False,
@@ -205,6 +206,20 @@ def invert_paths(tree_walker, paths):
             else:
                 yield fullpath
 
+def copy_all_files(srcpath, destpath):
+    '''Copy every file in the source path to the destination.
+
+    If an exception is raised, the staging-area is indeterminate.
+
+    '''
+
+    def _copyfun(inpath, outpath):
+        with open(inpath, "r") as infh:
+            with open(outpath, "w") as outfh:
+                shutil.copyfileobj(infh, outfh, 1024*1024*4)
+        shutil.copystat(inpath, outpath)
+
+    _process_tree(srcpath, destpath, _copyfun)
 
 def hardlink_all_files(srcpath, destpath):
     '''Hardlink every file in the path to the staging-area
@@ -212,7 +227,9 @@ def hardlink_all_files(srcpath, destpath):
     If an exception is raised, the staging-area is indeterminate.
 
     '''
+    _process_tree(srcpath, destpath, os.link)
 
+def _process_tree(srcpath, destpath, actionfunc):
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
 
@@ -226,8 +243,9 @@ def hardlink_all_files(srcpath, destpath):
                           ' destination has %s' % (srcpath, destpath))
 
         for entry in os.listdir(srcpath):
-            hardlink_all_files(os.path.join(srcpath, entry),
-                                     os.path.join(destpath, entry))
+            _process_tree(os.path.join(srcpath, entry),
+                          os.path.join(destpath, entry),
+                          actionfunc)
     elif stat.S_ISLNK(mode):
         # Copy the symlink.
         if os.path.lexists(destpath):
@@ -235,10 +253,10 @@ def hardlink_all_files(srcpath, destpath):
         os.symlink(os.readlink(srcpath), destpath)
 
     elif stat.S_ISREG(mode):
-        # Hardlink the file.
+        # Process the file.
         if os.path.lexists(destpath):
             os.remove(destpath)
-        os.link(srcpath, destpath)
+        actionfunc(srcpath, destpath)
 
     elif stat.S_ISCHR(mode) or stat.S_ISBLK(mode):
         # Block or character device. Put contents of st_dev in a mknod.
