@@ -38,3 +38,4 @@ with app.setup(target, arch):
             cache.get_cache(app.settings['target'])
         defs.save_trees()
         assemble(app.settings['target'])
+app.log(app.settings['target'], 'Finished')
