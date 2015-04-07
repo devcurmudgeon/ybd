@@ -86,6 +86,7 @@ def install(this, component, force_copy=False):
                                    component['name'] + '.meta')):
         return
 
+    app.log(this, 'Installing %s' % component['cache'])
     _install(this, component, force_copy)
 
 
@@ -107,10 +108,8 @@ def _install(this, component, force_copy):
 
     unpackdir = cache.unpack(component)
     if force_copy:
-        app.log(this, 'Installing (by copy) %s' % component['cache'])
         utils.copy_all_files(unpackdir, this['assembly'])
     else:
-        app.log(this, 'Installing (by link) %s' % component['cache'])
         utils.hardlink_all_files(unpackdir, this['assembly'])
 
 
