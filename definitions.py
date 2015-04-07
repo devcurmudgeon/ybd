@@ -40,7 +40,9 @@ class Definitions():
                 if filename.endswith(('.def', '.morph')):
                     definition = self._load(os.path.join(dirname, filename))
         try:
-            self.__trees = self._load(".trees")
+            with open(".trees") as f:
+                text = f.read()
+            self.__trees = yaml.safe_load(text)
             for name in self.__definitions:
                 self.__definitions[name]['tree'] = self.__trees.get(name)
         except:
