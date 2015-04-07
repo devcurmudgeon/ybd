@@ -67,6 +67,7 @@ def cache(this, full_root=False):
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
     if full_root:
         shutil.make_archive(cachefile, 'tar', this['assembly'])
+        call(['mv', cachefile + '.tar', cachefile + '.tar.gz'])
     else:
         utils.set_mtime_recursively(this['install'])
         shutil.make_archive(cachefile, 'gztar', this['install'])
