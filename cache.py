@@ -80,7 +80,8 @@ def unpack(this):
         unpackdir = cachefile + '.unpacked'
         if not os.path.exists(unpackdir):
             os.makedirs(unpackdir)
-            call(['tar', 'xf', cachefile, '--directory', unpackdir])
+            if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
+                app.log(this, 'ERROR: Problem unpacking', cachefile)
         return unpackdir
 
     app.log(this, 'ERROR: Cached artifact not found')
