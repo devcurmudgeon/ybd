@@ -32,14 +32,13 @@ class Definitions():
         ''' Load all definitions from `cwd` tree. '''
         if self.__definitions != {}:
             return
+
         for dirname, dirnames, filenames in os.walk('.'):
             if '.git' in dirnames:
                 dirnames.remove('.git')
-
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
                     definition = self._load(os.path.join(dirname, filename))
-
         try:
             self.__trees = self._load(".trees")
             for name in self.__definitions:
@@ -58,41 +57,44 @@ class Definitions():
             return None
 
         definition['path'] = path[2:]
+        self._fix_path_name(definition)
 
         # handle morph syntax oddities...
         for index, component in enumerate(definition.get('build-depends', [])):
-            if component.get('morph'):
-                component['path'] = component.pop('morph')
-                if component.get('name') is None:
-                    name = os.path.basename(component['path'])
-                    component['name'] = os.path.splitext(name)[0]
-            self._insert(component)
-            definition['build-depends'][index] = component['name']
+            self._fix_path_name(component)
+            definition['build-depends'][index] = self._insert(component)
 
         for subset in ['chunks', 'strata']:
             if definition.get(subset):
                 definition['contents'] = definition.pop(subset)
 
+        lookup = {}
         for index, component in enumerate(definition.get('contents', [])):
-            if component.get('morph'):
-                component['path'] = component.pop('morph')
-                if component.get('name') is None:
-                    name = os.path.basename(component['path'])
-                    component['name'] = os.path.splitext(name)[0]
-            component['build-depends'] = (definition.get('build-depends', []) +
-                                          component.get('build-depends', []))
+            self._fix_path_name(component)
+            lookup[component['name']] = component['path']
             if component['name'] == definition['name']:
                 app.log(definition, 'WARNING: %s contains' % definition['name'],
                         component['name'])
-            self._insert(component)
-            definition['contents'][index] = component['name']
+            for x, it in enumerate(component.get('build-depends', [])):
+                component['build-depends'][x] = lookup.get(it, it)
 
-        self._insert(definition)
+            component['build-depends'] = (definition.get('build-depends', []) +
+                                          component.get('build-depends', []))
+            definition['contents'][index] = self._insert(component)
 
-        return definition
+        return self._insert(definition)
+
+    def _fix_path_name(self, this, name='ERROR'):
+        if this.get('path', None) is None:
+            this['path'] = this.pop('morph', this.get('name', name))
+            if this['path'] == 'ERROR':
+                app.log(this, 'ERROR: no path, no name?')
+                raise SystemExit
+        if this.get('name') is None:
+            this['name'] = this['path']
 
     def _insert(self, this):
-        definition = self.__definitions.get(this['name'])
+        definition = self.__definitions.get(this['path'])
         if definition:
             if definition.get('ref') is None or this.get('ref') is None:
                 for key in this:
@@ -103,13 +105,15 @@ class Definitions():
                     app.log(this, 'WARNING: multiple definitions of', key)
                     app.log(this, '%s | %s' % (definition.get(key), this[key]))
         else:
-            self.__definitions[this['name']] = this
+            self.__definitions[this['path']] = this
+
+        return this['path']
 
     def get(self, this):
         if type(this) is str:
             return self.__definitions.get(this)
 
-        return self.__definitions.get(this['name'])
+        return self.__definitions.get(this['path'])
 
     def version(self, this):
         try:
