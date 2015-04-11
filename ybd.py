@@ -31,7 +31,9 @@ target = os.path.splitext(os.path.basename(sys.argv[1]))[0]
 arch = sys.argv[2]
 with app.setup(target, arch):
     with app.timer('TOTAL', 'YBD starts'):
+        with app.timer('DEFINITIONS', 'Parsing'):
+            defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(target)
-        Definitions().save_trees()
+        defs.save_trees()
         assemble(target)
