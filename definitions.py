@@ -60,27 +60,30 @@ class Definitions():
         definition['path'] = path[2:]
 
         # handle morph syntax oddities...
-        for subset in ['chunks', 'strata']:
-            if definition.get(subset):
-                definition['contents'] = definition.pop(subset)
-
-        for component in (definition.get('build-depends', []) +
-                          definition.get('contents', [])):
+        for index, component in enumerate(definition.get('build-depends', [])):
             if component.get('morph'):
                 component['path'] = component.pop('morph')
                 if component.get('name') is None:
                     name = os.path.basename(component['path'])
                     component['name'] = os.path.splitext(name)[0]
+            self._insert(component)
+            definition['build-depends'][index] = component['name']
+
+        for subset in ['chunks', 'strata']:
+            if definition.get(subset):
+                definition['contents'] = definition.pop(subset)
+
+        for index, component in enumerate(definition.get('contents', [])):
+            if component.get('morph'):
+                component['path'] = component.pop('morph')
+                if component.get('name') is None:
+                    name = os.path.basename(component['path'])
+                    component['name'] = os.path.splitext(name)[0]
+            component['build-depends'] = (definition.get('build-depends', []) +
+                                          component.get('build-depends', []))
             if component['name'] == definition['name']:
                 app.log(definition, 'WARNING: %s contains' % definition['name'],
                         component['name'])
-
-        for index, dependency in enumerate(definition.get('build-depends', [])):
-            definition['build-depends'][index] = dependency['name']
-
-        for index, component in enumerate(definition.get('contents', [])):
-            component['build-depends'] = (definition.get('build-depends', []) +
-                                          component.get('build-depends', []))
             self._insert(component)
             definition['contents'][index] = component['name']
 
