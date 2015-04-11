@@ -23,7 +23,6 @@ import re
 from subprocess import call
 from subprocess import check_output
 import string
-import definitions
 import urllib2
 import json
 import utils
