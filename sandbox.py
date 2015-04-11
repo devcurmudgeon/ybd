@@ -87,16 +87,24 @@ def install(this, component):
         return
 
     app.log(this, 'Installing %s' % component['cache'])
+    _install(this, component)
+
+
+def _install(this, component):
+    if os.path.exists(os.path.join(this['assembly'], 'baserock',
+                                   component['name'] + '.meta')):
+        return
+
     for it in component.get('build-depends', []):
         dependency = Definitions().get(it)
         if (dependency.get('build-mode', 'staging') ==
             component.get('build-mode', 'staging')):
-            install(this, dependency)
+            _install(this, dependency)
 
     for it in component.get('contents', []):
         subcomponent = Definitions().get(it)
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            install(this, subcomponent)
+            _install(this, subcomponent)
 
     unpackdir = cache.unpack(component)
     utils.hardlink_all_files(unpackdir, this['assembly'])
