@@ -91,7 +91,7 @@ class Definitions():
                 app.log(this, 'ERROR: no path, no name?')
                 raise SystemExit
         if this.get('name') is None:
-            this['name'] = this['path']
+            this['name'] = this['path'].replace('/', '-')
 
     def _insert(self, this):
         definition = self.__definitions.get(this['path'])
