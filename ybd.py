@@ -27,6 +27,7 @@ import app
 from assembly import assemble
 import sandbox
 
+print
 target = sys.argv[1]
 arch = sys.argv[2]
 with app.setup(target, arch):
