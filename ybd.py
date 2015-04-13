@@ -35,6 +35,6 @@ with app.setup(target, arch):
         with app.timer('DEFINITIONS', 'Parsing'):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):
-            cache.get_cache(target)
+            cache.get_cache(app.settings['target'])
         defs.save_trees()
-        assemble(target)
+        assemble(app.settings['target'])

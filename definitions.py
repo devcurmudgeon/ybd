@@ -92,6 +92,8 @@ class Definitions():
                 raise SystemExit
         if this.get('name') is None:
             this['name'] = this['path'].replace('/', '-')
+        if this['name'] == app.settings['target']:
+            app.settings['target'] = this['path']
 
     def _insert(self, this):
         definition = self.__definitions.get(this['path'])
