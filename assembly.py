@@ -78,7 +78,8 @@ def build(this):
         if this.get(build_step):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
-            sandbox.run_sandboxed(this, command)
+            sandbox.run_sandboxed(this, command,
+                                  allow_parallel=('build' in build_step))
 
 
 def get_build_commands(this):

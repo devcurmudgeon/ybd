@@ -122,7 +122,7 @@ def ldconfig(this):
         app.log(this, 'No %s, not running ldconfig' % conf)
 
 
-def run_sandboxed(this, command):
+def run_sandboxed(this, command, allow_parallel=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
@@ -154,8 +154,14 @@ def run_sandboxed(this, command):
     argv = ['sh', '-c', command]
     cmd_list = utils.containerised_cmdline(argv, **container_config)
 
-    run_logged(this, cmd_list, container_config)
-
+    cur_makeflags = os.environ.get("MAKEFLAGS")
+    try:
+        if not allow_parallel:
+            os.environ.pop("MAKEFLAGS", None)
+        run_logged(this, cmd_list, container_config)
+    finally:
+        if cur_makeflags is not None:
+            os.environ["MAKEFLAGS"] = cur_makeflags
 
 def run_logged(this, cmd_list, config=''):
     app.log_env(this['log'], '\n'.join(cmd_list))
