@@ -18,7 +18,7 @@
 import contextlib
 import os
 import textwrap
-from subprocess import call
+from subprocess import call, PIPE
 import app
 from definitions import Definitions
 import shutil
@@ -171,7 +171,7 @@ def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
 def run_logged(this, cmd_list, config=''):
     app.log_env(this['log'], '\n'.join(cmd_list))
     with open(this['log'], "a") as logfile:
-        if call(cmd_list, stdout=logfile, stderr=logfile):
+        if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), ' '.join(cmd_list))
             app.log(this, 'ERROR: Containerisation settings:\n\n', config)
