@@ -63,10 +63,13 @@ def cache_key(this):
     return definition['cache']
 
 
-def cache(this):
+def cache(this, full_root=False):
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
-    utils.set_mtime_recursively(this['install'])
-    shutil.make_archive(cachefile, 'gztar', this['install'])
+    if full_root:
+        shutil.make_archive(cachefile, 'gztar', this['assembly'])
+    else:
+        utils.set_mtime_recursively(this['install'])
+        shutil.make_archive(cachefile, 'gztar', this['install'])
     app.log(this, 'Now cached as', cache_key(this))
 
 
