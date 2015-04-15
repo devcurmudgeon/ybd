@@ -81,16 +81,15 @@ def remove(this):
         shutil.rmtree(this['assembly'])
 
 
-def install(this, component):
+def install(this, component, force_copy=False):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
-    app.log(this, 'Installing %s' % component['cache'])
-    _install(this, component)
+    _install(this, component, force_copy)
 
 
-def _install(this, component):
+def _install(this, component, force_copy):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
@@ -99,15 +98,20 @@ def _install(this, component):
         dependency = Definitions().get(it)
         if (dependency.get('build-mode', 'staging') ==
             component.get('build-mode', 'staging')):
-            _install(this, dependency)
+            _install(this, dependency, force_copy)
 
     for it in component.get('contents', []):
         subcomponent = Definitions().get(it)
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            _install(this, subcomponent)
+            _install(this, subcomponent, force_copy)
 
     unpackdir = cache.unpack(component)
-    utils.hardlink_all_files(unpackdir, this['assembly'])
+    if force_copy:
+        app.log(this, 'Installing (by copy) %s' % component['cache'])
+        utils.copy_all_files(unpackdir, this['assembly'])
+    else:
+        app.log(this, 'Installing (by link) %s' % component['cache'])
+        utils.hardlink_all_files(unpackdir, this['assembly'])
 
 
 def ldconfig(this):
@@ -122,12 +126,13 @@ def ldconfig(this):
         app.log(this, 'No %s, not running ldconfig' % conf)
 
 
-def run_sandboxed(this, command, allow_parallel=False):
+def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
     use_chroot = False if this.get('build-mode') == 'bootstrap' else True
     do_not_mount_dirs = [this['build'], this['install']]
+    readonly_base = False if this.get('kind') == 'system' else True
 
     if use_chroot:
         chroot_dir = this['assembly']
@@ -149,7 +154,7 @@ def run_sandboxed(this, command, allow_parallel=False):
         mounts=mounts,
         mount_proc=use_chroot,
         binds=binds,
-        writable_paths=do_not_mount_dirs)
+        writable_paths=None if readwrite_root else do_not_mount_dirs)
 
     argv = ['sh', '-c', command]
     cmd_list = utils.containerised_cmdline(argv, **container_config)
@@ -178,7 +183,7 @@ def run_logged(this, cmd_list, config=''):
 def get_binds(this):
     if app.settings['no-ccache']:
         binds = ()
-    else:
+    elif 'repo' in this:
         name = os.path.basename(get_repo_url(this['repo']))
         ccache_dir = os.path.join(app.settings['ccache_dir'], name)
         ccache_target = os.path.join(this['assembly'],
@@ -188,7 +193,8 @@ def get_binds(this):
         if not os.path.isdir(ccache_target):
             os.mkdir(ccache_target)
         binds = ((ccache_dir, ccache_target),)
-
+    else:
+        binds = ()
     return binds
 
 
