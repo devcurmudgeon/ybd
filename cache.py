@@ -74,10 +74,6 @@ def cache(this, full_root=False):
     app.log(this, 'Now cached as', cache_key(this))
 
 
-def checksum(this):
-    call(['tar', 'cf', '-', this['install'], '|', cachefile + '.checksum' ])
-
-
 def unpack(this):
     cachefile = get_cache(this)
     if cachefile:
