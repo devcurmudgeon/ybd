@@ -159,7 +159,7 @@ def mirror(name, repo):
         tar_file = get_repo_name(repo_url) + '.tar'
         app.log(name, 'Try fetching tarball %s' % tar_file)
         with app.chdir(gitdir), open(os.devnull, "w") as fnull:
-            call(['wget', app['tar-url']], stdout=fnull, stderr=fnull)
+            call(['wget', os.path.join(app.settings['tar-url'], tar_file)])
             call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
             os.remove(tar_file)
             call(['git', 'config', 'remote.origin.url', repo_url],
