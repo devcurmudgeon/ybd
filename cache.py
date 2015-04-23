@@ -55,6 +55,11 @@ def cache_key(this):
         if definition.get(factor):
             hash_factors[factor] = definition[factor]
 
+    if definition.get('kind') == 'cluster':
+        for system in definition.get('systems', []):
+            factor = system.get('morph', 'BROKEN')
+            hash_factors[factor] = cache_key(factor)
+
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
     safename = definition['name'].replace('/', '-')
