@@ -22,14 +22,77 @@ import repos
 import app
 import buildsystem
 import sandbox
+import shutil
+import tempfile
+import utils
 from subprocess import check_output
 from subprocess import call
 
-
 def assemble(target):
+    '''Assemble whatever we're given, until the target is fulfilled'''
+    defs = Definitions()
+    this = defs.get(target)
+
+    if this.get('kind') == 'cluster':
+        return assemble_as_deploy(target)
+    else:
+        return assemble_as_build(target)
+
+def assemble_as_deploy(target):
+    defs = Definitions()
+    this = defs.get(target)
+    extensions = utils.find_extensions()
+    for system in this.get('systems', []):
+        # 1. assemble the system
+        key = assemble(system.get('morph', 'MISSING KEY: morph in system %r' % system))
+        # 2. do something with it
+        for name, deployment in system.get('deploy',{}).iteritems():
+            deployment['name'] = "%s.%s.%s" % (this['name'], key, name)
+            with app.timer(deployment, 'Deployment begins'):
+                tempfile.tempdir = app.settings['deployment']
+                deploy_base = tempfile.mkdtemp()
+                app.log(deployment, "Staging deployment in %s" % deploy_base)
+                try:
+                    write_method = deployment['type']
+                    # 2.1 Run the check extension for the write method
+                    if write_method in extensions['check']:
+                        utils.run_deployment_extension(
+                            deployment,
+                            [extensions['check'][write_method],
+                             deployment['location']],
+                            'Running write method pre-check')
+                    # 2.2 Extract the system
+                    app.log(deployment, "Extracting system artifact")
+                    artifact_filename = os.path.join(app.settings['artifacts'],
+                                                     key + '.tar.gz')
+                    with open(artifact_filename, "r") as artifile:
+                        call(['tar', 'x', '--directory',
+                              deploy_base], stdin=artifile)
+                    # 2.3 Run configuration extensions from the system
+                    system_def = defs.get(system['morph'])
+                    for conf_ext in system_def.get('configuration-extensions', []):
+                        utils.run_deployment_extension(
+                            deployment,
+                            [extensions['configure'][conf_ext], deploy_base],
+                            'Running configuration extension')
+                    # 2.4 Fix up permissions on the "/" of the target
+                    os.chmod(deploy_base, 0o755)
+                    # 2.5 Run the write method
+                    utils.run_deployment_extension(
+                        deployment,
+                        [extensions['write'][write_method], deploy_base,
+                         deployment['location']],
+                        'Running write method')
+                finally:
+                    app.log(deployment, "Cleaning up")
+                    shutil.rmtree(deploy_base)
+    return cache.cache_key(target)
+
+def assemble_as_build(target):
     '''Assemble dependencies and contents recursively until target exists.'''
+
     if cache.get_cache(target):
-        return
+        return cache.cache_key(target)
 
     defs = Definitions()
     this = defs.get(target)
@@ -59,10 +122,10 @@ def assemble(target):
             if this.get('devices'):
                 sandbox.create_devices(this)
             do_manifest(this)
-
+            app.log(this, "Constructing artifact")
             cache.cache(this, full_root=this.get('kind', None) == "system")
             sandbox.remove(this)
-
+    return cache.cache_key(this)
 
 def build(this):
     '''Actually create an artifact and add it to the cache
