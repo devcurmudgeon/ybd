@@ -73,9 +73,10 @@ def setup(target, arch):
 
         settings['tmp'] = os.path.join(settings['base'], 'tmp')
         settings['staging'] = os.path.join(settings['tmp'], 'staging')
+        settings['deployment'] = os.path.join(settings['tmp'], 'deployments')
 
         for directory in ['base', 'caches', 'artifacts', 'gits',
-                          'tmp', 'staging', 'ccache_dir']:
+                          'tmp', 'staging', 'ccache_dir', 'deployment']:
             if not os.path.exists(settings[directory]):
                 os.makedirs(settings[directory])
 
