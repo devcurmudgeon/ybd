@@ -15,11 +15,16 @@
 #
 # =*= License: GPL-2 =*=
 
+import glob
 import os
 import textwrap
 import stat
 import time
 import shutil
+import tempfile
+from subprocess import call, check_output
+
+import app
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
                           mount_proc=False, unshare_net=False,
@@ -287,3 +292,70 @@ def set_mtime_recursively(root, set_time=1321009871.0):
             if os.path.exists(pathname):
                 os.utime(pathname, (set_time, set_time))
         os.utime(dirname, (set_time, set_time))
+
+def _find_extensions(paths):
+    '''Iterate the paths, in order, finding extensions and adding them to
+    the return dict.'''
+
+    ret = {}
+    extension_kinds = ['check','configure','write']
+
+    for e in extension_kinds:
+        ret[e] = {}
+
+    def scan_path(path):
+        for kind in extension_kinds:
+            for entry in glob.glob(os.path.join(path, '*.' + kind)):
+                base = os.path.splitext(os.path.basename(entry))[0]
+                ret[kind][base] = entry
+
+    for p in paths:
+        scan_path(p)
+
+    return ret
+
+def find_extensions():
+    '''Scan morphlib (if present), ybd source, and definitions for extensions.'''
+
+    paths = []
+
+    try:
+        import morphlib
+        morphlib_dir = os.path.dirname(morphlib.__file__)
+        paths.append(os.path.join(morphlib_dir, 'exts'))
+    except:
+        app.log("EXTENSIONS", "WARNING: unable to locate morphlib")
+
+    ybd_dir = os.path.dirname(__file__)
+    paths.append(os.path.join(ybd_dir, 'exts'))
+
+    # TODO: Do not assume '.' is where definitions are.
+    paths.append(os.path.realpath('.'))
+
+    return _find_extensions(paths)
+
+def run_deployment_extension(deployment, command, msg):
+    app.log(deployment, msg + ": " + repr(command))
+
+    cmd_bin = command.pop(0)
+
+    tempfile.tempdir = tmp=app.settings['tmp']
+    cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
+
+    envlist = ['UPGRADE=no']
+
+    for key, value in deployment.iteritems():
+        if key.isupper():
+            envlist.append("%s=%s" % (key, value))
+
+    command = ["env"] + envlist + [cmd_tmp.name] + command
+
+    try:
+        with open(cmd_bin, "r") as infh:
+            shutil.copyfileobj(infh, cmd_tmp)
+        cmd_tmp.close()
+        os.chmod(cmd_tmp.name, 0o700)
+
+        app.log(deployment, check_output(command))
+    finally:
+        os.remove(cmd_tmp.name)
