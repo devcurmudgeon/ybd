@@ -28,6 +28,7 @@ import utils
 from subprocess import check_output
 from subprocess import call
 
+
 def assemble(target):
     '''Assemble whatever we're given, until the target is fulfilled'''
     defs = Definitions()
@@ -38,17 +39,19 @@ def assemble(target):
     else:
         return assemble_as_build(target)
 
+
 def assemble_as_deploy(target):
     defs = Definitions()
     this = defs.get(target)
     extensions = utils.find_extensions()
     for system in this.get('systems', []):
         # 1. assemble the system
-        key = assemble(system.get('morph', 'MISSING KEY: morph in system %r' % system))
+        key = assemble(system.get('morph',
+                                  'MISSING KEY: morph in system %r' % system))
         # 2. do something with it
-        for name, deployment in system.get('deploy',{}).iteritems():
+        for name, deployment in system.get('deploy', {}).iteritems():
             deployment['name'] = "%s.%s.%s" % (this['name'], key, name)
-            with app.timer(deployment, 'Deployment begins'):
+            with app.timer(deployment, 'Start deployment'):
                 tempfile.tempdir = app.settings['deployment']
                 deploy_base = tempfile.mkdtemp()
                 app.log(deployment, "Staging deployment in %s" % deploy_base)
@@ -66,14 +69,14 @@ def assemble_as_deploy(target):
                     artifact_filename = os.path.join(app.settings['artifacts'],
                                                      key + '.tar.gz')
                     with open(artifact_filename, "r") as artifile:
-                        call(['tar', 'x', '--directory',
-                              deploy_base], stdin=artifile)
+                        call(['tar', 'x', '--directory', deploy_base],
+                             stdin=artifile)
                     # 2.3 Run configuration extensions from the system
                     system_def = defs.get(system['morph'])
-                    for conf_ext in system_def.get('configuration-extensions', []):
+                    for ext in system_def.get('configuration-extensions', []):
                         utils.run_deployment_extension(
                             deployment,
-                            [extensions['configure'][conf_ext], deploy_base],
+                            [extensions['configure'][ext], deploy_base],
                             'Running configuration extension')
                     # 2.4 Fix up permissions on the "/" of the target
                     os.chmod(deploy_base, 0o755)
@@ -87,6 +90,7 @@ def assemble_as_deploy(target):
                     app.log(deployment, "Cleaning up")
                     shutil.rmtree(deploy_base)
     return cache.cache_key(target)
+
 
 def assemble_as_build(target):
     '''Assemble dependencies and contents recursively until target exists.'''
@@ -127,6 +131,7 @@ def assemble_as_build(target):
             sandbox.remove(this)
     return cache.cache_key(this)
 
+
 def build(this):
     '''Actually create an artifact and add it to the cache
 
@@ -146,7 +151,7 @@ def build(this):
         for command in this.get(build_step, []):
             sandbox.run_sandboxed(this, command,
                                   allow_parallel=('build' in build_step),
-                                  readwrite_root=(this.get('kind') == 'system'))
+                                  rw_root=(this.get('kind') == 'system'))
 
 
 def get_build_commands(this):
@@ -170,8 +175,8 @@ def get_build_commands(this):
             if this.get(build_step):
                 return
 
-        files = check_output(['ls', this['build']]).decode("utf-8").splitlines()
-        build_system = buildsystem.detect_build_system(files)
+        files = check_output(['ls', this['build']]).decode("utf-8")
+        build_system = buildsystem.detect_build_system(files.splitlines())
 
     for build_step in buildsystem.build_steps:
         if this.get(build_step, None) is None:
@@ -181,6 +186,7 @@ def get_build_commands(this):
     if this.get('kind', None) == "system":
         # Systems must run their integration scripts as install commands
         this['install-commands'] = gather_integration_commands(this)
+
 
 def gather_integration_commands(this):
     # 1. iterate all subcomponents (recursively) looking for sys-int commands
@@ -192,8 +198,8 @@ def gather_integration_commands(this):
 
     def _gather_recursively(component, commands):
         if 'system-integration' in component:
-            for product, integrations in component['system-integration'].iteritems():
-                for name, cmdseq in integrations.iteritems():
+            for product, it in component['system-integration'].iteritems():
+                for name, cmdseq in it.iteritems():
                     commands["%s-%s" % (name, product)] = cmdseq
         for subcomp in component.get('contents', []):
             _gather_recursively(defs.get(subcomp), commands)
@@ -204,6 +210,7 @@ def gather_integration_commands(this):
     for key in sorted(all_commands.keys()):
         result.extend(all_commands[key])
     return None if result == [] else result
+
 
 def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')

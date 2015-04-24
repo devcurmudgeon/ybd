@@ -56,12 +56,12 @@ def get_repo_name(repo):
     return ''.join([transl(x) for x in get_repo_url(repo)])
 
 
-def get_upstream_version(repo, ref):
+def get_upstream_ver(repo, ref):
     try:
         gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
         with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                      '--tags', ref], stderr=fnull)[0:-1]
+                                     '--tags', ref], stderr=fnull)[0:-1]
             commits = check_output(['git', 'rev-list', last_tag + '..' + ref,
                                     '--count'])
         result = "%s (%s + %s commits)" % (ref[:8], last_tag, commits[0:-1])
@@ -77,8 +77,8 @@ def get_tree(this):
     gitdir = os.path.join(app.settings['gits'], get_repo_name(this['repo']))
     if not os.path.exists(gitdir):
         try:
-            url = (app.settings['cache-server-url'] + 'repo='
-                   + get_repo_url(this['repo']) + '&ref=' + ref)
+            url = (app.settings['cache-server'] + 'repo=' +
+                   get_repo_url(this['repo']) + '&ref=' + ref)
             with urllib2.urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
                 return tree
@@ -207,7 +207,7 @@ def checkout(name, repo, ref, checkoutdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
         update_mirror(name, repo, gitdir)
-    app.log(name, 'Upstream version %s' % repo, get_upstream_version(repo, ref))
+    app.log(name, 'Upstream version %s' % repo, get_upstream_ver(repo, ref))
     app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
     # checkout the required version of this from git
     with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
@@ -255,7 +255,7 @@ def checkout_submodules(name, ref):
                 checkout(name, url, submodule_commit, fulldir)
 
             else:
-                app.log(name, 'Skipping submodule %s non-commit object:' % path,
+                app.log(name, 'Skipping submodule %s, not a commit:' % path,
                         fields)
 
         except:

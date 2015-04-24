@@ -37,7 +37,7 @@ def setup(this):
 
     tempfile.tempdir = app.settings['staging']
     this['assembly'] = tempfile.mkdtemp()
-    this['build'] = os.path.join(this['assembly'], this['name']+ '.build')
+    this['build'] = os.path.join(this['assembly'], this['name'] + '.build')
     this['install'] = os.path.join(this['assembly'], this['name'] + '.inst')
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
     this['tmp'] = os.path.join(this['assembly'], 'tmp')
@@ -98,7 +98,7 @@ def _install(this, component, force_copy):
     for it in component.get('build-depends', []):
         dependency = Definitions().get(it)
         if (dependency.get('build-mode', 'staging') ==
-            component.get('build-mode', 'staging')):
+                component.get('build-mode', 'staging')):
             _install(this, dependency, force_copy)
 
     for it in component.get('contents', []):
@@ -125,7 +125,7 @@ def ldconfig(this):
         app.log(this, 'No %s, not running ldconfig' % conf)
 
 
-def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
+def run_sandboxed(this, command, allow_parallel=False, rw_root=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
@@ -137,7 +137,7 @@ def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
         chroot_dir = this['assembly']
         chdir = os.path.join('/', os.path.basename(this['build']))
         do_not_mount_dirs += [os.path.join(this['assembly'], d)
-                              for d in  ["dev", "proc", 'tmp']]
+                              for d in ["dev", "proc", 'tmp']]
         mounts = ('dev/shm', 'tmpfs', 'none'),
     else:
         chroot_dir = '/'
@@ -153,7 +153,7 @@ def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
         mounts=mounts,
         mount_proc=use_chroot,
         binds=binds,
-        writable_paths=None if readwrite_root else do_not_mount_dirs)
+        writable_paths=None if rw_root else do_not_mount_dirs)
 
     argv = ['sh', '-c', command]
     cmd_list = utils.containerised_cmdline(argv, **container_config)
@@ -166,6 +166,7 @@ def run_sandboxed(this, command, allow_parallel=False, readwrite_root=False):
     finally:
         if cur_makeflags is not None:
             os.environ["MAKEFLAGS"] = cur_makeflags
+
 
 def run_logged(this, cmd_list, config=''):
     app.log_env(this['log'], '\n'.join(cmd_list))

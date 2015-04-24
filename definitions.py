@@ -53,38 +53,38 @@ class Definitions():
         try:
             with open(path) as f:
                 text = f.read()
-            definition = yaml.safe_load(text)
+            this = yaml.safe_load(text)
         except ValueError:
             app.log(this, 'ERROR: problem loading', filename)
             return None
 
-        definition['path'] = path[2:]
-        self._fix_path_name(definition)
+        this['path'] = path[2:]
+        self._fix_path_name(this)
 
         # handle morph syntax oddities...
-        for index, component in enumerate(definition.get('build-depends', [])):
+        for index, component in enumerate(this.get('build-depends', [])):
             self._fix_path_name(component)
-            definition['build-depends'][index] = self._insert(component)
+            this['build-depends'][index] = self._insert(component)
 
         for subset in ['chunks', 'strata']:
-            if definition.get(subset):
-                definition['contents'] = definition.pop(subset)
+            if this.get(subset):
+                this['contents'] = this.pop(subset)
 
         lookup = {}
-        for index, component in enumerate(definition.get('contents', [])):
+        for index, component in enumerate(this.get('contents', [])):
             self._fix_path_name(component)
             lookup[component['name']] = component['path']
-            if component['name'] == definition['name']:
-                app.log(definition, 'WARNING: %s contains' % definition['name'],
+            if component['name'] == this['name']:
+                app.log(this, 'WARNING: %s contains' % this['name'],
                         component['name'])
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
-            component['build-depends'] = (definition.get('build-depends', []) +
+            component['build-depends'] = (this.get('build-depends', []) +
                                           component.get('build-depends', []))
-            definition['contents'][index] = self._insert(component)
+            this['contents'][index] = self._insert(component)
 
-        return self._insert(definition)
+        return self._insert(this)
 
     def _fix_path_name(self, this, name='ERROR'):
         if this.get('path', None) is None:

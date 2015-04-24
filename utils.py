@@ -23,8 +23,8 @@ import time
 import shutil
 import tempfile
 from subprocess import call, check_output
-
 import app
+
 
 def containerised_cmdline(args, cwd='.', root='/', binds=(),
                           mount_proc=False, unshare_net=False,
@@ -211,6 +211,7 @@ def invert_paths(tree_walker, paths):
             else:
                 yield fullpath
 
+
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
 
@@ -226,6 +227,7 @@ def copy_all_files(srcpath, destpath):
 
     _process_tree(srcpath, destpath, _copyfun)
 
+
 def hardlink_all_files(srcpath, destpath):
     '''Hardlink every file in the path to the staging-area
 
@@ -233,6 +235,7 @@ def hardlink_all_files(srcpath, destpath):
 
     '''
     _process_tree(srcpath, destpath, os.link)
+
 
 def _process_tree(srcpath, destpath, actionfunc):
     file_stat = os.lstat(srcpath)
@@ -293,12 +296,13 @@ def set_mtime_recursively(root, set_time=1321009871.0):
                 os.utime(pathname, (set_time, set_time))
         os.utime(dirname, (set_time, set_time))
 
+
 def _find_extensions(paths):
     '''Iterate the paths, in order, finding extensions and adding them to
     the return dict.'''
 
     ret = {}
-    extension_kinds = ['check','configure','write']
+    extension_kinds = ['check', 'configure', 'write']
 
     for e in extension_kinds:
         ret[e] = {}
@@ -314,8 +318,9 @@ def _find_extensions(paths):
 
     return ret
 
+
 def find_extensions():
-    '''Scan morphlib (if present), ybd source, and definitions for extensions.'''
+    '''Scan morphlib, ybd source, and definitions for extensions.'''
 
     paths = []
 
@@ -334,12 +339,13 @@ def find_extensions():
 
     return _find_extensions(paths)
 
+
 def run_deployment_extension(deployment, command, msg):
     app.log(deployment, msg + ": " + repr(command))
 
     cmd_bin = command.pop(0)
 
-    tempfile.tempdir = tmp=app.settings['tmp']
+    tempfile.tempdir = tmp = app.settings['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
 
     envlist = ['UPGRADE=no']
