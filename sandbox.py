@@ -125,13 +125,13 @@ def ldconfig(this):
         app.log(this, 'No %s, not running ldconfig' % conf)
 
 
-def run_sandboxed(this, command, allow_parallel=False, rw_root=False):
+def run_sandboxed(this, command, allow_parallel=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
+    rw_root = True if this.get('kind') == 'system' else False
     use_chroot = False if this.get('build-mode') == 'bootstrap' else True
     do_not_mount_dirs = [this['build'], this['install']]
-    readonly_base = False if this.get('kind') == 'system' else True
 
     if use_chroot:
         chroot_dir = this['assembly']
