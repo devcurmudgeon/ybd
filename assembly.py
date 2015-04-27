@@ -31,6 +31,10 @@ from subprocess import call
 
 def assemble(target):
     '''Assemble whatever we're given, until the target is fulfilled'''
+
+    if cache.get_cache(target):
+        return cache.cache_key(target)
+
     defs = Definitions()
     this = defs.get(target)
 
@@ -50,7 +54,7 @@ def assemble_as_deploy(target):
                                   'MISSING KEY: morph in system %r' % system))
         # 2. do something with it
         for name, deployment in system.get('deploy', {}).iteritems():
-            deployment['name'] = "%s.%s.%s" % (this['name'], key, name)
+            deployment['name'] = name
             with app.timer(deployment, 'Start deployment'):
                 tempfile.tempdir = app.settings['deployment']
                 deploy_base = tempfile.mkdtemp()
@@ -95,9 +99,6 @@ def assemble_as_deploy(target):
 def assemble_as_build(target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
-    if cache.get_cache(target):
-        return cache.cache_key(target)
-
     defs = Definitions()
     this = defs.get(target)
 
@@ -106,16 +107,13 @@ def assemble_as_build(target):
             for it in this.get('build-depends', []):
                 dependency = defs.get(it)
                 assemble(dependency)
-                sandbox.install(this, dependency,
-                                force_copy=this.get('kind', None) == "system")
+                sandbox.install(this, dependency)
 
             for it in this.get('contents', []):
                 component = defs.get(it)
                 if component.get('build-mode') != 'bootstrap':
                     assemble(component)
-                    sandbox.install(this, component,
-                                    force_copy=this.get('kind',
-                                                        None) == "system")
+                    sandbox.install(this, component)
 
             if this.get('build-mode') != 'bootstrap':
                 sandbox.ldconfig(this)

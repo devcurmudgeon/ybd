@@ -81,16 +81,16 @@ def remove(this):
         shutil.rmtree(this['assembly'])
 
 
-def install(this, component, force_copy=False):
+def install(this, component):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
     app.log(this, 'Installing %s' % component['cache'])
-    _install(this, component, force_copy)
+    _install(this, component)
 
 
-def _install(this, component, force_copy):
+def _install(this, component):
     if os.path.exists(os.path.join(this['assembly'], 'baserock',
                                    component['name'] + '.meta')):
         return
@@ -99,15 +99,15 @@ def _install(this, component, force_copy):
         dependency = Definitions().get(it)
         if (dependency.get('build-mode', 'staging') ==
                 component.get('build-mode', 'staging')):
-            _install(this, dependency, force_copy)
+            _install(this, dependency)
 
     for it in component.get('contents', []):
         subcomponent = Definitions().get(it)
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            _install(this, subcomponent, force_copy)
+            _install(this, subcomponent)
 
     unpackdir = cache.unpack(component)
-    if force_copy:
+    if this.get('kind') is 'system':
         utils.copy_all_files(unpackdir, this['assembly'])
     else:
         utils.hardlink_all_files(unpackdir, this['assembly'])
