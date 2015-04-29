@@ -90,6 +90,10 @@ def assemble(target):
     defs = Definitions()
     this = defs.get(target)
 
+    if this.get('arch') and this['arch'] != app.settings['arch']:
+        app.log(target, 'Skipping assembly for', this['arch'])
+        return None
+
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
             for it in this.get('systems', []) + this.get('subsystems', []):
