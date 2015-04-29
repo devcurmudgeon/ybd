@@ -19,8 +19,7 @@ import contextlib
 import os
 import datetime
 import shutil
-from subprocess import check_output
-from subprocess import call
+from subprocess import call, check_output
 from multiprocessing import cpu_count
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \

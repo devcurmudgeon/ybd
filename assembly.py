@@ -25,8 +25,7 @@ import sandbox
 import shutil
 import tempfile
 import utils
-from subprocess import check_output
-from subprocess import call
+from subprocess import call, check_output
 
 
 def deploy(target):

@@ -20,8 +20,7 @@
 import os
 import app
 import re
-from subprocess import call
-from subprocess import check_output
+from subprocess import call, check_output
 import string
 import urllib2
 import json
