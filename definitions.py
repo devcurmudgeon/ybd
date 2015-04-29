@@ -64,6 +64,8 @@ class Definitions():
         # handle morph syntax oddities...
         for system in this.get('systems', []):
             self._fix_path_name(system)
+            for subsystem in system.get('subsystems', []):
+                self._fix_path_name(subsystem)
 
         for index, component in enumerate(this.get('build-depends', [])):
             self._fix_path_name(component)
