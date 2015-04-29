@@ -115,14 +115,7 @@ def assemble_as_build(target):
                     assemble(component)
                     sandbox.install(this, component)
 
-            if this.get('build-mode') != 'bootstrap':
-                sandbox.ldconfig(this)
-            else:
-                app.log(this, "No ldconfig because bootstrap mode is engaged")
-
             build(this)
-            if this.get('devices'):
-                sandbox.create_devices(this)
             do_manifest(this)
             app.log(this, "Constructing artifact")
             cache.cache(this, full_root=this.get('kind', None) == "system")
@@ -138,7 +131,10 @@ def build(this):
     '''
 
     app.log(this, 'Start build')
-    defs = Definitions()
+
+    if this.get('build-mode') != 'bootstrap':
+        sandbox.ldconfig(this)
+
     if this.get('repo'):
         repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
@@ -149,6 +145,9 @@ def build(this):
         for command in this.get(build_step, []):
             sandbox.run_sandboxed(this, command,
                                   allow_parallel=('build' in build_step))
+
+    if this.get('devices'):
+        sandbox.create_devices(this)
 
 
 def get_build_commands(this):
