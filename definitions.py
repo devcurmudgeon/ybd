@@ -62,6 +62,9 @@ class Definitions():
         self._fix_path_name(this)
 
         # handle morph syntax oddities...
+        for system in this.get('systems', []):
+            self._fix_path_name(system)
+
         for index, component in enumerate(this.get('build-depends', [])):
             self._fix_path_name(component)
             this['build-depends'][index] = self._insert(component)

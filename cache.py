@@ -57,7 +57,7 @@ def cache_key(this):
 
     if definition.get('kind') == 'cluster':
         for system in definition.get('systems', []):
-            factor = system.get('morph', 'BROKEN')
+            factor = system.get('path', 'BROKEN')
             hash_factors[factor] = cache_key(factor)
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')

@@ -29,22 +29,7 @@ from subprocess import check_output
 from subprocess import call
 
 
-def assemble(target):
-    '''Assemble whatever we're given, until the target is fulfilled'''
-
-    if cache.get_cache(target):
-        return cache.cache_key(target)
-
-    defs = Definitions()
-    this = defs.get(target)
-
-    if this.get('kind') == 'cluster':
-        return assemble_as_deploy(target)
-    else:
-        return assemble_as_build(target)
-
-
-def assemble_as_deploy(target):
+def deploy(target):
     defs = Definitions()
     this = defs.get(target)
     extensions = utils.find_extensions()
@@ -96,14 +81,21 @@ def assemble_as_deploy(target):
     return cache.cache_key(target)
 
 
-def assemble_as_build(target):
+def assemble(target):
     '''Assemble dependencies and contents recursively until target exists.'''
+
+    if cache.get_cache(target):
+        return cache.cache_key(target)
 
     defs = Definitions()
     this = defs.get(target)
 
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
+            for it in this.get('systems', []) + this.get('subsystems', []):
+                system = defs.get(it)
+                assemble(system)
+
             for it in this.get('build-depends', []):
                 dependency = defs.get(it)
                 assemble(dependency)
