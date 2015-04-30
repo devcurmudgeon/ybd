@@ -203,7 +203,9 @@ def run_extension(this, deployment, step, method):
             cmd_tmp.close()
             os.chmod(cmd_tmp.name, 0o700)
 
-            app.log(this, check_output(command))
+            if call(command):
+                app.log(this, 'ERROR: %s extension failed:' % step, cmd_bin)
+                raise SystemExit
         finally:
             os.remove(cmd_tmp.name)
     return
