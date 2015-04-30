@@ -52,13 +52,13 @@ def deploy(target):
                 sandbox.run_extension(system, deployment, 'check', method)
                 app.log(system, "Extracting system artifact")
                 with open(cache.get_cache(system), "r") as artifact:
-                    call(['tar', 'x', '--directory', system['assembly']],
+                    call(['tar', 'x', '--directory', system['sandbox']],
                          stdin=artifact)
 
                 for ext in system.get('configuration-extensions', []):
                     sandbox.run_extension(system, deployment, 'configure', ext)
 
-                os.chmod(system['assembly'], 0o755)
+                os.chmod(system['sandbox'], 0o755)
                 sandbox.run_extension(system, deployment, 'write', method)
 
             sandbox.remove(system)

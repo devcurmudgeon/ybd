@@ -36,18 +36,18 @@ def setup(this):
     currentenv = dict(os.environ)
 
     tempfile.tempdir = app.settings['staging']
-    this['assembly'] = tempfile.mkdtemp()
-    this['build'] = os.path.join(this['assembly'], this['name'] + '.build')
-    this['install'] = os.path.join(this['assembly'], this['name'] + '.inst')
+    this['sandbox'] = tempfile.mkdtemp()
+    this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
+    this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
-    this['tmp'] = os.path.join(this['assembly'], 'tmp')
+    this['tmp'] = os.path.join(this['sandbox'], 'tmp')
     for directory in ['build', 'install', 'tmp', 'baserockdir']:
         os.makedirs(this[directory])
     this['log'] = os.path.join(app.settings['artifacts'],
                                this['cache'] + '.build-log')
     try:
         build_env = clean_env(this)
-        assembly_dir = this['assembly']
+        assembly_dir = this['sandbox']
         for directory in ['dev', 'tmp']:
             call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
@@ -62,8 +62,8 @@ def setup(this):
             else:
                 os.environ.pop(key)
 
-        os.chdir(this['assembly'])
-        app.log(this, 'Sandbox is at', this['assembly'])
+        os.chdir(this['sandbox'])
+        app.log(this, 'Sandbox is at', this['sandbox'])
 
         yield
     finally:
@@ -77,12 +77,12 @@ def setup(this):
 
 
 def remove(this):
-    if this['assembly'] != '/' and os.path.isdir(this['assembly']):
-        shutil.rmtree(this['assembly'])
+    if this['sandbox'] != '/' and os.path.isdir(this['sandbox']):
+        shutil.rmtree(this['sandbox'])
 
 
 def install(this, component):
-    if os.path.exists(os.path.join(this['assembly'], 'baserock',
+    if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
@@ -91,7 +91,7 @@ def install(this, component):
 
 
 def _install(this, component):
-    if os.path.exists(os.path.join(this['assembly'], 'baserock',
+    if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
@@ -108,17 +108,17 @@ def _install(this, component):
 
     unpackdir = cache.unpack(component)
     if this.get('kind') is 'system':
-        utils.copy_all_files(unpackdir, this['assembly'])
+        utils.copy_all_files(unpackdir, this['sandbox'])
     else:
-        utils.hardlink_all_files(unpackdir, this['assembly'])
+        utils.hardlink_all_files(unpackdir, this['sandbox'])
 
 
 def ldconfig(this):
-    conf = os.path.join(this['assembly'], 'etc', 'ld.so.conf')
+    conf = os.path.join(this['sandbox'], 'etc', 'ld.so.conf')
     if os.path.exists(conf):
         path = os.environ['PATH']
         os.environ['PATH'] = '%s:/sbin:/usr/sbin:/usr/local/sbin' % path
-        cmd_list = ['ldconfig', '-r', this['assembly']]
+        cmd_list = ['ldconfig', '-r', this['sandbox']]
         run_logged(this, cmd_list)
         os.environ['PATH'] = path
     else:
@@ -134,9 +134,9 @@ def run_sandboxed(this, command, allow_parallel=False):
     do_not_mount_dirs = [this['build'], this['install']]
 
     if use_chroot:
-        chroot_dir = this['assembly']
+        chroot_dir = this['sandbox']
         chdir = os.path.join('/', os.path.basename(this['build']))
-        do_not_mount_dirs += [os.path.join(this['assembly'], d)
+        do_not_mount_dirs += [os.path.join(this['sandbox'], d)
                               for d in ["dev", "proc", 'tmp']]
         mounts = ('dev/shm', 'tmpfs', 'none'),
     else:
@@ -194,9 +194,9 @@ def run_extension(this, deployment, step, method):
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
 
-    command = ["env"] + envlist + [cmd_tmp.name] + [this['assembly']]
+    command = ["env"] + envlist + [cmd_tmp.name] + [this['sandbox']]
 
-    with app.chdir(this['assembly']):
+    with app.chdir(this['sandbox']):
         try:
             with open(cmd_bin, "r") as infh:
                 shutil.copyfileobj(infh, cmd_tmp)
@@ -215,7 +215,7 @@ def get_binds(this):
     elif 'repo' in this:
         name = os.path.basename(get_repo_url(this['repo']))
         ccache_dir = os.path.join(app.settings['ccache_dir'], name)
-        ccache_target = os.path.join(this['assembly'],
+        ccache_target = os.path.join(this['sandbox'],
                                      os.environ['CCACHE_DIR'].lstrip('/'))
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
@@ -257,7 +257,7 @@ def clean_env(this):
 
     if this.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
-        full_path = [os.path.normpath(this['assembly'] + p)
+        full_path = [os.path.normpath(this['sandbox'] + p)
                      for p in rel_path]
         path = full_path + app.settings['base-path']
         env['DESTDIR'] = this.get('install')
