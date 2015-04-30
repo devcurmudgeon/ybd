@@ -53,6 +53,7 @@ def log_env(log, message=''):
 @contextlib.contextmanager
 def setup(target, arch):
     try:
+        settings['defdir'] = os.getcwd()
         settings['target'] = target
         settings['arch'] = arch
         settings['no-ccache'] = False

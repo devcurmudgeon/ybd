@@ -24,7 +24,7 @@ import sys
 from definitions import Definitions
 import cache
 import app
-from assembly import assemble
+from assembly import assemble, deploy
 import sandbox
 
 print
@@ -38,3 +38,4 @@ with app.setup(target, arch):
             cache.get_cache(app.settings['target'])
         defs.save_trees()
         assemble(app.settings['target'])
+        deploy(app.settings['target'])

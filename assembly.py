@@ -26,58 +26,42 @@ import shutil
 import tempfile
 import utils
 from subprocess import call, check_output
+import pdb
 
 
 def deploy(target):
+    '''Deploy systems and subsystems recursively'''
+
     defs = Definitions()
-    this = defs.get(target)
-    extensions = utils.find_extensions()
-    for system in this.get('systems', []):
-        # 1. assemble the system
-        key = assemble(system.get('morph',
-                                  'MISSING KEY: morph in system %r' % system))
-        # 2. do something with it
-        for name, deployment in system.get('deploy', {}).iteritems():
-            deployment['name'] = name
-            with app.timer(deployment, 'Start deployment'):
-                tempfile.tempdir = app.settings['deployment']
-                deploy_base = tempfile.mkdtemp()
-                app.log(deployment, "Staging deployment in %s" % deploy_base)
-                try:
-                    write_method = deployment['type']
-                    # 2.1 Run the check extension for the write method
-                    if write_method in extensions['check']:
-                        utils.run_deployment_extension(
-                            deployment,
-                            [extensions['check'][write_method],
-                             deployment['location']],
-                            'Running write method pre-check')
-                    # 2.2 Extract the system
-                    app.log(deployment, "Extracting system artifact")
-                    artifact_filename = os.path.join(app.settings['artifacts'],
-                                                     key + '.tar.gz')
-                    with open(artifact_filename, "r") as artifile:
-                        call(['tar', 'x', '--directory', deploy_base],
-                             stdin=artifile)
-                    # 2.3 Run configuration extensions from the system
-                    system_def = defs.get(system['morph'])
-                    for ext in system_def.get('configuration-extensions', []):
-                        utils.run_deployment_extension(
-                            deployment,
-                            [extensions['configure'][ext], deploy_base],
-                            'Running configuration extension')
-                    # 2.4 Fix up permissions on the "/" of the target
-                    os.chmod(deploy_base, 0o755)
-                    # 2.5 Run the write method
-                    utils.run_deployment_extension(
-                        deployment,
-                        [extensions['write'][write_method], deploy_base,
-                         deployment['location']],
-                        'Running write method')
-                finally:
-                    app.log(deployment, "Cleaning up")
-                    shutil.rmtree(deploy_base)
-    return cache.cache_key(target)
+    deployment = target if type(target) is dict else defs.get(target)
+
+    with app.timer(deployment, 'Starting deployment'):
+        for system in deployment.get('systems', []):
+            deploy(system)
+            for subsystem in system.get('subsystems', []):
+                deploy(subsystem)
+
+        system = defs.get(deployment['path'])
+        if system.get('arch') and system['arch'] != app.settings['arch']:
+            app.log(target, 'Skipping deployment for', system['arch'])
+            return None
+
+        with sandbox.setup(system):
+            for name, deployment in deployment.get('deploy', {}).iteritems():
+                method = deployment['type']
+                sandbox.run_extension(system, deployment, 'check', method)
+                app.log(system, "Extracting system artifact")
+                with open(cache.get_cache(system), "r") as artifact:
+                    call(['tar', 'x', '--directory', system['assembly']],
+                         stdin=artifact)
+
+                for ext in system.get('configuration-extensions', []):
+                    sandbox.run_extension(system, deployment, 'configure', ext)
+
+                os.chmod(system['assembly'], 0o755)
+                sandbox.run_extension(system, deployment, 'write', method)
+
+            sandbox.remove(system)
 
 
 def assemble(target):
@@ -95,9 +79,11 @@ def assemble(target):
 
     with app.timer(this, 'Starting assembly'):
         with sandbox.setup(this):
-            for it in this.get('systems', []) + this.get('subsystems', []):
+            for it in this.get('systems', []):
                 system = defs.get(it)
                 assemble(system)
+                for subsystem in this.get('subsystems', []):
+                    assemble(subsystem)
 
             for it in this.get('build-depends', []):
                 dependency = defs.get(it)

@@ -334,34 +334,6 @@ def find_extensions():
     ybd_dir = os.path.dirname(__file__)
     paths.append(os.path.join(ybd_dir, 'exts'))
 
-    # TODO: Do not assume '.' is where definitions are.
-    paths.append(os.path.realpath('.'))
+    paths.append(app.settings['defdir'])
 
     return _find_extensions(paths)
-
-
-def run_deployment_extension(deployment, command, msg):
-    app.log(deployment, msg + ": " + repr(command))
-
-    cmd_bin = command.pop(0)
-
-    tempfile.tempdir = tmp = app.settings['tmp']
-    cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
-
-    envlist = ['UPGRADE=no']
-
-    for key, value in deployment.iteritems():
-        if key.isupper():
-            envlist.append("%s=%s" % (key, value))
-
-    command = ["env"] + envlist + [cmd_tmp.name] + command
-
-    try:
-        with open(cmd_bin, "r") as infh:
-            shutil.copyfileobj(infh, cmd_tmp)
-        cmd_tmp.close()
-        os.chmod(cmd_tmp.name, 0o700)
-
-        app.log(deployment, check_output(command))
-    finally:
-        os.remove(cmd_tmp.name)

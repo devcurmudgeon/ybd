@@ -18,7 +18,7 @@
 import contextlib
 import os
 import textwrap
-from subprocess import call, PIPE
+from subprocess import call, PIPE, check_output
 import app
 from definitions import Definitions
 import shutil
@@ -63,7 +63,7 @@ def setup(this):
                 os.environ.pop(key)
 
         os.chdir(this['assembly'])
-        app.log(this, 'Assembly sandbox is at', this['assembly'])
+        app.log(this, 'Sandbox is at', this['assembly'])
 
         yield
     finally:
@@ -178,6 +178,35 @@ def run_logged(this, cmd_list, config=''):
             app.log(this, 'ERROR: Path:\n\n', os.environ['PATH'])
             app.log(this, 'ERROR: log file is at', this['log'])
             raise SystemExit
+
+
+def run_extension(this, deployment, step, method):
+    app.log(this, 'Running %s extension:' % step, method)
+
+    extensions = utils.find_extensions()
+    tempfile.tempdir = tmp = app.settings['tmp']
+    cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
+    cmd_bin = extensions[step][method]
+
+    envlist = ['UPGRADE=no']
+
+    for key, value in deployment.iteritems():
+        if key.isupper():
+            envlist.append("%s=%s" % (key, value))
+
+    command = ["env"] + envlist + [cmd_tmp.name] + [this['assembly']]
+
+    with app.chdir(this['assembly']):
+        try:
+            with open(cmd_bin, "r") as infh:
+                shutil.copyfileobj(infh, cmd_tmp)
+            cmd_tmp.close()
+            os.chmod(cmd_tmp.name, 0o700)
+
+            app.log(this, check_output(command))
+        finally:
+            os.remove(cmd_tmp.name)
+    return
 
 
 def get_binds(this):
