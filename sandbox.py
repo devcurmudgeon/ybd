@@ -188,7 +188,10 @@ def run_extension(this, deployment, step, method):
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
-    envlist = ['UPGRADE=no']
+    if deployment['type'] == 'ssh-rsync':
+        envlist = ['UPGRADE=yes']
+    else:
+        envlist = ['UPGRADE=no']
 
     for key, value in deployment.iteritems():
         if key.isupper():
