@@ -77,6 +77,7 @@ def setup(this):
 
 def remove(this):
     if this['sandbox'] != '/' and os.path.isdir(this['sandbox']):
+        app.log(this, 'Cleaning up', this['sandbox'])
         shutil.rmtree(this['sandbox'])
 
 
@@ -194,6 +195,9 @@ def run_extension(this, deployment, step, method):
             envlist.append("%s=%s" % (key, value))
 
     command = ["env"] + envlist + [cmd_tmp.name] + [this['sandbox']]
+
+    if step == 'write':
+        command += [deployment['location']]
 
     with app.chdir(this['sandbox']):
         try:
