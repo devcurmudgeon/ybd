@@ -33,6 +33,7 @@ def get_repo_url(repo):
     url = repo.replace('upstream:', 'git://git.baserock.org/delta/')
     url = url.replace('baserock:baserock/',
                       'git://git.baserock.org/baserock/baserock/')
+    url = url.replace('baserock:', 'git://git.baserock.org/baserock/')
     url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
     url = url.replace('github:', 'git://github.com/')
     url = url.replace('gnome:', 'git://git.gnome.org')
