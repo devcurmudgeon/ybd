@@ -26,6 +26,7 @@ import tempfile
 import utils
 from subprocess import call, check_output
 import pdb
+import random
 
 
 def deploy(target):
@@ -83,12 +84,16 @@ def assemble(target):
                 for subsystem in this.get('subsystems', []):
                     assemble(subsystem)
 
-            for it in this.get('build-depends', []):
+            dependencies = this.get('build-depends', [])
+            random.shuffle(dependencies)
+            for it in dependencies:
                 dependency = defs.get(it)
                 assemble(dependency)
                 sandbox.install(this, dependency)
 
-            for it in this.get('contents', []):
+            contents = this.get('contents', [])
+            random.shuffle(contents)
+            for it in contents:
                 component = defs.get(it)
                 if component.get('build-mode') != 'bootstrap':
                     assemble(component)
