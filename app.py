@@ -86,6 +86,7 @@ def setup(target, arch):
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
         settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
+        settings['server'] = 'http://192.168.56.101:8000/'
         yield
 
     finally:

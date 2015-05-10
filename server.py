@@ -14,18 +14,51 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # =*= License: GPL-2 =*=
+import socket
+import os
 import SimpleHTTPServer
 import SocketServer
-import app
+import logging
+import cgi
+import sys
 
-PORT = 8000
 
-Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
-with app.setup('foo', 'bar'), app.chdir(app.settings['artifacts']):
+    def do_GET(self):
+        logging.error(self.headers)
+        SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+
+    def do_POST(self):
+        e = {'REQUEST_METHOD':'POST',
+             'CONTENT_TYPE':self.headers['Content-Type'],}
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ=e)
+
+        fileitem = form['file']
+        if fileitem.filename:
+            filename = os.path.join(os.getcwd(),
+                                    os.path.basename(fileitem.filename))
+            open(filename, 'wb').write(fileitem.file.read())
+            print 'SERVER File was uploaded successfully %s' % filename
+        else:
+            print 'SERVER ERROR Something went wrong with %s' % filename
+
+        SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+
+
+def start():
+    server = 'http://192.168.56.101:8000/'
+    port = 8000
+    Handler = ServerHandler
+    os.chdir('/src/cache/remote')
+    print 'SERVER: I am Spartacus!'
     try:
-        httpd = SocketServer.TCPServer(("", PORT), Handler)
-        print "serving at port", PORT
-        httpd.serve_forever()
+        httpd = SocketServer.TCPServer(("", port), Handler)
+        if os.fork() == 0:
+            httpd.serve_forever()
+            sys.exit()
     except:
+        print 'ERROR: something went wrong'
         pass
+
+start()
