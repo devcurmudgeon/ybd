@@ -30,7 +30,6 @@ import stat
 
 @contextlib.contextmanager
 def setup(this):
-
     currentdir = os.getcwd()
     currentenv = dict(os.environ)
 
@@ -63,8 +62,8 @@ def setup(this):
 
         os.chdir(this['sandbox'])
         app.log(this, 'Sandbox is at', this['sandbox'])
-
         yield
+
     finally:
         for key, value in currentenv.items():
             if value:
@@ -182,7 +181,6 @@ def run_logged(this, cmd_list, config=''):
 
 def run_extension(this, deployment, step, method):
     app.log(this, 'Running %s extension:' % step, method)
-
     extensions = utils.find_extensions()
     tempfile.tempdir = tmp = app.settings['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)

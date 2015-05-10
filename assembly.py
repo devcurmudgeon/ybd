@@ -22,7 +22,6 @@ import app
 import buildsystem
 import sandbox
 import shutil
-import tempfile
 import utils
 from subprocess import call, check_output
 import random
@@ -100,9 +99,9 @@ def assemble(target):
 
             build(this)
             do_manifest(this)
-            app.log(this, "Constructing artifact")
             cache.cache(this, full_root=this.get('kind', None) == "system")
             sandbox.remove(this)
+
     return cache.cache_key(this)
 
 

@@ -332,7 +332,6 @@ def find_extensions():
 
     ybd_dir = os.path.dirname(__file__)
     paths.append(os.path.join(ybd_dir, 'exts'))
-
     paths.append(app.settings['defdir'])
 
     return _find_extensions(paths)

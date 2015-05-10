@@ -31,8 +31,6 @@ import re
 
 def get_repo_url(repo):
     url = repo.replace('upstream:', 'git://git.baserock.org/delta/')
-    url = url.replace('baserock:baserock/',
-                      'git://git.baserock.org/baserock/baserock/')
     url = url.replace('baserock:', 'git://git.baserock.org/baserock/')
     url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
     url = url.replace('github:', 'git://github.com/')
@@ -66,7 +64,7 @@ def get_upstream_ver(repo, ref):
         result = "%s (%s + %s commits)" % (ref[:8], last_tag, commits[0:-1])
 
     except:
-        result = ref[:8] + " " + "(No tag found)"
+        result = ref[:8] + " (No tag found)"
 
     return result
 

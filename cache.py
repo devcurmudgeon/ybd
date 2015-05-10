@@ -73,6 +73,7 @@ def cache_key(this):
 
 
 def cache(this, full_root=False):
+    app.log(this, "Creating cache artifact")
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
     if full_root:
         shutil.make_archive(cachefile, 'tar', this['sandbox'])
@@ -91,10 +92,10 @@ def upload(this, cachefile):
     url = app.settings['server'] + '/post'
     params = {"upfile": os.path.basename(cachefile),
               "folder": os.path.dirname(cachefile), "submit": "Submit"}
-    with open(cachefile,'rb') as local_file:
+    with open(cachefile, 'rb') as local_file:
         try:
-           response = requests.post(url=url, data=params,
-                                    files={"file": local_file})
+            response = requests.post(url=url, data=params,
+                                     files={"file": local_file})
         except:
             pass
 
@@ -124,6 +125,7 @@ def get_cache(this):
         return get_remote_cache(cachefile)
 
     return False
+
 
 def get_remote_cache(cachefile):
     ''' Get remote version if we can. '''

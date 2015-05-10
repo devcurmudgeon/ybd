@@ -28,8 +28,8 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self):
-        e = {'REQUEST_METHOD':'POST',
-             'CONTENT_TYPE':self.headers['Content-Type'],}
+        e = {'REQUEST_METHOD': 'POST',
+             'CONTENT_TYPE': self.headers['Content-Type'], }
         form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ=e)
 
         fileitem = form['file']
@@ -57,6 +57,6 @@ def start():
             sys.exit()
     except:
         print 'SERVER ERROR: Something went wrong starting SocketServer'
-        pass
+        raise SystemExit
 
 start()

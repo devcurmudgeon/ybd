@@ -21,9 +21,9 @@ import shutil
 from subprocess import call, check_output
 from multiprocessing import cpu_count
 
+
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
                  os.path.join(os.path.expanduser('~'), '.cache')
-
 settings = {}
 
 
