@@ -14,19 +14,17 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # =*= License: GPL-2 =*=
-import socket
-import os
+
 import SimpleHTTPServer
 import SocketServer
-import logging
 import cgi
 import sys
+import os
 
 
 class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
     def do_GET(self):
-        logging.error(self.headers)
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
     def do_POST(self):
@@ -41,7 +39,7 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
             open(filename, 'wb').write(fileitem.file.read())
             print 'SERVER File was uploaded successfully %s' % filename
         else:
-            print 'SERVER ERROR Something went wrong with %s' % filename
+            print 'SERVER ERROR: Something went wrong with %s' % filename
 
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
@@ -58,7 +56,7 @@ def start():
             httpd.serve_forever()
             sys.exit()
     except:
-        print 'ERROR: something went wrong'
+        print 'SERVER ERROR: Something went wrong starting SocketServer'
         pass
 
 start()

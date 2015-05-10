@@ -25,7 +25,6 @@ import shutil
 import tempfile
 import utils
 from subprocess import call, check_output
-import pdb
 import random
 
 
@@ -181,8 +180,8 @@ def gather_integration_commands(this):
             for product, it in component['system-integration'].iteritems():
                 for name, cmdseq in it.iteritems():
                     commands["%s-%s" % (name, product)] = cmdseq
-        for subcomp in component.get('contents', []):
-            _gather_recursively(defs.get(subcomp), commands)
+        for subcomponent in component.get('contents', []):
+            _gather_recursively(defs.get(subcomponent), commands)
 
     all_commands = {}
     _gather_recursively(this, all_commands)
