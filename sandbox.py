@@ -173,10 +173,7 @@ def run_logged(this, cmd_list, config=''):
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), ' '.join(cmd_list))
-            app.log(this, 'ERROR: Containerisation settings:\n\n', config)
-            app.log(this, 'ERROR: Path:\n\n', os.environ['PATH'])
-            app.log(this, 'ERROR: log file is at', this['log'])
-            raise SystemExit
+            app.exit(this, 'ERROR: log file is at', this['log'])
 
 
 def run_extension(this, deployment, step, method):
@@ -208,8 +205,7 @@ def run_extension(this, deployment, step, method):
 
     with app.chdir(app.settings['defdir']):
         if call(command):
-            app.log(this, 'ERROR: %s extension failed:' % step, cmd_bin)
-            raise SystemExit
+            app.exit(this, 'ERROR: %s extension failed:' % step, cmd_bin)
     return
 
 

@@ -98,8 +98,7 @@ def get_tree(this):
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-            app.log(this, 'ERROR: could not find tree for ref', ref)
-            raise SystemExit
+            app.exit(this, 'ERROR: could not find tree for ref', ref)
 
 
 def copy_repo(repo, destdir):
@@ -175,8 +174,7 @@ def mirror(name, repo):
                 call(['git', 'clone', '--mirror', '-n', repo_url, gitdir],
                      stdout=fnull, stderr=fnull)
         except:
-            app.log(name, 'ERROR: failed to clone', repo)
-            raise SystemExit
+            app.exit(name, 'ERROR: failed to clone', repo)
 
     app.log(name, 'Git repo is mirrored at', gitdir)
 
@@ -210,8 +208,7 @@ def checkout(name, repo, ref, checkoutdir):
     with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
         copy_repo(gitdir, checkoutdir)
         if call(['git', 'checkout', ref], stdout=fnull, stderr=fnull):
-            app.log(name, 'ERROR: git checkout failed for', ref)
-            raise SystemExit
+            app.exit(name, 'ERROR: git checkout failed for', ref)
 
         if os.path.exists('.gitmodules'):
             checkout_submodules(name, ref)
@@ -256,5 +253,4 @@ def checkout_submodules(name, ref):
                         fields)
 
         except:
-            app.log(name, "ERROR: Git submodules problem")
-            raise SystemExit
+            app.exit(name, "ERROR: Git submodules problem")

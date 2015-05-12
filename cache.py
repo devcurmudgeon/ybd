@@ -31,12 +31,12 @@ import requests
 import sys
 
 
+
 def cache_key(this):
     defs = definitions.Definitions()
     definition = defs.get(this)
     if definition is None:
-        app.log(this, 'ERROR: No definition found for', this)
-        raise SystemExit
+        app.exit(this, 'ERROR: No definition found for', this)
 
     if definition.get('cache'):
         return definition['cache']
@@ -85,7 +85,7 @@ def cache(this, full_root=False):
     app.log(this, 'Now cached as', cache_key(this))
     if os.fork() == 0:
         upload(this, cachefile)
-        sys.exit()
+        app.exit()
 
 
 def upload(this, cachefile):
@@ -96,6 +96,7 @@ def upload(this, cachefile):
         try:
             response = requests.post(url=url, data=params,
                                      files={"file": local_file})
+            app.log(this, 'Artifact uploaded')
         except:
             pass
 
@@ -107,11 +108,10 @@ def unpack(this):
         if not os.path.exists(unpackdir):
             os.makedirs(unpackdir)
             if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
-                app.log(this, 'ERROR: Problem unpacking', cachefile)
+                app.exit(this, 'ERROR: Problem unpacking', cachefile)
         return unpackdir
 
-    app.log(this, 'ERROR: Cached artifact not found')
-    raise SystemExit
+    app.exit(this, 'ERROR: Cached artifact not found')
 
 
 def get_cache(this):

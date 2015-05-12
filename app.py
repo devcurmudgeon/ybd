@@ -49,6 +49,13 @@ def log_env(log, message=''):
         logfile.flush()
 
 
+def exit(component=False, message='', data=''):
+    if component:
+        log(component, message, data)
+    settings['noisy'] = False
+    raise SystemExit
+
+
 @contextlib.contextmanager
 def setup(target, arch):
     try:
@@ -86,11 +93,13 @@ def setup(target, arch):
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
         settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
-        settings['server'] = 'http://192.168.56.101:8000/'
+        settings['server'] = 'http://192.168.56.102:8000/'
+        settings['noisy'] = True
         yield
 
     finally:
-        log(target, 'Finished')
+        if settings['noisy']:
+            log(target, 'Finished')
 
 
 @contextlib.contextmanager
@@ -115,4 +124,5 @@ def timer(this, start_message=''):
         hours, remainder = divmod(int(td.total_seconds()), 60*60)
         minutes, seconds = divmod(remainder, 60)
         td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        log(this, 'Elapsed time', td_string)
+        if settings['noisy']:
+            log(this, 'Elapsed time', td_string)

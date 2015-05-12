@@ -94,8 +94,7 @@ class Definitions():
         if this.get('path', None) is None:
             this['path'] = this.pop('morph', this.get('name', name))
             if this['path'] == 'ERROR':
-                app.log(this, 'ERROR: no path, no name?')
-                raise SystemExit
+                app.exit(this, 'ERROR: no path, no name?')
         if this.get('name') is None:
             this['name'] = this['path'].replace('/', '-')
         if this['name'] == app.settings['target']:
