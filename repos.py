@@ -168,13 +168,11 @@ def mirror(name, repo):
                 raise BaseException('Did not get a valid git repo')
             call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
-        app.log(name, 'Using git clone from ', repo_url)
-        try:
-            with open(os.devnull, "w") as fnull:
-                call(['git', 'clone', '--mirror', '-n', repo_url, gitdir],
-                     stdout=fnull, stderr=fnull)
-        except:
-            app.exit(name, 'ERROR: failed to clone', repo)
+        app.log(name, 'Trying git clone from ', repo_url)
+        with open(os.devnull, "w") as fnull:
+            if call(['git', 'clone', '--mirror', '-n', repo_url, gitdir],
+                     stdout=fnull, stderr=fnull):
+                app.exit(name, 'ERROR: failed to clone', repo)
 
     app.log(name, 'Git repo is mirrored at', gitdir)
 
@@ -193,7 +191,9 @@ def mirror_has_ref(gitdir, ref):
 def update_mirror(name, repo, gitdir):
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         app.log(name, 'Refreshing mirror for %s' % repo)
-        call(['git', 'remote', 'update', 'origin'], stdout=fnull, stderr=fnull)
+        if call(['git', 'remote', 'update', 'origin'], stdout=fnull,
+                 stderr=fnull):
+            app.exit(name, 'ERROR: git update mirror failed', repo)
 
 
 def checkout(name, repo, ref, checkoutdir):
@@ -253,4 +253,4 @@ def checkout_submodules(name, ref):
                         fields)
 
         except:
-            app.exit(name, "ERROR: Git submodules problem")
+            app.exit(name, "ERROR: git submodules problem")
