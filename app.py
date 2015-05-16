@@ -20,7 +20,7 @@ import datetime
 import shutil
 from subprocess import call, check_output
 from multiprocessing import cpu_count
-from repos import get_upstream_ver as version
+from repos import get_version
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
@@ -65,7 +65,7 @@ def setup(target, arch):
             exit(target, 'ERROR: this directory is not a git repo')
 
         settings['defdir'] = os.getcwd()
-        settings['def-ver'] = version('.')
+        settings['def-ver'] = get_version('.')
         settings['target'] = target
         settings['arch'] = arch
         settings['no-ccache'] = False
