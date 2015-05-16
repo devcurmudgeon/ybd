@@ -53,15 +53,15 @@ def get_repo_name(repo):
     return ''.join([transl(x) for x in get_repo_url(repo)])
 
 
-def get_upstream_ver(repo, ref):
+def get_upstream_ver(gitdir, ref='HEAD'):
     try:
-        gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
         with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+            described = check_output(['git', 'describe'], stderr=fnull)[0:-1]
             last_tag = check_output(['git', 'describe', '--abbrev=0',
                                      '--tags', ref], stderr=fnull)[0:-1]
             commits = check_output(['git', 'rev-list', last_tag + '..' + ref,
-                                    '--count'])
-        result = "%s (%s + %s commits)" % (ref[:8], last_tag, commits[0:-1])
+                                    '--count'])[0:-1]
+        result = "%s (%s + %s commits)" % (described, last_tag, commits)
 
     except:
         result = ref[:8] + " (No tag found)"
@@ -202,7 +202,7 @@ def checkout(name, repo, ref, checkoutdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
         update_mirror(name, repo, gitdir)
-    app.log(name, 'Upstream version %s' % repo, get_upstream_ver(repo, ref))
+    app.log(name, 'Upstream version %s' % repo, get_upstream_ver(gitdir, ref))
     app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
     # checkout the required version of this from git
     with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:

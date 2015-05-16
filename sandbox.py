@@ -161,13 +161,13 @@ def run_sandboxed(this, command, allow_parallel=False):
     try:
         if not allow_parallel:
             os.environ.pop("MAKEFLAGS", None)
-        run_logged(this, cmd_list, container_config)
+        run_logged(this, cmd_list)
     finally:
         if cur_makeflags is not None:
             os.environ["MAKEFLAGS"] = cur_makeflags
 
 
-def run_logged(this, cmd_list, config=''):
+def run_logged(this, cmd_list):
     app.log_env(this['log'], '\n'.join(cmd_list))
     with open(this['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
@@ -282,6 +282,7 @@ def clean_env(this):
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
+    env['DEFINITIONS_REF'] = app.settings['def-ver']
 
     return env
 

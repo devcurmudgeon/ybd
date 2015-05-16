@@ -26,12 +26,14 @@ import app
 from assembly import assemble, deploy
 import sandbox
 
+
 print
 target = sys.argv[1]
 arch = sys.argv[2]
+
 with app.setup(target, arch):
-    with app.timer('TOTAL', 'YBD starts'):
-        with app.timer('DEFINITIONS', 'Parsing'):
+    with app.timer('TOTAL', 'YBD starts in %s' % app.settings['defdir']):
+        with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(app.settings['target'])

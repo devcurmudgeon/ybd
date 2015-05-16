@@ -20,6 +20,7 @@ import datetime
 import shutil
 from subprocess import call, check_output
 from multiprocessing import cpu_count
+from repos import get_upstream_ver as version
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
@@ -59,7 +60,12 @@ def exit(component=False, message='', data=''):
 @contextlib.contextmanager
 def setup(target, arch):
     try:
+        settings['noisy'] = True
+        if call(['git', 'describe']):
+            exit(target, 'ERROR: this directory is not a git repo')
+
         settings['defdir'] = os.getcwd()
+        settings['def-ver'] = version('.')
         settings['target'] = target
         settings['arch'] = arch
         settings['no-ccache'] = False
@@ -94,7 +100,6 @@ def setup(target, arch):
 
         settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
         settings['server'] = 'http://192.168.56.102:8000/'
-        settings['noisy'] = True
         yield
 
     finally:
