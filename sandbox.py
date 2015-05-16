@@ -124,6 +124,26 @@ def ldconfig(this):
         app.log(this, 'No %s, not running ldconfig' % conf)
 
 
+def run_sb(this, command, allow_parallel=False):
+    app.log(this, 'Running command:\n%s' % command)
+    with app.chdir(this['build']):
+        with open(this['log'], "a") as logfile:
+            logfile.write("# # %s\n" % command)
+
+            cur_makeflags = os.environ.get("MAKEFLAGS")
+            try:
+                if not allow_parallel:
+                    os.environ.pop("MAKEFLAGS", None)
+
+                cmd_list = ['sh', '-c']
+                if this.get('build-mode') != 'bootstrap':
+                    cmd_list += ['chroot', this['sandbox']]
+                run_logged(this, cmd_list + [command])
+            finally:
+                if cur_makeflags is not None:
+                    os.environ["MAKEFLAGS"] = cur_makeflags
+
+
 def run_sandboxed(this, command, allow_parallel=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
