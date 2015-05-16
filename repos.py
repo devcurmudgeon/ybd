@@ -87,6 +87,7 @@ def get_tree(this):
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
                 stderr=fnull):
             # can't resolve this ref. is it upstream?
+            app.log(this, 'Fetching from upstream to resolve %s' % ref)
             call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
 
         try:
