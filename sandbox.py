@@ -60,7 +60,6 @@ def setup(this):
             else:
                 os.environ.pop(key)
 
-        os.chdir(this['sandbox'])
         yield
 
     finally:
@@ -70,7 +69,6 @@ def setup(this):
             else:
                 if os.environ.get(key):
                     os.environ.pop(key)
-        os.chdir(currentdir)
 
 
 def remove(this):
