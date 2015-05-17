@@ -61,7 +61,6 @@ def setup(this):
                 os.environ.pop(key)
 
         os.chdir(this['sandbox'])
-        app.log(this, 'Sandbox is at', this['sandbox'])
         yield
 
     finally:

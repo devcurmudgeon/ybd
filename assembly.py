@@ -74,33 +74,32 @@ def assemble(target):
         app.log(target, 'Skipping assembly for', this['arch'])
         return None
 
-    with app.timer(this, 'Starting assembly'):
-        with sandbox.setup(this):
-            for it in this.get('systems', []):
-                system = defs.get(it)
-                assemble(system)
-                for subsystem in this.get('subsystems', []):
-                    assemble(subsystem)
+    with app.timer(this, 'Starting assembly'), sandbox.setup(this):
+        for it in this.get('systems', []):
+            system = defs.get(it)
+            assemble(system)
+            for subsystem in this.get('subsystems', []):
+                assemble(subsystem)
 
-            dependencies = this.get('build-depends', [])
-            random.shuffle(dependencies)
-            for it in dependencies:
-                dependency = defs.get(it)
-                assemble(dependency)
-                sandbox.install(this, dependency)
+        dependencies = this.get('build-depends', [])
+        random.shuffle(dependencies)
+        for it in dependencies:
+            dependency = defs.get(it)
+            assemble(dependency)
+            sandbox.install(this, dependency)
 
-            contents = this.get('contents', [])
-            random.shuffle(contents)
-            for it in contents:
-                component = defs.get(it)
-                if component.get('build-mode') != 'bootstrap':
-                    assemble(component)
-                    sandbox.install(this, component)
+        contents = this.get('contents', [])
+        random.shuffle(contents)
+        for it in contents:
+            component = defs.get(it)
+            if component.get('build-mode') != 'bootstrap':
+                assemble(component)
+                sandbox.install(this, component)
 
-            build(this)
-            do_manifest(this)
-            cache.cache(this, full_root=this.get('kind', None) == "system")
-            sandbox.remove(this)
+        build(this)
+        do_manifest(this)
+        cache.cache(this, full_root=this.get('kind', None) == "system")
+        sandbox.remove(this)
 
     return cache.cache_key(this)
 
