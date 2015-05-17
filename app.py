@@ -38,6 +38,8 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
+    if 'ERROR' in log_entry:
+        log_entry = '\n\n%s\n\n' % log_entry
     print(log_entry),
 
 
