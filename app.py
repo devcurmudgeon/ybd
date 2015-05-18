@@ -131,5 +131,5 @@ def timer(this, start_message=''):
         hours, remainder = divmod(int(td.total_seconds()), 60*60)
         minutes, seconds = divmod(remainder, 60)
         td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        if settings['noisy']:
+        if settings['noisy'] or this == 'TOTAL':
             log(this, 'Elapsed time', td_string)
