@@ -63,8 +63,9 @@ def exit(component=False, message='', data=''):
 def setup(target, arch):
     try:
         settings['noisy'] = True
-        if call(['git', 'describe']):
-            exit(target, 'ERROR: this directory is not a git repo')
+        with open(os.devnull, "w") as fnull:
+            if call(['git', 'describe'], stdout=fnull, stderr=fnull):
+                exit(target, 'ERROR: %s is not a git repo' % os.getcwd())
 
         settings['defdir'] = os.getcwd()
         settings['def-ver'] = get_version('.')
