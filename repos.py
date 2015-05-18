@@ -170,10 +170,9 @@ def mirror(name, repo):
                 raise BaseException('Did not get a valid git repo')
             call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
     except:
-        app.log(name, 'Trying git clone from ', repo_url)
+        app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
-            if call(['git', 'clone', '--mirror', '-n', repo_url, gitdir],
-                     stdout=fnull, stderr=fnull):
+            if call(['git', 'clone', '--mirror', '-n', repo_url, gitdir]):
                 app.exit(name, 'ERROR: failed to clone', repo)
 
     app.log(name, 'Git repo is mirrored at', gitdir)
