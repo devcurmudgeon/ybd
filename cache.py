@@ -77,11 +77,11 @@ def cache(this, full_root=False):
     cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
     if full_root:
         shutil.make_archive(cachefile, 'tar', this['sandbox'])
-        call(['mv', cachefile + '.tar', cachefile])
+        os.rename('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(this['install'])
         shutil.make_archive(cachefile, 'gztar', this['install'])
-        call(['mv', cachefile + '.tar.gz', cachefile])
+        os.rename('%s.tar.gz' % cachefile, cachefile)
     app.log(this, 'Now cached as', cache_key(this))
     if os.fork() == 0:
         upload(this, cachefile)
