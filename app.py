@@ -35,7 +35,7 @@ def log(component, message='', data=''):
 
     name = component
     try:
-        name = component['path']
+        name = component['name']
     except:
         pass
 
