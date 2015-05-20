@@ -30,9 +30,12 @@ settings = {}
 
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
+    if os.getpid() != settings.get('pid'):
+        return
+
     name = component
     try:
-        name = component['name']
+        name = component['path']
     except:
         pass
 
@@ -55,14 +58,13 @@ def log_env(log, message=''):
 def exit(component=False, message='', data=''):
     if component:
         log(component, message, data)
-    settings['noisy'] = False
     raise SystemExit
 
 
 @contextlib.contextmanager
 def setup(target, arch):
     try:
-        settings['noisy'] = True
+        settings['pid'] = os.getpid()
         with open(os.devnull, "w") as fnull:
             if call(['git', 'describe'], stdout=fnull, stderr=fnull):
                 exit(target, 'ERROR: %s is not a git repo' % os.getcwd())
@@ -106,8 +108,7 @@ def setup(target, arch):
         yield
 
     finally:
-        if settings['noisy']:
-            log(target, 'Finished')
+        log(target, 'Finished')
 
 
 @contextlib.contextmanager
@@ -132,5 +133,4 @@ def timer(this, start_message=''):
         hours, remainder = divmod(int(td.total_seconds()), 60*60)
         minutes, seconds = divmod(remainder, 60)
         td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        if settings['noisy'] or this == 'TOTAL':
-            log(this, 'Elapsed time', td_string)
+        log(this, 'Elapsed time', td_string)
