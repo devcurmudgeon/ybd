@@ -186,7 +186,7 @@ def gather_integration_commands(this):
     result = []
     for key in sorted(all_commands.keys()):
         result.extend(all_commands[key])
-    return None if result == [] else result
+    return result
 
 
 def do_manifest(this):
