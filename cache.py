@@ -67,7 +67,7 @@ def cache_key(this):
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
     safename = definition['name'].replace('/', '-')
-    definition['cache'] = safename + "@" + hashlib.sha256(result).hexdigest()
+    definition['cache'] = safename + "." + hashlib.sha256(result).hexdigest()
     app.log(definition, 'Cache_key is', definition['cache'])
     return definition['cache']
 
