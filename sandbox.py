@@ -301,6 +301,7 @@ def clean_env(this):
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
     env['DEFINITIONS_REF'] = app.settings['def-ver']
+    env['YBD_REF'] = app.settings['ybd-version']
 
     return env
 

@@ -33,7 +33,7 @@ arch = sys.argv[2]
 
 with app.setup(target, arch):
     with app.timer('TOTAL', 'YBD starts, version %s' % \
-                   app.settings['ybd-version'][:-1]):
+                   app.settings['ybd-version']):
         app.log(app.settings['defdir'], 'Target is', target)
         with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
