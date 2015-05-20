@@ -122,12 +122,6 @@ class Definitions():
 
         return self.__definitions.get(this['path'])
 
-    def version(self, this):
-        try:
-            return this['name'].split('@')[1]
-        except:
-            return False
-
     def save_trees(self):
         self.__trees = {}
         for name in self.__definitions:
