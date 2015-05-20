@@ -32,7 +32,9 @@ target = sys.argv[1]
 arch = sys.argv[2]
 
 with app.setup(target, arch):
-    with app.timer('TOTAL', 'YBD starts in %s' % app.settings['defdir']):
+    with app.timer('TOTAL', 'YBD starts, version %s' % \
+                   app.settings['ybd-version'][:-1]):
+        app.log(app.settings['defdir'], 'Target is', target)
         with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):

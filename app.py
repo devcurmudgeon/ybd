@@ -69,6 +69,8 @@ def setup(target, arch):
             if call(['git', 'describe'], stdout=fnull, stderr=fnull):
                 exit(target, 'ERROR: %s is not a git repo' % os.getcwd())
 
+        with chdir(os.path.dirname(__file__)):
+            settings['ybd-version'] = check_output(['git', 'rev-parse', 'HEAD'])
         settings['defdir'] = os.getcwd()
         settings['def-ver'] = get_version('.')
         settings['target'] = target
