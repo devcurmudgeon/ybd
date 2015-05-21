@@ -121,21 +121,4 @@ def get_cache(this):
     if os.path.exists(cachefile):
         return cachefile
 
-    if app.settings.get('server'):
-        return get_remote_cache(cachefile)
-
-    return False
-
-
-def get_remote_cache(cachefile):
-    ''' Get remote version if we can. '''
-
-    with app.chdir(app.settings['artifacts']), open(os.devnull, "w") as fnull:
-        try:
-            remote = app.settings['server'] + os.path.basename(cachefile)
-            if call(['wget', remote], stderr=fnull) == 0:
-                return cachefile
-        except:
-            pass
-
     return False
