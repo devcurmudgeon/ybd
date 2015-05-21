@@ -20,7 +20,8 @@ import yaml
 import os
 import app
 import cache
-from subprocess import check_output
+from subprocess import check_output, PIPE
+import hashlib
 
 
 class Definitions():
@@ -38,14 +39,9 @@ class Definitions():
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
                     definition = self._load(os.path.join(dirname, filename))
-        try:
-            with open(".trees") as f:
-                text = f.read()
-            self.__trees = yaml.safe_load(text)
+        if self._check_trees():
             for name in self.__definitions:
                 self.__definitions[name]['tree'] = self.__trees.get(name)
-        except:
-            return
 
     def _load(self, path):
         ''' Load a single definition file '''
@@ -122,10 +118,30 @@ class Definitions():
 
         return self.__definitions.get(this['path'])
 
+    def _check_trees(self):
+        try:
+            with app.chdir(app.settings['defdir']):
+                checksum = check_output('ls -lRA */', shell=True)
+            checksum = hashlib.md5(checksum).hexdigest()
+            with open('.trees') as f:
+                text = f.read()
+            self.__trees = yaml.safe_load(text)
+            if self.__trees.get('.checksum') == checksum:
+                return True
+        except:
+            if os.path.exists('.trees'):
+                os.remove('.trees')
+            self.__trees = {}
+            return False
+
     def save_trees(self):
-        self.__trees = {}
+        with app.chdir(app.settings['defdir']):
+            checksum = check_output('ls -lRA */', shell=True)
+        checksum = hashlib.md5(checksum).hexdigest()
+        self.__trees = {'.checksum': checksum}
         for name in self.__definitions:
             if self.__definitions[name].get('tree') is not None:
                 self.__trees[name] = self.__definitions[name]['tree']
+
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.dump(self.__trees, default_flow_style=False))
