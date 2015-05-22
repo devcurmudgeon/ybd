@@ -85,7 +85,7 @@ def cache(this, full_root=False):
     app.log(this, 'Now cached as', cache_key(this))
     if os.fork() == 0:
         upload(this, cachefile)
-        app.exit()
+        sys.exit()
 
 
 def upload(this, cachefile):

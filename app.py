@@ -21,6 +21,7 @@ import shutil
 from subprocess import call, check_output
 from multiprocessing import cpu_count
 from repos import get_version
+import sys
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
@@ -55,10 +56,9 @@ def log_env(log, message=''):
         logfile.flush()
 
 
-def exit(component=False, message='', data=''):
-    if component:
-        log(component, message, data)
-    raise SystemExit
+def exit(component, message, data):
+    log(component, message, data)
+    sys.exit(1)
 
 
 @contextlib.contextmanager
