@@ -123,6 +123,8 @@ def build(this):
         repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
     get_build_commands(this)
+
+    app.log(this, 'Logging build commands to %s' % this['log'])
     for build_step in buildsystem.build_steps:
         if this.get(build_step):
             app.log(this, 'Running', build_step)
