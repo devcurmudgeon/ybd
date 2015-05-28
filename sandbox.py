@@ -14,18 +14,29 @@
 #
 # =*= License: GPL-2 =*=
 
+
+import sandboxlib
+
 import contextlib
 import os
-import textwrap
-from subprocess import call, PIPE, check_output
-import app
-from definitions import Definitions
+import pipes
 import shutil
-import utils
-import cache
-from repos import get_repo_url
-import tempfile
 import stat
+import tempfile
+from subprocess import call, PIPE
+
+import app
+import cache
+from definitions import Definitions
+from repos import get_repo_url
+import utils
+
+
+def builddir_for_component(this):
+    return this['name'] + '.build'
+
+def installdir_for_component(this):
+    return this['name'] + '.inst'
 
 
 @contextlib.contextmanager
@@ -35,8 +46,10 @@ def setup(this):
 
     tempfile.tempdir = app.settings['staging']
     this['sandbox'] = tempfile.mkdtemp()
-    this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
-    this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
+    this['build'] = os.path.join(
+        this['sandbox'], builddir_for_component(this))
+    this['install'] = os.path.join(
+        this['sandbox'], installdir_for_component(this))
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
     this['tmp'] = os.path.join(this['sandbox'], 'tmp')
     for directory in ['build', 'install', 'tmp', 'baserockdir']:
@@ -142,55 +155,94 @@ def run_sb(this, command, allow_parallel=False):
                     os.environ["MAKEFLAGS"] = cur_makeflags
 
 
+def argv_to_string(argv):
+    return ' '.join(map(pipes.quote, argv))
+
+
 def run_sandboxed(this, command, allow_parallel=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
-    rw_root = True if this.get('kind') == 'system' else False
-    use_chroot = False if this.get('build-mode') == 'bootstrap' else True
-    do_not_mount_dirs = [this['build'], this['install']]
 
-    if use_chroot:
-        chroot_dir = this['sandbox']
-        chdir = os.path.join('/', os.path.basename(this['build']))
-        do_not_mount_dirs += [os.path.join(this['sandbox'], d)
-                              for d in ["dev", "proc", 'tmp']]
-        mounts = ('dev/shm', 'tmpfs', 'none'),
+    executor = sandboxlib.linux_user_chroot
+    sandbox_config = executor.maximum_possible_isolation()
+
+    mounts = ccache_mounts(this)
+
+    if this.get('build-mode') == 'bootstrap':
+        # bootstrap mode: builds have some access to the host system, so they
+        # can use the compilers etc.
+        tmpdir = app.settings.get("TMPDIR", "/tmp")
+
+        writable_paths = [
+            this['build'], this['install'], tmpdir,
+        ]
+
+        sandbox_config.update(dict(
+            cwd=this['build'],
+            filesystem_root='/',
+            filesystem_writable_paths=writable_paths,
+            extra_mounts=[],
+        ))
     else:
-        chroot_dir = '/'
-        chdir = this['build']
-        do_not_mount_dirs += [app.settings.get("TMPDIR", "/tmp")]
-        mounts = []
+        # normal mode: builds run in a chroot with only their dependencies
+        # present.
 
-    binds = get_binds(this)
+        mounts.extend([
+            (None, '/dev/shm', 'tmpfs'),
+            (None, '/proc', 'proc'),
+        ])
 
-    container_config = dict(
-        cwd=chdir,
-        root=chroot_dir,
-        mounts=mounts,
-        mount_proc=use_chroot,
-        binds=binds,
-        writable_paths=None if rw_root else do_not_mount_dirs)
+        if this.get('kind') == 'system':
+            writable_paths = None
+        else:
+            writable_paths = [
+                builddir_for_component(this),
+                installdir_for_component(this),
+                '/dev', '/proc', '/tmp',
+            ]
+
+        sandbox_config.update(dict(
+            cwd=builddir_for_component(this),
+            filesystem_root=this['sandbox'],
+            filesystem_writable_paths=writable_paths,
+            extra_mounts=mounts,
+        ))
 
     argv = ['sh', '-c', command]
-    cmd_list = utils.containerised_cmdline(argv, **container_config)
 
     cur_makeflags = os.environ.get("MAKEFLAGS")
+
     try:
         if not allow_parallel:
             os.environ.pop("MAKEFLAGS", None)
-        run_logged(this, cmd_list)
+
+        # The setup() function modifies os.environ directly to match the build
+        # environment. so there isn't any leakage of host environment
+        # variables here.
+        env = os.environ
+        app.log_env(this['log'], argv_to_string(argv))
+
+        with open(this['log'], "a") as logfile:
+            exit_code = executor.run_sandbox_with_redirection(
+                argv, stdout=logfile, stderr=sandboxlib.STDOUT,
+                env=env, **sandbox_config)
+
+        if exit_code != 0:
+            app.log(this, 'ERROR: command failed in directory %s:\n\n' %
+                    os.getcwd(), argv_to_string(argv))
+            app.exit(this, 'ERROR: log file is at', this['log'])
     finally:
         if cur_makeflags is not None:
             os.environ["MAKEFLAGS"] = cur_makeflags
 
 
 def run_logged(this, cmd_list):
-    app.log_env(this['log'], '\n'.join(cmd_list))
+    app.log_env(this['log'], argv_to_string(cmd_list))
     with open(this['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
-                    os.getcwd(), ' '.join(cmd_list))
+                    os.getcwd(), argv_to_string(cmd_list))
             app.exit(this, 'ERROR: log file is at', this['log'])
 
 
@@ -233,22 +285,20 @@ def run_extension(this, deployment, step, method):
     return
 
 
-def get_binds(this):
-    if app.settings['no-ccache']:
-        binds = ()
-    elif 'repo' in this:
+def ccache_mounts(this):
+    if app.settings['no-ccache'] or 'repo' not in this:
+        mounts = []
+    else:
         name = os.path.basename(get_repo_url(this['repo']))
+
         ccache_dir = os.path.join(app.settings['ccache_dir'], name)
-        ccache_target = os.path.join(this['sandbox'],
-                                     os.environ['CCACHE_DIR'].lstrip('/'))
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
-        if not os.path.isdir(ccache_target):
-            os.mkdir(ccache_target)
-        binds = ((ccache_dir, ccache_target),)
-    else:
-        binds = ()
-    return binds
+
+        ccache_target = os.environ['CCACHE_DIR']
+
+        mounts = [(ccache_dir, ccache_target, None, 'bind')]
+    return mounts
 
 
 def clean_env(this):
@@ -319,7 +369,7 @@ def create_devices(this):
         mode = int(device['permissions'], 8) & perms_mask
         if device['type'] == 'c':
             mode = mode | stat.S_IFCHR
-        elif dev['type'] == 'b':
+        elif device['type'] == 'b':
             mode = mode | stat.S_IFBLK
         else:
             raise IOError('Cannot create device node %s,'
