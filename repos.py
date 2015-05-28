@@ -103,51 +103,6 @@ def get_tree(this):
             app.exit(this, 'ERROR: could not find tree for ref', ref)
 
 
-def copy_repo(repo, destdir):
-    '''Copies a cached repository into a directory using cp.
-
-    This also fixes up the repository afterwards, so that it can contain
-    code etc.  It does not leave any given branch ready for use.
-
-    '''
-
-    # core.bare should be false so that git believes work trees are possible
-    # we do not want the origin remote to behave as a mirror for pulls
-    # we want a traditional refs/heads -> refs/remotes/origin ref mapping
-    # set the origin url to the cached repo so that we can quickly clean up
-    # by packing the refs, we can then edit then en-masse easily
-    call(['cp', '-a', repo, os.path.join(destdir, '.git')])
-    call(['git', 'config', 'core.bare', 'false'])
-    call(['git', 'config', '--unset', 'remote.origin.mirror'])
-    with open(os.devnull, "w") as fnull:
-        call(['git', 'config', 'remote.origin.fetch',
-              '+refs/heads/*:refs/remotes/origin/*'],
-             stdout=fnull,
-             stderr=fnull)
-    call(['git',  'config', 'remote.origin.url', repo])
-    call(['git',  'pack-refs', '--all', '--prune'])
-
-    # turn refs/heads/* into refs/remotes/origin/* in the packed refs
-    # so that the new copy behaves more like a traditional clone.
-    with open(os.path.join(destdir, ".git", "packed-refs"), "r") as ref_fh:
-        pack_lines = ref_fh.read().split("\n")
-    with open(os.path.join(destdir, ".git", "packed-refs"), "w") as ref_fh:
-        ref_fh.write(pack_lines.pop(0) + "\n")
-        for refline in pack_lines:
-            if ' refs/remotes/' in refline:
-                continue
-            if ' refs/heads/' in refline:
-                sha, ref = refline[:40], refline[41:]
-                if ref.startswith("refs/heads/"):
-                    ref = "refs/remotes/origin/" + ref[11:]
-                refline = "%s %s" % (sha, ref)
-            ref_fh.write("%s\n" % (refline))
-    # Finally run a remote update to clear up the refs ready for use.
-    with open(os.devnull, "w") as fnull:
-        call(['git', 'remote', 'update', 'origin', '--prune'], stdout=fnull,
-             stderr=fnull)
-
-
 def mirror(name, repo):
     # try tarball first
     gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
@@ -204,17 +159,26 @@ def checkout(name, repo, ref, checkoutdir):
     elif not mirror_has_ref(gitdir, ref):
         update_mirror(name, repo, gitdir)
     # checkout the required version of this from git
-    with app.chdir(checkoutdir), open(os.devnull, "w") as fnull:
-        copy_repo(gitdir, checkoutdir)
-        if call(['git', 'checkout', '--force', ref], stdout=fnull,
-                stderr=fnull):
-            app.exit(name, 'ERROR: git checkout failed for', ref)
+    with open(os.devnull, "w") as fnull:
+        # We need to pass '--no-hardlinks' because right now there's nothing to
+        # stop the build from overwriting the files in the .git directory
+        # inside the sandbox. If they were hardlinks, it'd be possible for a
+        # build to corrupt the repo cache. I think it would be faster if we
+        # removed --no-hardlinks, though.
+        if call(['git', 'clone', '--no-hardlinks', gitdir, checkoutdir],
+                stdout=fnull, stderr=fnull):
+            app.exit(name, 'ERROR: git clone failed for', ref)
 
-        app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
-        app.log(name, 'Upstream version %s' % get_version(checkoutdir, ref))
+        with app.chdir(checkoutdir):
+            if call(['git', 'checkout', '--force', ref], stdout=fnull,
+                    stderr=fnull):
+                app.exit(name, 'ERROR: git checkout failed for', ref)
 
-        if os.path.exists('.gitmodules'):
-            checkout_submodules(name, ref)
+            app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
+            app.log(name, 'Upstream version %s' % get_version(checkoutdir, ref))
+
+            if os.path.exists('.gitmodules'):
+                checkout_submodules(name, ref)
 
     utils.set_mtime_recursively(checkoutdir)
 
