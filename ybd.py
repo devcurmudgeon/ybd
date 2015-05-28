@@ -27,6 +27,11 @@ from assembly import assemble, deploy
 import sandbox
 
 
+if len(sys.argv) != 3:
+    sys.stderr.write("Usage: %s DEFINITION_FILE ARCHITECTURE\n" % sys.argv[0])
+    sys.exit(1)
+
+
 print
 target = sys.argv[1]
 arch = sys.argv[2]
