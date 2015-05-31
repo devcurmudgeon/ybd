@@ -22,6 +22,7 @@ import app
 import cache
 from subprocess import check_output, PIPE
 import hashlib
+from jsonschema import validate
 
 
 class Definitions():
@@ -33,27 +34,42 @@ class Definitions():
         if self.__definitions != {}:
             return
 
+        json_schema = self._load(app.settings['json-schema'])
+        definitions_schema = self._load(app.settings['defs-schema'])
+        if json_schema and definitions_schema:
+            validate(json_schema, json_schema)
+            validate(definitions_schema, json_schema)
+
+        things_have_changed = not self._check_trees()
         for dirname, dirnames, filenames in os.walk('.'):
             if '.git' in dirnames:
                 dirnames.remove('.git')
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
-                    definition = self._load(os.path.join(dirname, filename))
+                    contents = self._load(os.path.join(dirname, filename))
+                    if things_have_changed and definitions_schema:
+                        app.log(filename, 'Validating schema')
+                        validate(contents, definitions_schema)
+                    self._tidy(contents)
+
         if self._check_trees():
             for name in self.__definitions:
                 self.__definitions[name]['tree'] = self.__trees.get(name)
 
     def _load(self, path):
-        ''' Load a single definition file '''
         try:
             with open(path) as f:
                 text = f.read()
-            this = yaml.safe_load(text)
-        except ValueError:
-            app.log(this, 'ERROR: problem loading', filename)
+            contents = yaml.safe_load(text)
+        except:
+            app.log('DEFINITIONS', 'WARNING: problem loading', path)
             return None
+        contents['path'] = path[2:]
+        return contents
 
-        this['path'] = path[2:]
+    def _tidy(self, this):
+        ''' Load a single definition file '''
+
         self._fix_path_name(this)
 
         # handle morph syntax oddities...

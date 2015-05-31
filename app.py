@@ -71,6 +71,8 @@ def setup(target, arch):
 
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
+        settings['json-schema'] = './schema/json-schema.json'
+        settings['defs-schema'] = './schema/definitions-schema.json'
         settings['def-ver'] = get_version('.')
         settings['target'] = target
         settings['arch'] = arch
