@@ -27,6 +27,7 @@ import utils
 import ConfigParser
 import StringIO
 import re
+import shutil
 
 
 def get_repo_url(repo):
@@ -73,6 +74,7 @@ def get_version(gitdir, ref='HEAD'):
 def get_tree(this):
     ref = this['ref']
     gitdir = os.path.join(app.settings['gits'], get_repo_name(this['repo']))
+
     if not os.path.exists(gitdir):
         try:
             url = (app.settings['cache-server'] + 'repo=' +
@@ -104,14 +106,17 @@ def get_tree(this):
 
 
 def mirror(name, repo):
-    # try tarball first
     gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+    tmpdir = gitdir + '.tmp'
+    if os.path.isdir(tmpdir):
+        shutil.rmtree(tmpdir)
     repo_url = get_repo_url(repo)
     try:
-        os.makedirs(gitdir)
+        os.makedirs(tmpdir)
         tar_file = get_repo_name(repo_url) + '.tar'
         app.log(name, 'Try fetching tarball %s' % tar_file)
-        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        # try tarball first
+        with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(app.settings['tar-url'], tar_file)])
             call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
             os.remove(tar_file)
@@ -127,9 +132,14 @@ def mirror(name, repo):
     except:
         app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
-            if call(['git', 'clone', '--mirror', '-n', repo_url, gitdir]):
+            if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
                 app.exit(name, 'ERROR: failed to clone', repo)
 
+    with app.chdir(tmpdir):
+        if call(['git', 'rev-parse']):
+            app.exit(name, 'ERROR: problem mirroring git repo at', tmpdir)
+
+    os.rename(tmpdir, gitdir)
     app.log(name, 'Git repo is mirrored at', gitdir)
 
 
