@@ -22,7 +22,6 @@ import app
 import cache
 from subprocess import check_output, PIPE
 import hashlib
-from jsonschema import validate
 
 
 class Definitions():
@@ -37,8 +36,9 @@ class Definitions():
         json_schema = self._load(app.settings['json-schema'])
         definitions_schema = self._load(app.settings['defs-schema'])
         if json_schema and definitions_schema:
-            validate(json_schema, json_schema)
-            validate(definitions_schema, json_schema)
+            import jsonschema as js
+            js.validate(json_schema, json_schema)
+            js.validate(definitions_schema, json_schema)
 
         things_have_changed = not self._check_trees()
         for dirname, dirnames, filenames in os.walk('.'):
@@ -49,7 +49,7 @@ class Definitions():
                     contents = self._load(os.path.join(dirname, filename))
                     if things_have_changed and definitions_schema:
                         app.log(filename, 'Validating schema')
-                        validate(contents, definitions_schema)
+                        js.validate(contents, definitions_schema)
                     self._tidy(contents)
 
         if self._check_trees():

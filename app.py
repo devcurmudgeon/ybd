@@ -23,6 +23,12 @@ from multiprocessing import cpu_count
 from repos import get_version
 import sys
 
+try:
+    import jsonschema
+    jsonschema = True
+except:
+    jsonschema = False
+
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
                  os.path.join(os.path.expanduser('~'), '.cache')
@@ -71,8 +77,9 @@ def setup(target, arch):
 
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
-        settings['json-schema'] = './schema/json-schema.json'
-        settings['defs-schema'] = './schema/definitions-schema.json'
+        if jsonschema:
+            settings['json-schema'] = './schema/json-schema.json'
+            settings['defs-schema'] = './schema/definitions-schema.json'
         settings['def-ver'] = get_version('.')
         settings['target'] = target
         settings['arch'] = arch
