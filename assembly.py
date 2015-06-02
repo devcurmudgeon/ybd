@@ -197,4 +197,6 @@ def gather_integration_commands(this):
 def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
     with app.chdir(this['install']), open(metafile, "w") as f:
+        f.write("repo: %s\nref: %s\n" % (this['repo'], this['ref']))
+        f.flush()
         call(['find'], stdout=f, stderr=f)
