@@ -33,9 +33,6 @@ def deploy(target):
     defs = Definitions()
     deployment = target if type(target) is dict else defs.get(target)
 
-    if deployment.get('systems') == None:
-        return
-
     with app.timer(deployment, 'Starting deployment'):
         for system in deployment.get('systems', []):
             deploy(system)
@@ -49,7 +46,7 @@ def deploy(target):
 
         with sandbox.setup(system):
             for name, deployment in deployment.get('deploy', {}).iteritems():
-                method = deployment['type']
+                method = os.path.basename(deployment['type'])
                 sandbox.run_extension(system, deployment, 'check', method)
                 app.log(system, "Extracting system artifact")
                 with open(cache.get_cache(system), "r") as artifact:
@@ -57,7 +54,8 @@ def deploy(target):
                          stdin=artifact)
 
                 for ext in system.get('configuration-extensions', []):
-                    sandbox.run_extension(system, deployment, 'configure', ext)
+                    sandbox.run_extension(system, deployment, 'configure',
+                                          os.path.basename(ext))
 
                 os.chmod(system['sandbox'], 0o755)
                 sandbox.run_extension(system, deployment, 'write', method)
