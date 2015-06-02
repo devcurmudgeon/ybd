@@ -90,9 +90,13 @@ def setup(target, arch):
         settings['ccache_dir'] = os.path.join(xdg_cache_home, 'ybd', 'ccache')
         settings['cache-server'] = 'http://git.baserock.org:8080/1.0/sha1s?'
         settings['tar-url'] = 'http://git.baserock.org/tarballs'
-        settings['base'] = os.path.expanduser('~/.ybd/')
-        if os.path.exists('/src'):
+
+        try:
             settings['base'] = '/src'
+            os.makedirs(settings['base'])
+        except OSError:
+            if not os.path.isdir(settings['base']):
+               app.exit('ERROR: Can not find or create', settings['base'])
 
         settings['caches'] = os.path.join(settings['base'], 'cache')
         settings['artifacts'] = os.path.join(settings['caches'],
