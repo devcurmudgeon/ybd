@@ -33,8 +33,8 @@ class Definitions():
         if self.__definitions != {}:
             return
 
-        json_schema = self._load(app.settings['json-schema'])
-        definitions_schema = self._load(app.settings['defs-schema'])
+        json_schema = self._load(app.settings.get('json-schema'))
+        definitions_schema = self._load(app.settings.get('defs-schema'))
         if json_schema and definitions_schema:
             import jsonschema as js
             js.validate(json_schema, json_schema)
