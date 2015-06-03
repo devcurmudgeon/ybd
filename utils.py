@@ -308,9 +308,11 @@ def _find_extensions(paths):
 
     def scan_path(path):
         for kind in extension_kinds:
-            for entry in glob.glob(os.path.join(path, '*.' + kind)):
-                base = os.path.splitext(os.path.basename(entry))[0]
-                ret[kind][base] = entry
+            for dirpath, dirnames, filenames in os.walk(path):
+                for filename in filenames:
+                    if filename.endswith(kind):
+                        filepath = os.path.join(dirpath, filename)
+                        ret[kind][os.path.splitext(filename)[0]] = filepath
 
     for p in paths:
         scan_path(p)
