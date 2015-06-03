@@ -308,9 +308,11 @@ def _find_extensions(paths):
 
     def scan_path(path):
         for kind in extension_kinds:
-            for entry in glob.glob(os.path.join(path, '*.' + kind)):
-                base = os.path.splitext(os.path.basename(entry))[0]
-                ret[kind][base] = entry
+            for dirpath, dirnames, filenames in os.walk(path):
+                for filename in filenames:
+                    if filename.endswith(kind):
+                        filepath = os.path.join(dirpath, filename)
+                        ret[kind][os.path.splitext(filename)[0]] = filepath
 
     for p in paths:
         scan_path(p)
@@ -319,19 +321,8 @@ def _find_extensions(paths):
 
 
 def find_extensions():
-    '''Scan morphlib, ybd source, and definitions for extensions.'''
+    '''Scan definitions for extensions.'''
 
-    paths = []
-
-    try:
-        import morphlib
-        morphlib_dir = os.path.dirname(morphlib.__file__)
-        paths.append(os.path.join(morphlib_dir, 'exts'))
-    except:
-        app.log("EXTENSIONS", "WARNING: unable to locate morphlib")
-
-    ybd_dir = os.path.dirname(__file__)
-    paths.append(os.path.join(ybd_dir, 'exts'))
-    paths.append(app.settings['defdir'])
+    paths = [os.path.join(app.settings['defdir'], 'extensions')]
 
     return _find_extensions(paths)
