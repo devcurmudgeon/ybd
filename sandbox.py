@@ -210,20 +210,23 @@ def run_extension(this, deployment, step, method):
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
 
-    command = ["env"] + envlist + [cmd_bin]
-
-    if step == 'check':
-        command += [deployment['location']]
-
-    if step == 'configure':
-        command += [this['sandbox']]
+    command = ["env"] + envlist + [cmd_tmp.name] + [this['sandbox']]
 
     if step == 'write':
-        command += [this['sandbox']] + [deployment['location']]
+        command += [deployment['location']]
 
-    with app.chdir(app.settings['defdir']):
-        if call(command):
-            app.exit(this, 'ERROR: %s extension failed:' % step, cmd_bin)
+    with app.chdir(this['sandbox']):
+        try:
+            with open(cmd_bin, "r") as infh:
+                shutil.copyfileobj(infh, cmd_tmp)
+            cmd_tmp.close()
+            os.chmod(cmd_tmp.name, 0o700)
+
+            if call(command):
+                app.log(this, 'ERROR: %s extension failed:' % step, cmd_bin)
+                raise SystemExit
+        finally:
+            os.remove(cmd_tmp.name)
     return
 
 
