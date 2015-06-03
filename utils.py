@@ -321,19 +321,8 @@ def _find_extensions(paths):
 
 
 def find_extensions():
-    '''Scan morphlib, ybd source, and definitions for extensions.'''
+    '''Scan definitions for extensions.'''
 
-    paths = []
-
-    try:
-        import morphlib
-        morphlib_dir = os.path.dirname(morphlib.__file__)
-        paths.append(os.path.join(morphlib_dir, 'exts'))
-    except:
-        app.log("EXTENSIONS", "WARNING: unable to locate morphlib")
-
-    ybd_dir = os.path.dirname(__file__)
-    paths.append(os.path.join(ybd_dir, 'exts'))
-    paths.append(app.settings['defdir'])
+    paths = [os.path.join(app.settings['defdir'], 'extensions')]
 
     return _find_extensions(paths)

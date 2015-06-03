@@ -16,7 +16,7 @@ including, for example
 - GENIVI baseline systems
 - OpenStack appliances
 
-It can also deploy some systems in some ways, by piggybacking morphlib. More work is needed to make that functionality tidy and reliable, without morphlib.
+It can also deploy some systems in some ways.
 
 YBD is under development. Things will change :)
 
@@ -45,7 +45,6 @@ Currently YBD generates a lot of log output, which hopefully helps to explain wh
   - easier to try things, easier to change things, easier to debug things
   - less to break, less to maintain, less to audit
 - ybd has minimal dependencies - just git and a 'normal' Linux toolchain
-  (but for deploy it is currently using morph's plugins, which is not ideal)
 - ybd has faster, simpler calculation of cache-keys, and faster resolution of
   build-order
 - ybd can drop the words morphology, stratum, chunk from the Baserock vocabulary
