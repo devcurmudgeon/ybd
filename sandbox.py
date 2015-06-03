@@ -210,10 +210,13 @@ def run_extension(this, deployment, step, method):
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
 
-    command = ["env"] + envlist + [cmd_tmp.name] + [this['sandbox']]
+    command = ["env"] + envlist + [cmd_tmp.name]
 
-    if step == 'write':
-        command += [deployment['location']]
+    if step in ('write', 'configure'):
+        command.append(this['sandbox'])
+
+    if step in ('write', 'check'):
+        command.append(deployment['location'])
 
     with app.chdir(app.settings['defdir']):
         try:
