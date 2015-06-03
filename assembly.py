@@ -33,9 +33,6 @@ def deploy(target):
     defs = Definitions()
     deployment = target if type(target) is dict else defs.get(target)
 
-    if deployment.get('systems') == None:
-        return
-
     with app.timer(deployment, 'Starting deployment'):
         for system in deployment.get('systems', []):
             deploy(system)

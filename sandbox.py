@@ -201,7 +201,7 @@ def run_extension(this, deployment, step, method):
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
-    if deployment['type'] == 'ssh-rsync':
+    if method == 'ssh-rsync':
         envlist = ['UPGRADE=yes']
     else:
         envlist = ['UPGRADE=no']
@@ -215,7 +215,7 @@ def run_extension(this, deployment, step, method):
     if step == 'write':
         command += [deployment['location']]
 
-    with app.chdir(this['sandbox']):
+    with app.chdir(app.settings['defdir']):
         try:
             with open(cmd_bin, "r") as infh:
                 shutil.copyfileobj(infh, cmd_tmp)
