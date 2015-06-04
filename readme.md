@@ -20,6 +20,14 @@ It can also deploy some systems in some ways.
 
 YBD is under development. Things will change :)
 
+# Dependencies
+
+YBD depends on the [sandboxlib](https://github.com/CodethinkLabs/sandboxlib)
+library.
+
+If you trust the Python Package Index (PyPI) you can install it with: `pip
+install sandboxlib`.
+
 # Quick Start
 
 git clone git://git.baserock.org/baserock/baserock/definitions ; cd definitions
