@@ -349,6 +349,7 @@ def clean_env(this):
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
     env['LC_ALL'] = 'C'
     env['HOME'] = '/tmp'
+    env['TZ'] = 'UTC'
 
     arch = app.settings['arch']
     cpu = 'i686' if arch == 'x86_32' else arch
