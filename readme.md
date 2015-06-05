@@ -32,9 +32,7 @@ and optionally Julian Berman's
 If you trust the Python Package Index (PyPI) you can install them with:
 
 ```
-    pip install pyyaml
-    pip install sandboxlib
-    pip install jsonschema
+    pip install pyyaml sandboxlib jsonschema
 ```
 
 # Quick Start
