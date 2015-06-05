@@ -23,20 +23,25 @@ import cache
 import app
 from assembly import assemble, deploy
 import sandbox
+import platform
 
 
-print
-if len(sys.argv) != 3:
-    sys.stderr.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
+print('')
+if len(sys.argv) not in [2,3]:
+    sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
     sys.exit(1)
 
 target = sys.argv[1]
-arch = sys.argv[2]
+if len(sys.argv) == 3:
+    arch = sys.argv[2]
+else:
+    arch = platform.machine()
 
 with app.setup(target, arch):
     with app.timer('TOTAL', 'YBD starts, version %s' %
                    app.settings['ybd-version']):
-        app.log(app.settings['defdir'], 'Target is', target)
+        app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
+                                                      target), arch)
         with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):

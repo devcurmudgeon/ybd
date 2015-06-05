@@ -7,7 +7,7 @@ YBD can be a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
 projects.
 
-The ybd codebase is currently only ~ 1550 lines of Python in ten source files.
+The ybd codebase is currently only ~ 1560 lines of Python in ten source files.
 Even so ybd can reproducibly build all systems in Baserock's definitions.git,
 i.e. all of the FOSS components required for Linux appliances up to and
 including, for example
@@ -22,32 +22,42 @@ YBD is under development. Things will change :)
 
 # Dependencies
 
-Currently YBD is for Linux only, and is expecting git, GCC, Autotools, python, and pyyaml. 
+Currently YBD is for Linux only, and is expecting git, gcc, make, autotools, python.
 
-YBD also depends on [sandboxlib](https://github.com/CodethinkLabs/sandboxlib), and optionally Julian Berman's [jsonschema](https://github.com/Julian/jsonschema)
+YBD also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
+[sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
+and optionally Julian Berman's
+[jsonschema](https://github.com/Julian/jsonschema)
 
-If you trust the Python Package Index (PyPI) you can install sandboxlib with:
+If you trust the Python Package Index (PyPI) you can install them with:
 
-`pip install sandboxlib`
-
-The same goes for jsonschema.
+```
+    pip install pyyaml
+    pip install sandboxlib
+    pip install jsonschema
+```
 
 # Quick Start
 
-`git clone git://git.baserock.org/baserock/baserock/definitions ; cd definitions`
-
-Once there, you should be able to run
-
-python path/to/ybd/ybd.py $1 $2
+```
+    git clone git://github.com/devcurmudeon/ybd
+    git clone git://git.baserock.org/baserock/baserock/definitions
+    cd definitions
+```
+Once there you can run
+```
+    python ../ybd/ybd.py $1 $2
+```
 
 where
 
 - $1 is relative path to a chunk, stratum, system or cluster definition file
-- $2 is the architecture you're building/deploying for
+- $2 is the architecture you're building/deploying for. 
 
-Note that all of the current definitions only work for native builds, no
-cross-compile, so if you're on a typical laptop your only option for $2 is
-`x86_64`
+If you omit $2, ybd tries to use the architecture of your current machine
+(x86_64 for most folks). Note that all of the current baserock definitions only
+work for native builds, no cross-compile. So if you're on a typical laptop
+currently your only option for $2 is `x86_64`
 
 Currently YBD generates a lot of log output, which hopefully helps to explain what is happening. As we approach the singularity, most of the logging will probably end up being turned off.
 
