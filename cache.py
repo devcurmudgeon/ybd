@@ -31,7 +31,6 @@ import requests
 import sys
 
 
-
 def cache_key(this):
     defs = definitions.Definitions()
     definition = defs.get(this)

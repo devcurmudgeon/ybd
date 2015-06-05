@@ -63,7 +63,7 @@ def get_version(gitdir, ref='HEAD'):
                                      '--tags', ref], stderr=fnull)[0:-1]
             commits = check_output(['git', 'rev-list', last_tag + '..' + ref,
                                     '--count'])[0:-1]
-        result = "%s %s (%s + %s commits)" % (ref[:8], described, last_tag, \
+        result = "%s %s (%s + %s commits)" % (ref[:8], described, last_tag,
                                               commits)
     except:
         result = ref[:8] + " (No tag found)"
@@ -158,11 +158,11 @@ def update_mirror(name, repo, gitdir):
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         app.log(name, 'Refreshing mirror for %s' % repo)
         if call(['git', 'remote', 'update', 'origin'], stdout=fnull,
-                 stderr=fnull):
+                stderr=fnull):
             app.exit(name, 'ERROR: git update mirror failed', repo)
 
 
-def checkout(name, repo, ref, checkoutdir):
+def checkout(name, repo, ref, checkout):
     gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
@@ -175,22 +175,22 @@ def checkout(name, repo, ref, checkoutdir):
         # inside the sandbox. If they were hardlinks, it'd be possible for a
         # build to corrupt the repo cache. I think it would be faster if we
         # removed --no-hardlinks, though.
-        if call(['git', 'clone', '--no-hardlinks', gitdir, checkoutdir],
+        if call(['git', 'clone', '--no-hardlinks', gitdir, checkout],
                 stdout=fnull, stderr=fnull):
             app.exit(name, 'ERROR: git clone failed for', ref)
 
-        with app.chdir(checkoutdir):
+        with app.chdir(checkout):
             if call(['git', 'checkout', '--force', ref], stdout=fnull,
                     stderr=fnull):
                 app.exit(name, 'ERROR: git checkout failed for', ref)
 
-            app.log(name, 'Git checkout %s in %s' % (repo, checkoutdir))
-            app.log(name, 'Upstream version %s' % get_version(checkoutdir, ref))
+            app.log(name, 'Git checkout %s in %s' % (repo, checkout))
+            app.log(name, 'Upstream version %s' % get_version(checkout, ref))
 
             if os.path.exists('.gitmodules'):
                 checkout_submodules(name, ref)
 
-    utils.set_mtime_recursively(checkoutdir)
+    utils.set_mtime_recursively(checkout)
 
 
 def checkout_submodules(name, ref):

@@ -96,7 +96,7 @@ def setup(target, arch):
             os.makedirs(settings['base'])
         except OSError:
             if not os.path.isdir(settings['base']):
-               app.exit('ERROR: Can not find or create', settings['base'])
+                app.exit('ERROR: Can not find or create', settings['base'])
 
         settings['caches'] = os.path.join(settings['base'], 'cache')
         settings['artifacts'] = os.path.join(settings['caches'],

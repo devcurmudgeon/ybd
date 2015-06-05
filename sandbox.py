@@ -34,6 +34,7 @@ import utils
 def builddir_for_component(this):
     return this['name'] + '.build'
 
+
 def installdir_for_component(this):
     return this['name'] + '.inst'
 
