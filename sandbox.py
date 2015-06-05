@@ -194,7 +194,7 @@ def run_sandboxed(this, command, allow_parallel=False):
         ])
 
         if this.get('kind') == 'system':
-            writable_paths = None
+            writable_paths = 'all'
         else:
             writable_paths = [
                 builddir_for_component(this),
