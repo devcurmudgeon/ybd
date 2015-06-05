@@ -57,8 +57,6 @@ Currently YBD generates a lot of log output, which hopefully helps to explain wh
 - ybd has faster, simpler calculation of cache-keys, and faster resolution of
   build-order
 - ybd can drop the words morphology, stratum, chunk from the Baserock vocabulary
-  (optionally run morph-converter.sh on a checkout of definitions to do the
-  renaming)
 - ybd recognises generic 'definitions'
   - a definition can contain definitions, nested
   - definitions can be stored in one file or many, one directory or many
