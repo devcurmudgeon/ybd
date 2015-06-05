@@ -79,6 +79,7 @@ def setup(target, arch):
 
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
+        settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
         settings['def-ver'] = get_version('.')
         settings['target'] = target
         settings['arch'] = arch
