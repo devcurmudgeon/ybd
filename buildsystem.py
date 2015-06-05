@@ -30,7 +30,26 @@ build_steps = ['pre-configure-commands',
                'post-test-commands',
                'pre-install-commands',
                'install-commands',
-               'post-install-commands']
+               'post-install-commands',
+               'pre-strip-commands',
+               'strip-commands',
+               'post-strip-commands']
+
+
+_STRIP_COMMAND = r'''find "$DESTDIR" -type f \
+  '(' -perm -111 -o -name '*.so*' -o -name '*.cmxs' -o -name '*.node' ')' \
+  -exec sh -ec \
+  'read -n4 hdr <"$1" # check for elf header
+   if [ "$hdr" != "$(printf \\x7fELF)" ]; then
+       exit 0
+   fi
+   debugfile="$DESTDIR$PREFIX/lib/debug/$(basename "$1")"
+   mkdir -p "$(dirname "$debugfile")"
+   objcopy --only-keep-debug "$1" "$debugfile"
+   chmod 644 "$debugfile"
+   strip --remove-section=.comment --remove-section=.note --strip-unneeded "$1"
+   objcopy --add-gnu-debuglink "$debugfile" "$1"' - {} ';'
+'''
 
 
 class BuildSystem(object):
@@ -49,6 +68,7 @@ class BuildSystem(object):
 
     def __init__(self):
         self.commands = {}
+        self.commands['strip-commands'] = [_STRIP_COMMAND]
 
     def __getitem__(self, key):
         key = '_'.join(key.split('-'))

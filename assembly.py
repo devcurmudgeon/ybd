@@ -137,35 +137,29 @@ def build(this):
 def get_build_commands(this):
     '''Get commands specified in this, plus commmands implied by build_system
 
-    If bs is unspecified and all steps are empty, detect bs & use its commands
-    If bs is specified, use its commands for empty steps
-
-    This logic is rather convoluted, because there are examples of morph files
-    where build-system is unspecified. It boils down to:
-        if bs is specified, or all steps are empty, fill any empty steps
+    If definition file doesn't exist, detect bs and use its commands.
+    If bs is unspecified assume it's the manual build system.
+    Use commands from the build system to fill in empty steps.
     '''
-
-    build_system = None
-    for bs in buildsystem.build_systems:
-        if this.get('build-system') == bs.name:
-            build_system = bs
-
-    if not build_system:
-        for build_step in buildsystem.build_steps:
-            if this.get(build_step):
-                return
-
-        files = check_output(['ls', this['build']]).decode("utf-8")
-        build_system = buildsystem.detect_build_system(files.splitlines())
-
-    for build_step in buildsystem.build_steps:
-        if this.get(build_step, None) is None:
-            if build_system.commands.get(build_step):
-                this[build_step] = build_system.commands.get(build_step)
 
     if this.get('kind', None) == "system":
         # Systems must run their integration scripts as install commands
         this['install-commands'] = gather_integration_commands(this)
+        return
+
+    if os.path.exists(this['path']):
+        build_system = buildsystem.ManualBuildSystem()
+        for bs in buildsystem.build_systems:
+            if this.get('build-system') == bs.name:
+                build_system = bs
+    else:
+        files = os.listdir(this['build'])
+        build_system = buildsystem.detect_build_system(files)
+
+    for build_step in buildsystem.build_steps:
+        if this.get(build_step, None) is None:
+            if build_step in build_system.commands:
+                this[build_step] = build_system.commands[build_step]
 
 
 def gather_integration_commands(this):
