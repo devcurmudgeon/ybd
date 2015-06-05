@@ -22,12 +22,7 @@ from subprocess import call, check_output
 from multiprocessing import cpu_count
 from repos import get_version
 import sys
-
-try:
-    import jsonschema
-    jsonschema = True
-except:
-    jsonschema = False
+import yaml
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
@@ -70,6 +65,13 @@ def exit(component, message, data):
 @contextlib.contextmanager
 def setup(target, arch):
     try:
+        settings_file = './ybd.def'
+        if not os.path.exists(settings_file):
+            settings_file = os.path.join(os.path.dirname(__file__), 'ybd.def')
+        with open(settings_file) as f:
+            text = f.read()
+        for key, value in yaml.safe_load(text).items():
+            settings[key] = value
         settings['pid'] = os.getpid()
         with open(os.devnull, "w") as fnull:
             if call(['git', 'describe'], stdout=fnull, stderr=fnull):
@@ -77,40 +79,17 @@ def setup(target, arch):
 
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
-        if jsonschema:
-            settings['json-schema'] = './schema/json-schema.json'
-            settings['defs-schema'] = './schema/definitions-schema.json'
         settings['def-ver'] = get_version('.')
         settings['target'] = target
         settings['arch'] = arch
-        settings['no-ccache'] = False
-        settings['no-distcc'] = True
-        settings['base-path'] = ['/usr/bin', '/bin', '/usr/sbin', '/sbin']
 
-        settings['ccache_dir'] = os.path.join(xdg_cache_home, 'ybd', 'ccache')
-        settings['cache-server'] = 'http://git.baserock.org:8080/1.0/sha1s?'
-        settings['tar-url'] = 'http://git.baserock.org/tarballs'
-
-        try:
-            settings['base'] = '/src'
-            os.makedirs(settings['base'])
-        except OSError:
-            if not os.path.isdir(settings['base']):
-                app.exit('ERROR: Can not find or create', settings['base'])
-
-        settings['caches'] = os.path.join(settings['base'], 'cache')
-        settings['artifacts'] = os.path.join(settings['caches'],
-                                             'ybd-artifacts')
-        settings['gits'] = os.path.join(settings['caches'], 'gits')
-
-        settings['tmp'] = os.path.join(settings['base'], 'tmp')
-        settings['staging'] = os.path.join(settings['tmp'], 'staging')
-        settings['deployment'] = os.path.join(settings['tmp'], 'deployments')
-
-        for directory in ['base', 'caches', 'artifacts', 'gits',
-                          'tmp', 'staging', 'ccache_dir', 'deployment']:
-            if not os.path.exists(settings[directory]):
-                os.makedirs(settings[directory])
+        for directory in ['base', 'caches', 'artifacts', 'gits', 'tmp',
+                          'ccache_dir', 'deployment']:
+            try:
+                os.makedirs(directory)
+            except OSError:
+                if not os.path.isdir(directory):
+                    app.exit('ERROR: Can not find or create', directory)
 
         # git replace means we can't trust that just the sha1 of a branch
         # is enough to say what it contains, so we turn it off by setting
@@ -118,7 +97,6 @@ def setup(target, arch):
         os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
         settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
-        settings['server'] = 'http://192.168.56.102:8000/'
         yield
 
     finally:

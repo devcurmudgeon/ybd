@@ -1,0 +1,15 @@
+json-schema: './schema/json-schema.json'
+defs-schema: './schema/definitions-schema.json'
+no-ccache: False
+no-distcc: True
+base-path: ['/usr/bin', '/bin', '/usr/sbin', '/sbin']
+ccache_dir: '/src/cache/ccache'
+cache-server: 'http://git.baserock.org:8080/1.0/sha1s?'
+tar-url: 'http://git.baserock.org/tarballs'
+base: '/src'
+caches: '/src/cache'
+artifacts: '/src/cache/ybd-artifacts'
+gits: '/src/cache/gits'
+tmp: '/src/tmp'
+deployment: '/src/tmp/deployments'
+server: 'http://192.168.56.102:8000/'

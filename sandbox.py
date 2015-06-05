@@ -44,7 +44,7 @@ def setup(this):
     currentdir = os.getcwd()
     currentenv = dict(os.environ)
 
-    tempfile.tempdir = app.settings['staging']
+    tempfile.tempdir = app.settings['tmp']
     this['sandbox'] = tempfile.mkdtemp()
     this['build'] = os.path.join(
         this['sandbox'], builddir_for_component(this))
