@@ -284,6 +284,11 @@ def clean_env(this):
     env = {}
     extra_path = []
     defs = Definitions()
+    arch_dict = {
+        'i686': "x86_32",
+        'armv8l64': "aarch64",
+        'armv8b64': "aarch64_be"
+    }
 
     if app.settings['no-ccache']:
         ccache_path = []
@@ -331,7 +336,7 @@ def clean_env(this):
     env['TZ'] = 'UTC'
 
     arch = app.settings['arch']
-    cpu = 'i686' if arch == 'x86_32' else arch
+    cpu = arch_dict.get(arch, arch)
     abi = 'eabi' if arch.startswith('arm') else ''
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
