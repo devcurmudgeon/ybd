@@ -7,7 +7,7 @@ YBD can be a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
 projects.
 
-The ybd codebase is currently only ~ 1900 lines of Python in ten source files.
+The ybd codebase is currently only ~ 1550 lines of Python in ten source files.
 Even so ybd can reproducibly build all systems in Baserock's definitions.git,
 i.e. all of the FOSS components required for Linux appliances up to and
 including, for example
@@ -22,15 +22,16 @@ YBD is under development. Things will change :)
 
 # Dependencies
 
-YBD depends on the [sandboxlib](https://github.com/CodethinkLabs/sandboxlib)
-library.
+Currently YBD is for Linux only, and is expecting git, GCC, Autotools, python, and pyyaml. 
 
-If you trust the Python Package Index (PyPI) you can install it with: `pip
-install sandboxlib`.
+YBD also depends on [sandboxlib](https://github.com/CodethinkLabs/sandboxlib), and optionally Julian Berman's [jsonschema](https://github.com/Julian/jsonschema)
+
+If you trust the Python Package Index (PyPI) you can install sandboxlib with:
+`pip install sandboxlib` - same goes for jsonschema.
 
 # Quick Start
 
-git clone git://git.baserock.org/baserock/baserock/definitions ; cd definitions
+`git clone git://git.baserock.org/baserock/baserock/definitions ; cd definitions`
 
 Once there, you should be able to run
 
