@@ -27,7 +27,10 @@ Currently YBD is for Linux only, and is expecting git, GCC, Autotools, python, a
 YBD also depends on [sandboxlib](https://github.com/CodethinkLabs/sandboxlib), and optionally Julian Berman's [jsonschema](https://github.com/Julian/jsonschema)
 
 If you trust the Python Package Index (PyPI) you can install sandboxlib with:
-`pip install sandboxlib` - same goes for jsonschema.
+
+`pip install sandboxlib`
+
+The same goes for jsonschema.
 
 # Quick Start
 
@@ -41,6 +44,10 @@ where
 
 - $1 is relative path to a chunk, stratum, system or cluster definition file
 - $2 is the architecture you're building/deploying for
+
+Note that all of the current definitions only work for native builds, no
+cross-compile, so if you're on a typical laptop your only option for $2 is
+`x86_64`
 
 Currently YBD generates a lot of log output, which hopefully helps to explain what is happening. As we approach the singularity, most of the logging will probably end up being turned off.
 
