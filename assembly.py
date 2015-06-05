@@ -190,5 +190,6 @@ def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
     with app.chdir(this['install']), open(metafile, "w") as f:
         f.write("repo: %s\nref: %s\n" % (this.get('repo'), this.get('ref')))
+        f.write('elapsed_time: %s\n' % app.elapsed(this['start-time']))
         f.flush()
         call(['find'], stdout=f, stderr=f)

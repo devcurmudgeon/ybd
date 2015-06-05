@@ -140,11 +140,16 @@ def chdir(dirname=None):
 def timer(this, start_message=''):
     starttime = datetime.datetime.now()
     log(this, start_message)
+    if type(this) is dict:
+        this['start-time'] = starttime
     try:
         yield
     finally:
-        td = datetime.datetime.now() - starttime
-        hours, remainder = divmod(int(td.total_seconds()), 60*60)
-        minutes, seconds = divmod(remainder, 60)
-        td_string = "%02d:%02d:%02d" % (hours, minutes, seconds)
-        log(this, 'Elapsed time', td_string)
+        log(this, 'Elapsed time', elapsed(starttime))
+
+
+def elapsed(starttime):
+    td = datetime.datetime.now() - starttime
+    hours, remainder = divmod(int(td.total_seconds()), 60*60)
+    minutes, seconds = divmod(remainder, 60)
+    return "%02d:%02d:%02d" % (hours, minutes, seconds)
