@@ -22,7 +22,7 @@ YBD is under development. Things will change :)
 
 # Dependencies
 
-Currently YBD is for Linux only, and is expecting git, gcc, make, autotools, python.
+Currently YBD is for Linux only, and is expecting git, gcc, make, autotools, python, tar, wget, linux-user-chroot.
 
 YBD also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 [sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
@@ -92,8 +92,7 @@ Currently YBD generates a lot of log output, which hopefully helps to explain wh
 
 In no particular order, here's a list of things that may be interesting to try
 doing to/with ybd:
-- pip install (iiuc the only dependencies are python, pyyaml, git, tar, wget
-  and linux-user-chroot)
+- pip install
 - deterministic (bit-for-bit) build
 - fix deployment: ybd currently can deploy systems, subsystems (test this?) 
   and upgrades, but it's a mess
