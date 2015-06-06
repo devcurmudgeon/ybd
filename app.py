@@ -86,10 +86,11 @@ def setup(target, arch):
         for directory in ['base', 'caches', 'artifacts', 'gits', 'tmp',
                           'ccache_dir', 'deployment']:
             try:
-                os.makedirs(directory)
+                os.makedirs(settings[directory])
             except OSError:
-                if not os.path.isdir(directory):
-                    app.exit('ERROR: Can not find or create', directory)
+                if not os.path.isdir(settings[directory]):
+                    exit(target, 'ERROR: Can not find or create',
+                         settings[directory])
 
         # git replace means we can't trust that just the sha1 of a branch
         # is enough to say what it contains, so we turn it off by setting
