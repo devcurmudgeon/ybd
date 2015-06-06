@@ -7,7 +7,7 @@ ybd is a tool for integrating software stacks. it does four things:
 - build the collection
 - (optionally) deploy the collection
 
-currently ybd understands the semantics of yaml definitions from the [Baserock](wiki.baserock.org) project. ybd does some of the things that
+currently ybd understands the semantics of yaml definitions from the [Baserock](http://wiki.baserock.org) project. ybd does some of the things that
 Baserock morph does, without most of the complexity that morph has accrued
 since morph development started in 2011.
 
