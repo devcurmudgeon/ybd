@@ -38,7 +38,7 @@ else:
     arch = platform.machine()
 
 with app.setup(target, arch):
-    with app.timer('TOTAL', 'YBD starts, version %s' %
+    with app.timer('TOTAL', 'ybd starts, version %s' %
                    app.settings['ybd-version']):
         app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
                                                       target), arch)

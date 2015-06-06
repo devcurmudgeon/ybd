@@ -1,14 +1,22 @@
-# YBD
+# ybd
 
-YBD does useful things with Baserock definitions, while avoiding most
-of the complexity that morph has accrued since its development started in 2011.
+ybd is a tool for integrating software stacks. it does four things:
 
-YBD can be a simple start-point for building, deploying, learning and
+- parse some yaml files describing integrated collections of software components
+- collect the source for one target collection (from git repos)
+- build the collection
+- (optionally) deploy the collection
+
+currently ybd understands the semantics of yaml definitions from the [Baserock](wiki.baserock.org) project. ybd does some of the things that
+Baserock morph does, without most of the complexity that morph has accrued
+since morph development started in 2011.
+
+ybd can be a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
-projects.
+projects. with a little work it can be used to build other stacks too.
 
-The ybd codebase is currently only ~ 1560 lines of Python in ten source files.
-Even so ybd can reproducibly build all systems in Baserock's definitions.git,
+the ybd codebase is currently only ~ 1560 lines of Python in ten source files.
+even so ybd can reproducibly build all systems in Baserock's definitions.git,
 i.e. all of the FOSS components required for Linux appliances up to and
 including, for example
 
@@ -16,33 +24,36 @@ including, for example
 - GENIVI baseline systems
 - OpenStack appliances
 
-It can also deploy some systems in some ways.
+it can also deploy some systems in some ways.
 
-YBD is under development. Things will change :)
+ybd is under development. things will change :)
 
-# Dependencies
+### dependencies
 
-Currently YBD is for Linux only, and is expecting git, gcc, make, autotools, python, tar, wget, linux-user-chroot.
+currently ybd is for Linux only, and requires git, gcc, make, autotools,
+linux-user-chroot, python, tar, wget.
 
-YBD also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
+ybd also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 [sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
 and optionally Julian Berman's
 [jsonschema](https://github.com/Julian/jsonschema)
 
-If you trust the Python Package Index (PyPI) you can install them with:
+if you trust the Python Package Index (PyPI) you can install them with:
 
 ```
     pip install pyyaml sandboxlib jsonschema
 ```
 
-# Quick Start
+### quick start
 
 ```
     git clone git://github.com/devcurmudeon/ybd
     git clone git://git.baserock.org/baserock/baserock/definitions
     cd definitions
 ```
-Once there you can run
+
+once there you can run
+
 ```
     python ../ybd/ybd.py $1 $2
 ```
@@ -52,12 +63,14 @@ where
 - $1 is relative path to a chunk, stratum, system or cluster definition file
 - $2 is the architecture you're building/deploying for. 
 
-If you omit $2, ybd tries to use the architecture of your current machine
-(x86_64 for most folks). Note that all of the current baserock definitions only
-work for native builds, no cross-compile. So if you're on a typical laptop
-currently your only option for $2 is `x86_64`
+if you omit $2, ybd tries to use the architecture of your current machine
+(x86_64 for most folks). note that all of the current baserock definitions
+are for native builds, no cross-compile. so if you're on a typical laptop
+it may be that your only option for $2 is `x86_64`
 
-Currently YBD generates a lot of log output, which hopefully helps to explain what is happening. As we approach the singularity, most of the logging will probably end up being turned off.
+currently ybd generates a lot of log output, which hopefully helps to explain
+what is happening. As we approach the singularity, most of the logging will
+probably end up being turned off.
 
 ### comparison with morph
 
@@ -90,7 +103,7 @@ Currently YBD generates a lot of log output, which hopefully helps to explain wh
 
 ### todo
 
-In no particular order, here's a list of things that may be interesting to try
+in no particular order, here's a list of things that may be interesting to try
 doing to/with ybd:
 - pip install
 - deterministic (bit-for-bit) build
@@ -132,9 +145,9 @@ doing to/with ybd:
 
 ### license
 
-- License is GPLv2 but other licensing can be considered on request
+- license is GPLv2 but other licensing can be considered on request
 - most of the copyright is currently Codethink but don't let that put you off.
   There's no intent to keep this as a Codethink-only project, nor will there be
   any attempt to get folks to sign a contributor agreement.
-  Contributors retain their own copyright.
+  contributors retain their own copyright.
 
