@@ -100,7 +100,7 @@ def get_tree(this):
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
 
-            app.exit(this, 'ERROR: could not find tree for ref', ref)
+            app.exit(this, 'ERROR: could not find tree for ref', (ref, gitdir))
 
 
 def mirror(name, repo):
