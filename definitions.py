@@ -45,10 +45,11 @@ class Definitions():
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
                     contents = self._load(os.path.join(dirname, filename))
-                    if things_have_changed and definitions_schema:
-                        app.log(filename, 'Validating schema')
-                        js.validate(contents, definitions_schema)
-                    self._tidy(contents)
+                    if contents is not None:
+                        if things_have_changed and definitions_schema:
+                            app.log(filename, 'Validating schema')
+                            js.validate(contents, definitions_schema)
+                        self._tidy(contents)
 
         if self._check_trees():
             for name in self.__definitions:

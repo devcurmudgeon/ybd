@@ -44,22 +44,22 @@ def deploy(target):
             app.log(target, 'Skipping deployment for', system['arch'])
             return None
 
-        with sandbox.setup(system):
-            for name, deployment in deployment.get('deploy', {}).iteritems():
-                method = os.path.basename(deployment['type'])
-                sandbox.run_extension(system, deployment, 'check', method)
-                app.log(system, "Extracting system artifact")
-                with open(cache.get_cache(system), "r") as artifact:
-                    call(['tar', 'x', '--directory', system['sandbox']],
-                         stdin=artifact)
+        sandbox.setup(system)
+        for name, deployment in deployment.get('deploy', {}).iteritems():
+            method = os.path.basename(deployment['type'])
+            sandbox.run_extension(system, deployment, 'check', method)
+            app.log(system, "Extracting system artifact")
+            with open(cache.get_cache(system), "r") as artifact:
+                call(['tar', 'x', '--directory', system['sandbox']],
+                     stdin=artifact)
 
-                for ext in system.get('configuration-extensions', []):
-                    sandbox.run_extension(system, deployment, 'configure',
-                                          os.path.basename(ext))
+            for ext in system.get('configuration-extensions', []):
+                sandbox.run_extension(system, deployment, 'configure',
+                                      os.path.basename(ext))
 
-                os.chmod(system['sandbox'], 0o755)
-                sandbox.run_extension(system, deployment, 'write', method)
-            sandbox.remove(system)
+            os.chmod(system['sandbox'], 0o755)
+            sandbox.run_extension(system, deployment, 'write', method)
+        sandbox.remove(system)
 
 
 def assemble(target):
@@ -75,7 +75,8 @@ def assemble(target):
         app.log(target, 'Skipping assembly for', this['arch'])
         return None
 
-    with app.timer(this, 'Starting assembly'), sandbox.setup(this):
+    with app.timer(this, 'Starting assembly'):
+        sandbox.setup(this)
         for it in this.get('systems', []):
             system = defs.get(it)
             assemble(system)
@@ -121,14 +122,16 @@ def build(this):
         repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
     get_build_commands(this)
+    env_vars = sandbox.env_vars_for_build(this)
 
     app.log(this, 'Logging build commands to %s' % this['log'])
     for build_step in buildsystem.build_steps:
         if this.get(build_step):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
-            sandbox.run_sandboxed(this, command,
-                                  allow_parallel=('build' in build_step))
+            sandbox.run_sandboxed(
+                this, command, env=env_vars,
+                allow_parallel=('build' in build_step))
 
     if this.get('devices'):
         sandbox.create_devices(this)

@@ -39,10 +39,8 @@ def installdir_for_component(this):
     return this['name'] + '.inst'
 
 
-@contextlib.contextmanager
 def setup(this):
     currentdir = os.getcwd()
-    currentenv = dict(os.environ)
 
     tempfile.tempdir = app.settings['tmp']
     this['sandbox'] = tempfile.mkdtemp()
@@ -56,32 +54,14 @@ def setup(this):
         os.makedirs(this[directory])
     this['log'] = os.path.join(app.settings['artifacts'],
                                this['cache'] + '.build-log')
-    try:
-        build_env = clean_env(this)
-        assembly_dir = this['sandbox']
-        for directory in ['dev', 'tmp']:
-            call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
+    assembly_dir = this['sandbox']
+    for directory in ['dev', 'tmp']:
+        call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
-        devnull = os.path.join(assembly_dir, 'dev/null')
-        if not os.path.exists(devnull):
-            call(['sudo', 'mknod', devnull, 'c', '1', '3'])
-            call(['sudo', 'chmod', '666', devnull])
-
-        for key, value in (currentenv.items() + build_env.items()):
-            if key in build_env:
-                os.environ[key] = build_env[key]
-            else:
-                os.environ.pop(key)
-
-        yield
-
-    finally:
-        for key, value in currentenv.items():
-            if value:
-                os.environ[key] = value
-            else:
-                if os.environ.get(key):
-                    os.environ.pop(key)
+    devnull = os.path.join(assembly_dir, 'dev/null')
+    if not os.path.exists(devnull):
+        call(['sudo', 'mknod', devnull, 'c', '1', '3'])
+        call(['sudo', 'chmod', '666', devnull])
 
 
 def remove(this):
@@ -139,7 +119,7 @@ def argv_to_string(argv):
     return ' '.join(map(pipes.quote, argv))
 
 
-def run_sandboxed(this, command, allow_parallel=False):
+def run_sandboxed(this, command, env=None, allow_parallel=False):
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
@@ -147,7 +127,7 @@ def run_sandboxed(this, command, allow_parallel=False):
     executor = sandboxlib.linux_user_chroot
     sandbox_config = executor.maximum_possible_isolation()
 
-    mounts = ccache_mounts(this)
+    mounts = ccache_mounts(this, ccache_target=env['CCACHE_DIR'])
 
     if this.get('build-mode') == 'bootstrap':
         # bootstrap mode: builds have some access to the host system, so they
@@ -191,17 +171,13 @@ def run_sandboxed(this, command, allow_parallel=False):
 
     argv = ['sh', '-c', command]
 
-    cur_makeflags = os.environ.get("MAKEFLAGS")
+    cur_makeflags = env.get("MAKEFLAGS")
 
     try:
         if not allow_parallel:
-            os.environ.pop("MAKEFLAGS", None)
+            env.pop("MAKEFLAGS", None)
 
-        # The setup() function modifies os.environ directly to match the build
-        # environment. so there isn't any leakage of host environment
-        # variables here.
-        env = os.environ
-        app.log_env(this['log'], argv_to_string(argv))
+        app.log_env(this['log'], env, argv_to_string(argv))
 
         with open(this['log'], "a") as logfile:
             exit_code = executor.run_sandbox_with_redirection(
@@ -214,11 +190,11 @@ def run_sandboxed(this, command, allow_parallel=False):
             app.exit(this, 'ERROR: log file is at', this['log'])
     finally:
         if cur_makeflags is not None:
-            os.environ["MAKEFLAGS"] = cur_makeflags
+            env['MAKEFLAGS'] = cur_makeflags
 
 
 def run_logged(this, cmd_list):
-    app.log_env(this['log'], argv_to_string(cmd_list))
+    app.log_env(this['log'], os.environ, argv_to_string(cmd_list))
     with open(this['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
@@ -265,7 +241,7 @@ def run_extension(this, deployment, step, method):
     return
 
 
-def ccache_mounts(this):
+def ccache_mounts(this, ccache_target):
     if app.settings['no-ccache'] or 'repo' not in this:
         mounts = []
     else:
@@ -275,13 +251,11 @@ def ccache_mounts(this):
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
 
-        ccache_target = os.environ['CCACHE_DIR']
-
         mounts = [(ccache_dir, ccache_target, None, 'bind')]
     return mounts
 
 
-def clean_env(this):
+def env_vars_for_build(this):
     env = {}
     extra_path = []
     defs = Definitions()
