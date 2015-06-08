@@ -14,18 +14,28 @@
 #
 # =*= License: GPL-2 =*=
 
+
 import os
-import app
-import re
-from subprocess import call, check_output
-import string
-import urllib2
 import json
-import utils
-import ConfigParser
-import StringIO
 import re
 import shutil
+import string
+from subprocess import call, check_output
+import sys
+
+import app
+import utils
+
+
+if sys.version_info.major == 2:
+    # For compatibility with Python 2.
+    from ConfigParser import RawConfigParser
+    from StringIO import StringIO
+    from urllib2 import urlopen
+else:
+    from configparser import RawConfigParser
+    from io import StringIO
+    from urllib.request import urlopen
 
 
 def get_repo_url(repo):
@@ -77,7 +87,7 @@ def get_tree(this):
         try:
             url = (app.settings['cache-server'] + 'repo=' +
                    get_repo_url(this['repo']) + '&ref=' + ref)
-            with urllib2.urlopen(url) as response:
+            with urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
                 return tree
         except:
@@ -196,8 +206,8 @@ def checkout_submodules(name, ref):
     with open('.gitmodules', "r") as gitfile:
         # drop indentation in sections, as RawConfigParser cannot handle it
         content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
-    io = StringIO.StringIO(content)
-    parser = ConfigParser.RawConfigParser()
+    io = StringIO(content)
+    parser = RawConfigParser()
     parser.readfp(io)
 
     for section in parser.sections():
