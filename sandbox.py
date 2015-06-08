@@ -313,7 +313,7 @@ def env_vars_for_build(this):
 
     arch = app.settings['arch']
     cpu = arch_dict.get(arch, arch)
-    abi = 'eabi' if arch.startswith('arm') else ''
+    abi = 'eabi' if arch.startswith(('armv7', 'armv5')) else ''
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
