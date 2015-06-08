@@ -75,7 +75,7 @@ def setup(target, arch):
         settings['pid'] = os.getpid()
         with open(os.devnull, "w") as fnull:
             if call(['git', 'describe'], stdout=fnull, stderr=fnull):
-                exit(target, 'ERROR: %s is not a git repo' % os.getcwd())
+                exit(target, 'ERROR: not a git repo', os.getcwd())
 
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
