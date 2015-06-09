@@ -79,6 +79,10 @@ probably end up being turned off.
 - ybd has core functionality only - parse definitions, build, cache artifacts
 - no branch|checkout|edit|merge (use git and be done)
 - no need for workspaces
+- no need to be in a baserock vm or a baserock chroot - ybd may even run on
+other Linux operating systems (eg Ubuntu, fedora, debian) and maybe even
+non-Linux operating systems (eg BSD, MacOS). However it may be have differently
+and current Baserock definitions are Linux-specific.
 - ybd has an order of magnitude less code, so
   - easier to try things, easier to change things, easier to debug things
   - less to break, less to maintain, less to audit
