@@ -56,13 +56,13 @@ if you trust the Python Package Index (PyPI) you can install them with:
 once there you can run
 
 ```
-    python ../ybd/ybd.py $1 $2
+    ../ybd/ybd.py $1 $2
 ```
 
 where
 
 - $1 is relative path to a chunk, stratum, system or cluster definition file
-- $2 is the architecture you're building/deploying for. 
+- $2 is optional and specifies the architecture you're building/deploying for.
 
 if you omit $2, ybd tries to use the architecture of your current machine
 (x86_64 for most folks). note that all of the current baserock definitions
