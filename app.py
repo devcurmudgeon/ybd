@@ -15,14 +15,16 @@
 # =*= License: GPL-2 =*=
 
 import contextlib
-import os
 import datetime
+import os
 import shutil
-from subprocess import call, check_output
-from multiprocessing import cpu_count
-from repos import get_version
 import sys
+import warnings
 import yaml
+from multiprocessing import cpu_count
+from subprocess import call, check_output
+
+from repos import get_version
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
@@ -62,8 +64,19 @@ def exit(component, message, data):
     sys.exit(1)
 
 
+def warning_handler(message, category, filename, lineno, file=None, line=None):
+    '''Output messages from warnings.warn().
+
+    The default output is a bit ugly.
+
+    '''
+    return 'WARNING: %s\n' % (message)
+
+
 @contextlib.contextmanager
 def setup(target, arch):
+    warnings.formatwarning = warning_handler
+
     try:
         settings_file = './ybd.def'
         if not os.path.exists(settings_file):
