@@ -15,51 +15,72 @@
 # =*= License: GPL-2 =*=
 
 import os
-from definitions import Definitions
-import cache
-import repos
+import random
+from subprocess import call, check_output
+
 import app
 import buildsystem
+import cache
+import repos
 import sandbox
 import shutil
 import utils
-from subprocess import call, check_output
-import random
+from definitions import Definitions
 
 
 def deploy(target):
-    '''Deploy systems and subsystems recursively'''
+    '''Deploy a cluster definition.'''
 
     defs = Definitions()
     deployment = target if type(target) is dict else defs.get(target)
 
     with app.timer(deployment, 'Starting deployment'):
         for system in deployment.get('systems', []):
-            deploy(system)
-            for subsystem in system.get('subsystems', []):
-                deploy(subsystem)
+            deploy_system(system)
 
-        system = defs.get(deployment['path'])
-        if system.get('arch') and system['arch'] != app.settings['arch']:
-            app.log(target, 'Skipping deployment for', system['arch'])
-            return None
 
-        sandbox.setup(system)
-        for name, deployment in deployment.get('deploy', {}).iteritems():
-            method = os.path.basename(deployment['type'])
+def deploy_system(system_spec, parent_location=''):
+    '''Deploy a system and subsystems recursively.
+
+    Takes a system spec (i.e. an entry in the "systems" list in a cluster
+    definition), and optionally a path to a parent system tree. If
+    `parent_location` is given then the `location` given in the cluster
+    definition for the subsystem is appended to `parent_location`, with
+    the result being used as the location for the deployment extensions.
+
+    '''
+    defs = Definitions()
+    system = defs.get(system_spec['path'])
+
+    if system.get('arch') and system['arch'] != app.settings['arch']:
+        app.log(system, 'Skipping deployment for', system['arch'])
+        return None
+
+    sandbox.setup(system)
+    app.log(system, 'Extracting system artifact into', system['sandbox'])
+    with open(cache.get_cache(system), 'r') as artifact:
+        call(['tar', 'x', '--directory', system['sandbox']],
+              stdin=artifact)
+
+    for subsystem_spec in system_spec.get('subsystems', []):
+        deploy_system(subsystem_spec, parent_location=system['sandbox'])
+
+    for name, deployment in system_spec.get('deploy', {}).iteritems():
+        method = os.path.basename(deployment['type'])
+        if parent_location:
+            deployment['location'] = os.path.join(
+                parent_location, deployment['location'].lstrip('/'))
+        try:
             sandbox.run_extension(system, deployment, 'check', method)
-            app.log(system, "Extracting system artifact")
-            with open(cache.get_cache(system), "r") as artifact:
-                call(['tar', 'x', '--directory', system['sandbox']],
-                     stdin=artifact)
-
-            for ext in system.get('configuration-extensions', []):
-                sandbox.run_extension(system, deployment, 'configure',
-                                      os.path.basename(ext))
-
-            os.chmod(system['sandbox'], 0o755)
-            sandbox.run_extension(system, deployment, 'write', method)
-        sandbox.remove(system)
+        except KeyError:
+            app.log(system, "Couldn't find a check extension for",
+                    method)
+        for ext in system.get('configuration-extensions', []):
+            sandbox.run_extension(system, deployment, 'configure',
+                                  os.path.basename(ext))
+        os.chmod(system['sandbox'], 0o755)
+        sandbox.run_extension(system, deployment, 'write', method)
+    sandbox.remove(system)
 
 
 def assemble(target):
