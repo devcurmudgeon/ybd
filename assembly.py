@@ -90,41 +90,41 @@ def assemble(target):
         return cache.cache_key(target)
 
     defs = Definitions()
-    this = defs.get(target)
+    component = defs.get(target)
 
-    if this.get('arch') and this['arch'] != app.settings['arch']:
-        app.log(target, 'Skipping assembly for', this['arch'])
+    if component.get('arch') and component['arch'] != app.settings['arch']:
+        app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
-    with app.timer(this, 'Starting assembly'):
-        sandbox.setup(this)
-        for it in this.get('systems', []):
-            system = defs.get(it)
-            assemble(system)
-            for subsystem in this.get('subsystems', []):
-                assemble(subsystem)
+    with app.timer(component, 'Starting assembly'):
+        sandbox.setup(component)
+        for system_spec in component.get('systems', []):
+            assemble(system_spec['path'])
+            for subsystem in system_spec.get('subsystems', []):
+                assemble(subsystem['path'])
 
-        dependencies = this.get('build-depends', [])
+        dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
         for it in dependencies:
             dependency = defs.get(it)
             assemble(dependency)
-            sandbox.install(this, dependency)
+            sandbox.install(component, dependency)
 
-        contents = this.get('contents', [])
+        contents = component.get('contents', [])
         random.shuffle(contents)
         for it in contents:
-            component = defs.get(it)
-            if component.get('build-mode') != 'bootstrap':
-                assemble(component)
-                sandbox.install(this, component)
+            subcomponent = defs.get(it)
+            if subcomponent.get('build-mode') != 'bootstrap':
+                assemble(subcomponent)
+                sandbox.install(component, subcomponent)
 
-        build(this)
-        do_manifest(this)
-        cache.cache(this, full_root=this.get('kind', None) == "system")
-        sandbox.remove(this)
+        if 'systems' not in component:
+            build(component)
+        do_manifest(component)
+        cache.cache(component, full_root=component.get('kind') == "system")
+        sandbox.remove(component)
 
-    return cache.cache_key(this)
+    return cache.cache_key(component)
 
 
 def build(this):
