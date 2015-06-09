@@ -214,6 +214,12 @@ def run_extension(this, deployment, step, method):
     else:
         envlist = ['UPGRADE=no']
 
+    if 'PYTHONPATH' in os.environ:
+        envlist.append('PYTHONPATH=%s:%s' % (os.environ['PYTHONPATH'],
+                                             app.settings['extsdir']))
+    else:
+        envlist.append('PYTHONPATH=%s' % app.settings['extsdir'])
+
     for key, value in deployment.iteritems():
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
