@@ -15,51 +15,72 @@
 # =*= License: GPL-2 =*=
 
 import os
-from definitions import Definitions
-import cache
-import repos
+import random
+from subprocess import call, check_output
+
 import app
 import buildsystem
+import cache
+import repos
 import sandbox
 import shutil
 import utils
-from subprocess import call, check_output
-import random
+from definitions import Definitions
 
 
 def deploy(target):
-    '''Deploy systems and subsystems recursively'''
+    '''Deploy a cluster definition.'''
 
     defs = Definitions()
     deployment = target if type(target) is dict else defs.get(target)
 
     with app.timer(deployment, 'Starting deployment'):
         for system in deployment.get('systems', []):
-            deploy(system)
-            for subsystem in system.get('subsystems', []):
-                deploy(subsystem)
+            deploy_system(system)
 
-        system = defs.get(deployment['path'])
-        if system.get('arch') and system['arch'] != app.settings['arch']:
-            app.log(target, 'Skipping deployment for', system['arch'])
-            return None
 
-        sandbox.setup(system)
-        for name, deployment in deployment.get('deploy', {}).iteritems():
-            method = os.path.basename(deployment['type'])
+def deploy_system(system_spec, parent_location=''):
+    '''Deploy a system and subsystems recursively.
+
+    Takes a system spec (i.e. an entry in the "systems" list in a cluster
+    definition), and optionally a path to a parent system tree. If
+    `parent_location` is given then the `location` given in the cluster
+    definition for the subsystem is appended to `parent_location`, with
+    the result being used as the location for the deployment extensions.
+
+    '''
+    defs = Definitions()
+    system = defs.get(system_spec['path'])
+
+    if system.get('arch') and system['arch'] != app.settings['arch']:
+        app.log(system, 'Skipping deployment for', system['arch'])
+        return None
+
+    sandbox.setup(system)
+    app.log(system, 'Extracting system artifact into', system['sandbox'])
+    with open(cache.get_cache(system), 'r') as artifact:
+        call(['tar', 'x', '--directory', system['sandbox']],
+              stdin=artifact)
+
+    for subsystem_spec in system_spec.get('subsystems', []):
+        deploy_system(subsystem_spec, parent_location=system['sandbox'])
+
+    for name, deployment in system_spec.get('deploy', {}).iteritems():
+        method = os.path.basename(deployment['type'])
+        if parent_location:
+            deployment['location'] = os.path.join(
+                parent_location, deployment['location'].lstrip('/'))
+        try:
             sandbox.run_extension(system, deployment, 'check', method)
-            app.log(system, "Extracting system artifact")
-            with open(cache.get_cache(system), "r") as artifact:
-                call(['tar', 'x', '--directory', system['sandbox']],
-                     stdin=artifact)
-
-            for ext in system.get('configuration-extensions', []):
-                sandbox.run_extension(system, deployment, 'configure',
-                                      os.path.basename(ext))
-
-            os.chmod(system['sandbox'], 0o755)
-            sandbox.run_extension(system, deployment, 'write', method)
-        sandbox.remove(system)
+        except KeyError:
+            app.log(system, "Couldn't find a check extension for",
+                    method)
+        for ext in system.get('configuration-extensions', []):
+            sandbox.run_extension(system, deployment, 'configure',
+                                  os.path.basename(ext))
+        os.chmod(system['sandbox'], 0o755)
+        sandbox.run_extension(system, deployment, 'write', method)
+    sandbox.remove(system)
 
 
 def assemble(target):
@@ -69,41 +90,41 @@ def assemble(target):
         return cache.cache_key(target)
 
     defs = Definitions()
-    this = defs.get(target)
+    component = defs.get(target)
 
-    if this.get('arch') and this['arch'] != app.settings['arch']:
-        app.log(target, 'Skipping assembly for', this['arch'])
+    if component.get('arch') and component['arch'] != app.settings['arch']:
+        app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
-    with app.timer(this, 'Starting assembly'):
-        sandbox.setup(this)
-        for it in this.get('systems', []):
-            system = defs.get(it)
-            assemble(system)
-            for subsystem in this.get('subsystems', []):
-                assemble(subsystem)
+    with app.timer(component, 'Starting assembly'):
+        sandbox.setup(component)
+        for system_spec in component.get('systems', []):
+            assemble(system_spec['path'])
+            for subsystem in system_spec.get('subsystems', []):
+                assemble(subsystem['path'])
 
-        dependencies = this.get('build-depends', [])
+        dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
         for it in dependencies:
             dependency = defs.get(it)
             assemble(dependency)
-            sandbox.install(this, dependency)
+            sandbox.install(component, dependency)
 
-        contents = this.get('contents', [])
+        contents = component.get('contents', [])
         random.shuffle(contents)
         for it in contents:
-            component = defs.get(it)
-            if component.get('build-mode') != 'bootstrap':
-                assemble(component)
-                sandbox.install(this, component)
+            subcomponent = defs.get(it)
+            if subcomponent.get('build-mode') != 'bootstrap':
+                assemble(subcomponent)
+                sandbox.install(component, subcomponent)
 
-        build(this)
-        do_manifest(this)
-        cache.cache(this, full_root=this.get('kind', None) == "system")
-        sandbox.remove(this)
+        if 'systems' not in component:
+            build(component)
+        do_manifest(component)
+        cache.cache(component, full_root=component.get('kind') == "system")
+        sandbox.remove(component)
 
-    return cache.cache_key(this)
+    return cache.cache_key(component)
 
 
 def build(this):
