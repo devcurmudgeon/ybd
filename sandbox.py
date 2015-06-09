@@ -16,7 +16,7 @@
 
 
 import sandboxlib
-import contextlib
+
 import os
 import pipes
 import shutil
@@ -124,9 +124,6 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
 
-    executor = sandboxlib.linux_user_chroot
-    sandbox_config = executor.maximum_possible_isolation()
-
     mounts = ccache_mounts(this, ccache_target=env['CCACHE_DIR'])
 
     if this.get('build-mode') == 'bootstrap':
@@ -138,12 +135,14 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
             this['build'], this['install'], tmpdir,
         ]
 
-        sandbox_config.update(dict(
+        sandbox_config = dict(
             cwd=this['build'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
+            mounts='isolated',
             extra_mounts=[],
-        ))
+            network='isolated',
+        )
     else:
         # normal mode: builds run in a chroot with only their dependencies
         # present.
@@ -162,16 +161,27 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
                 '/dev', '/proc', '/tmp',
             ]
 
-        sandbox_config.update(dict(
+        sandbox_config = dict(
             cwd=builddir_for_component(this),
             filesystem_root=this['sandbox'],
             filesystem_writable_paths=writable_paths,
+            mounts='isolated',
             extra_mounts=mounts,
-        ))
+            network='isolated',
+        )
 
     argv = ['sh', '-c', command]
 
     cur_makeflags = env.get("MAKEFLAGS")
+
+    # Pick the sandboxing backend for the current platform.
+    executor = sandboxlib.executor_for_platform()
+    app.log(this, 'Setting up sandbox using %s' % executor)
+
+    # Adjust config for what the backend is capable of. The user will be warned
+    # about any changes made.
+    sandbox_config = executor.degrade_config_for_capabilities(
+        sandbox_config, warn=True)
 
     try:
         if not allow_parallel:
