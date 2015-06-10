@@ -65,7 +65,6 @@ def setup(this):
 
     devnull = os.path.join(assembly_dir, 'dev/null')
     if not os.path.exists(devnull):
-        app.log(this, "Creating /dev/null inside sandbox")
         call(['sudo', 'mknod', devnull, 'c', '1', '3'])
         call(['sudo', 'chmod', '666', devnull])
 
