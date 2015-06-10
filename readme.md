@@ -48,7 +48,7 @@ if you trust the Python Package Index (PyPI) you can install them with:
 ### quick start
 
 ```
-    git clone git://github.com/devcurmudeon/ybd
+    git clone git://github.com/devcurmudgeon/ybd
     git clone git://git.baserock.org/baserock/baserock/definitions
     cd definitions
 ```
