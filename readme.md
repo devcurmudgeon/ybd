@@ -69,6 +69,25 @@ if you omit $2, ybd tries to use the architecture of your current machine
 are for native builds, no cross-compile. so if you're on a typical laptop
 it may be that your only option for $2 is `x86_64`
 
+Some examples to try:
+
+```
+   # on an x86_64 laptop running linux, to build a build-system...
+   ../ybd/ybd.py systems/build-system-x86_64.morph
+
+   # on the same laptop, to build the genivi stratum (and its dependencies)
+   ../ybd/ybd.py strata/genivi.morph x86_64
+
+   # on a jetson, to build a GENIVI baseline system...
+   ../ybd/ybd.py systems/enivi-baseline-system-armv7lhf-jetson.morph
+
+   # on anything, to build (and deploy?) parts of baserock release...
+   ../ybd/ybd.py clusters/release.morph
+
+   # in a baserock devel vm (x86_64), to build and deploy a self-upgrade...
+   ../ybd/ybd.py clusters/upgrade-devel.morph
+```
+
 currently ybd generates a lot of log output, which hopefully helps to explain
 what is happening. As we approach the singularity, most of the logging will
 probably end up being turned off.
@@ -79,14 +98,14 @@ probably end up being turned off.
 - ybd has core functionality only - parse definitions, build, cache artifacts
 - no branch|checkout|edit|merge (use git and be done)
 - no need for workspaces
-- no need to be in a baserock vm or a baserock chroot - ybd may even run on
-other Linux operating systems (eg Ubuntu, fedora, debian) and maybe even
+- no need to be in a Baserock vm or a Baserock chroot - ybd should run on
+other Linux operating systems (eg Ubuntu, Fedora, Debian) and maybe even
 non-Linux operating systems (eg BSD, MacOS). However it may be have differently
 and current Baserock definitions are Linux-specific.
 - ybd has an order of magnitude less code, so
   - easier to try things, easier to change things, easier to debug things
   - less to break, less to maintain, less to audit
-- ybd has minimal dependencies - just git and a 'normal' Linux toolchain
+- ybd aims to have less dependencies
 - ybd has faster, simpler calculation of cache-keys, and faster resolution of
   build-order
 - ybd can drop the words morphology, stratum, chunk from the Baserock vocabulary
