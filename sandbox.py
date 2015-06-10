@@ -31,6 +31,11 @@ from repos import get_repo_url
 import utils
 
 
+# This must be set to a sandboxlib backend before the run_sandboxed() function
+# can be used.
+executor = None
+
+
 def builddir_for_component(this):
     return this['name'] + '.build'
 
@@ -120,6 +125,8 @@ def argv_to_string(argv):
 
 
 def run_sandboxed(this, command, env=None, allow_parallel=False):
+    global executor
+
     app.log(this, 'Running command:\n%s' % command)
     with open(this['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
@@ -173,10 +180,6 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
     argv = ['sh', '-c', command]
 
     cur_makeflags = env.get("MAKEFLAGS")
-
-    # Pick the sandboxing backend for the current platform.
-    executor = sandboxlib.executor_for_platform()
-    app.log(this, 'Setting up sandbox using %s' % executor)
 
     # Adjust config for what the backend is capable of. The user will be warned
     # about any changes made.

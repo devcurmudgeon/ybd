@@ -17,14 +17,18 @@
 
 '''A module to build a definition.'''
 
+
+import sandboxlib
+
 import os
 import sys
-from definitions import Definitions
-import cache
+
 import app
 from assembly import assemble, deploy
-import sandbox
+from definitions import Definitions
+import cache
 import platform
+import sandbox
 
 
 print('')
@@ -48,5 +52,9 @@ with app.setup(target, arch):
         with app.timer('CACHE-KEYS', 'Calculating'):
             cache.get_cache(app.settings['target'])
         defs.save_trees()
+
+        sandbox.executor = sandboxlib.executor_for_platform()
+        app.log(target, 'Using %s for sandboxing' % sandbox.executor)
+
         assemble(app.settings['target'])
         deploy(app.settings['target'])
