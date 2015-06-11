@@ -99,8 +99,8 @@ def get_tree(this):
                 stderr=fnull):
             # can't resolve this ref. is it upstream?
             app.log(this, 'Fetching from upstream to resolve %s' % ref)
-            call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
-
+            call(['git', 'fetch', 'origin', '--depth', '1000000',
+                 this['unpetrify-ref']], stdout=fnull, stderr=fnull)
         try:
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
                                 universal_newlines=True)[0:-1]
@@ -109,7 +109,6 @@ def get_tree(this):
         except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
-
             app.exit(this, 'ERROR: could not find tree for ref', (ref, gitdir))
 
 
@@ -140,8 +139,12 @@ def mirror(name, repo):
     except:
         app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
-            if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
+            if call(['git', 'clone', '--depth', '1', '--no-single-branch',
+                    '--mirror', '-n', repo_url, tmpdir]):
                 app.exit(name, 'ERROR: failed to clone', repo)
+            with app.chdir(tmpdir):
+                if call(['git', 'fetch', '--tags', '--depth', '1']):
+                    app.exit(name, 'ERROR: failed to get tags for ', repo)
 
     with app.chdir(tmpdir):
         if call(['git', 'rev-parse']):
@@ -238,4 +241,4 @@ def checkout_submodules(name, ref):
                         fields)
 
         except:
-            app.exit(name, "ERROR: git submodules problem")
+            app.exit(name, "ERROR: git submodules problem", commit)
