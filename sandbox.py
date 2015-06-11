@@ -26,9 +26,8 @@ from subprocess import call, PIPE
 
 import app
 import cache
-from definitions import Definitions
-from repos import get_repo_url
 import utils
+from repos import get_repo_url
 
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
@@ -75,32 +74,32 @@ def remove(this):
         app.log(this, 'Cleaned up', this['sandbox'])
 
 
-def install(this, component):
+def install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
     app.log(this, 'Installing %s' % component['cache'])
-    _install(this, component)
+    _install(defs, this, component)
 
 
-def _install(this, component):
+def _install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
     for it in component.get('build-depends', []):
-        dependency = Definitions().get(it)
+        dependency = defs.get(it)
         if (dependency.get('build-mode', 'staging') ==
                 component.get('build-mode', 'staging')):
-            _install(this, dependency)
+            _install(defs, this, dependency)
 
     for it in component.get('contents', []):
-        subcomponent = Definitions().get(it)
+        subcomponent = defs.get(it)
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            _install(this, subcomponent)
+            _install(defs, this, subcomponent)
 
-    unpackdir = cache.unpack(component)
+    unpackdir = cache.unpack(defs, component)
     if this.get('kind') is 'system':
         utils.copy_all_files(unpackdir, this['sandbox'])
     else:
@@ -273,10 +272,9 @@ def ccache_mounts(this, ccache_target):
     return mounts
 
 
-def env_vars_for_build(this):
+def env_vars_for_build(defs, this):
     env = {}
     extra_path = []
-    defs = Definitions()
     arch_dict = {
         'i686': "x86_32",
         'armv8l64': "aarch64",

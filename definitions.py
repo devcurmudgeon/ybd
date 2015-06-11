@@ -22,7 +22,7 @@ from subprocess import check_output, PIPE
 import hashlib
 
 
-class Definitions():
+class Definitions(object):
     __definitions = {}
     __trees = {}
 

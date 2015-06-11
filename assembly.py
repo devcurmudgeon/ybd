@@ -25,21 +25,19 @@ import repos
 import sandbox
 import shutil
 import utils
-from definitions import Definitions
 
 
-def deploy(target):
+def deploy(defs, target):
     '''Deploy a cluster definition.'''
 
-    defs = Definitions()
     deployment = target if type(target) is dict else defs.get(target)
 
     with app.timer(deployment, 'Starting deployment'):
         for system in deployment.get('systems', []):
-            deploy_system(system)
+            deploy_system(defs, system)
 
 
-def deploy_system(system_spec, parent_location=''):
+def deploy_system(defs, system_spec, parent_location=''):
     '''Deploy a system and subsystems recursively.
 
     Takes a system spec (i.e. an entry in the "systems" list in a cluster
@@ -49,7 +47,6 @@ def deploy_system(system_spec, parent_location=''):
     the result being used as the location for the deployment extensions.
 
     '''
-    defs = Definitions()
     system = defs.get(system_spec['path'])
 
     if system.get('arch') and system['arch'] != app.settings['arch']:
@@ -58,12 +55,12 @@ def deploy_system(system_spec, parent_location=''):
 
     sandbox.setup(system)
     app.log(system, 'Extracting system artifact into', system['sandbox'])
-    with open(cache.get_cache(system), 'r') as artifact:
+    with open(cache.get_cache(defs, system), 'r') as artifact:
         call(['tar', 'x', '--directory', system['sandbox']],
               stdin=artifact)
 
     for subsystem_spec in system_spec.get('subsystems', []):
-        deploy_system(subsystem_spec, parent_location=system['sandbox'])
+        deploy_system(defs, subsystem_spec, parent_location=system['sandbox'])
 
     for name, deployment in system_spec.get('deploy', {}).iteritems():
         method = os.path.basename(deployment['type'])
@@ -83,13 +80,12 @@ def deploy_system(system_spec, parent_location=''):
     sandbox.remove(system)
 
 
-def assemble(target):
+def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
-    if cache.get_cache(target):
-        return cache.cache_key(target)
+    if cache.get_cache(defs, target):
+        return cache.cache_key(defs, target)
 
-    defs = Definitions()
     component = defs.get(target)
 
     if component.get('arch') and component['arch'] != app.settings['arch']:
@@ -99,35 +95,36 @@ def assemble(target):
     with app.timer(component, 'Starting assembly'):
         sandbox.setup(component)
         for system_spec in component.get('systems', []):
-            assemble(system_spec['path'])
+            assemble(defs, system_spec['path'])
             for subsystem in system_spec.get('subsystems', []):
-                assemble(subsystem['path'])
+                assemble(defs, subsystem['path'])
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
         for it in dependencies:
             dependency = defs.get(it)
-            assemble(dependency)
-            sandbox.install(component, dependency)
+            assemble(defs, dependency)
+            sandbox.install(defs, component, dependency)
 
         contents = component.get('contents', [])
         random.shuffle(contents)
         for it in contents:
             subcomponent = defs.get(it)
             if subcomponent.get('build-mode') != 'bootstrap':
-                assemble(subcomponent)
-                sandbox.install(component, subcomponent)
+                assemble(defs, subcomponent)
+                sandbox.install(defs, component, subcomponent)
 
         if 'systems' not in component:
-            build(component)
+            build(defs, component)
         do_manifest(component)
-        cache.cache(component, full_root=component.get('kind') == "system")
+        cache.cache(defs, component,
+                    full_root=component.get('kind') == "system")
         sandbox.remove(component)
 
-    return cache.cache_key(component)
+    return cache.cache_key(defs, component)
 
 
-def build(this):
+def build(defs, this):
     '''Actually create an artifact and add it to the cache
 
     This is what actually runs ./configure, make, make install (for example)
@@ -142,8 +139,8 @@ def build(this):
     if this.get('repo'):
         repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
 
-    get_build_commands(this)
-    env_vars = sandbox.env_vars_for_build(this)
+    get_build_commands(defs, this)
+    env_vars = sandbox.env_vars_for_build(defs, this)
 
     app.log(this, 'Logging build commands to %s' % this['log'])
     for build_step in buildsystem.build_steps:
@@ -158,7 +155,7 @@ def build(this):
         sandbox.create_devices(this)
 
 
-def get_build_commands(this):
+def get_build_commands(defs, this):
     '''Get commands specified in this, plus commmands implied by build_system
 
     If definition file doesn't exist, detect bs and use its commands.
@@ -168,7 +165,7 @@ def get_build_commands(this):
 
     if this.get('kind', None) == "system":
         # Systems must run their integration scripts as install commands
-        this['install-commands'] = gather_integration_commands(this)
+        this['install-commands'] = gather_integration_commands(defs, this)
         return
 
     if os.path.exists(this['path']):
@@ -186,13 +183,11 @@ def get_build_commands(this):
                 this[build_step] = build_system.commands[build_step]
 
 
-def gather_integration_commands(this):
+def gather_integration_commands(defs, this):
     # 1. iterate all subcomponents (recursively) looking for sys-int commands
     # 2. gather them all up
     # 3. asciibetically sort them
     # 4. concat the lists
-
-    defs = Definitions()
 
     def _gather_recursively(component, commands):
         if 'system-integration' in component:
