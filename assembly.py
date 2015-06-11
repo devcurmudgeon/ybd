@@ -24,7 +24,7 @@ import buildsystem
 import cache
 import repos
 import sandbox
-import shutil
+from shutil import copyfile
 import utils
 
 
@@ -166,6 +166,9 @@ def build(defs, this):
     if this.get('devices'):
         sandbox.create_devices(this)
 
+    with open(this['log'], "a") as logfile:
+        logfile.write('Elapsed_time: %s\n' % app.elapsed(this['start-time']))
+
 
 def get_build_commands(defs, this):
     '''Get commands specified in this, plus commmands implied by build_system
@@ -216,6 +219,7 @@ def gather_integration_commands(defs, this):
         result.extend(all_commands[key])
     return result
 
+
 def do_deployment_manifest(system, configuration):
     app.log(system, "Creating deployment manifest in", system['sandbox'])
     deployment_data = { 'configuration': configuration }
@@ -225,10 +229,12 @@ def do_deployment_manifest(system, configuration):
                   sort_keys=True, encoding='unicode-escape')
         f.flush()
 
+
 def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
     with app.chdir(this['install']), open(metafile, "w") as f:
         f.write("repo: %s\nref: %s\n" % (this.get('repo'), this.get('ref')))
-        f.write('elapsed_time: %s\n' % app.elapsed(this['start-time']))
         f.flush()
         call(['find'], stdout=f, stderr=f)
+    copyfile(metafile, os.path.join(app.settings['artifacts'],
+                                    this['cache'] + '.meta'))
