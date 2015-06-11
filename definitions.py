@@ -14,27 +14,24 @@
 #
 # =*= License: GPL-2 =*=
 
-import yaml
+import hashlib
+import jsonschema as js
 import os
+import yaml
+from subprocess import check_output, PIPE
+
 import app
 import cache
-from subprocess import check_output, PIPE
-import hashlib
 
 
 class Definitions(object):
 
     def __init__(self):
-        ''' Load all definitions from `cwd` tree. '''
+        '''Load all definitions from `cwd` tree.'''
         self._definitions = {}
         self._trees = {}
 
-        json_schema = self._load(app.settings.get('json-schema'))
-        definitions_schema = self._load(app.settings.get('defs-schema'))
-        if json_schema and definitions_schema:
-            import jsonschema as js
-            js.validate(json_schema, json_schema)
-            js.validate(definitions_schema, json_schema)
+        self._validate_schema()
 
         things_have_changed = not self._check_trees()
         for dirname, dirnames, filenames in os.walk('.'):
@@ -64,72 +61,121 @@ class Definitions(object):
         contents['path'] = path[2:]
         return contents
 
-    def _tidy(self, this):
-        ''' Load a single definition file '''
+    def _validate_schema(self):
+        json_schema = self._load(app.settings.get('json-schema'))
+        definitions_schema = self._load(app.settings.get('defs-schema'))
+        if json_schema and definitions_schema:
+            js.validate(json_schema, json_schema)
+            js.validate(definitions_schema, json_schema)
 
-        self._fix_path_name(this)
+    def _tidy(self, definition):
+        '''Insert a definition and its contents into the dictionary.
+
+        Takes a dict containing the content of a definition file.
+
+        Inserts the definitions references or defined in the
+        'build-dependencies' and 'contents' keys of `definition` into
+        the dictionary, and then inserts `definition` itself into the
+        dictionary.
+
+        '''
+        self._fix_path_name(definition)
 
         # handle morph syntax oddities...
-        for system in this.get('systems', []):
+        def fix_path_names(system):
             self._fix_path_name(system)
             for subsystem in system.get('subsystems', []):
-                self._fix_path_name(subsystem)
+                fix_path_names(subsystem)
 
-        for index, component in enumerate(this.get('build-depends', [])):
+        for system in definition.get('systems', []):
+            fix_path_names(system)
+
+        for index, component in enumerate(
+                definition.get('build-depends', [])):
             self._fix_path_name(component)
-            this['build-depends'][index] = self._insert(component)
+            definition['build-depends'][index] = self._insert(component)
 
         for subset in ['chunks', 'strata']:
-            if this.get(subset):
-                this['contents'] = this.pop(subset)
+            if subset in definition:
+                definition['contents'] = definition.pop(subset)
 
         lookup = {}
-        for index, component in enumerate(this.get('contents', [])):
+        for index, component in enumerate(definition.get('contents', [])):
             self._fix_path_name(component)
             lookup[component['name']] = component['path']
-            if component['name'] == this['name']:
-                app.log(this, 'WARNING: %s contains' % this['name'],
+            if component['name'] == definition['name']:
+                app.log(definition,
+                        'WARNING: %s contains' % definition['name'],
                         component['name'])
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
-            component['build-depends'] = (this.get('build-depends', []) +
-                                          component.get('build-depends', []))
-            this['contents'][index] = self._insert(component)
+            component['build-depends'] = (
+                definition.get('build-depends', []) +
+                component.get('build-depends', [])
+            )
+            definition['contents'][index] = self._insert(component)
 
-        return self._insert(this)
+        return self._insert(definition)
 
-    def _fix_path_name(self, this, name='ERROR'):
-        if this.get('path', None) is None:
-            this['path'] = this.pop('morph', this.get('name', name))
-            if this['path'] == 'ERROR':
-                app.exit(this, 'ERROR: no path, no name?')
-        if this.get('name') is None:
-            this['name'] = this['path'].replace('/', '-')
-        if this['name'] == app.settings['target']:
-            app.settings['target'] = this['path']
+    def _fix_path_name(self, definition, name='ERROR'):
+        if definition.get('path', None) is None:
+            definition['path'] = definition.pop('morph',
+                                                definition.get('name', name))
+            if definition['path'] == 'ERROR':
+                app.exit(definition, 'ERROR: no path, no name?')
+        if definition.get('name') is None:
+            definition['name'] = definition['path'].replace('/', '-')
+        if definition['name'] == app.settings['target']:
+            app.settings['target'] = definition['path']
 
-    def _insert(self, this):
-        definition = self._definitions.get(this['path'])
-        if definition:
-            if definition.get('ref') is None or this.get('ref') is None:
-                for key in this:
-                    definition[key] = this[key]
+    def _insert(self, definition):
+        '''Insert a definition into the dictionary, return the key.
 
-            for key in this:
-                if definition.get(key) != this[key]:
-                    app.log(this, 'WARNING: multiple definitions of', key)
-                    app.log(this, '%s | %s' % (definition.get(key), this[key]))
+        Takes a dict representing a single definition.
+
+        If a definition with the same 'path' already exists, extend the
+        existing definition with the contents of `definition` unless it
+        and the new definition contain a 'ref'. If any keys are
+        duplicated in the already-present definition, output a warning.
+
+        If a definition with the same 'path' doesn't exist, just add
+        `definition` to the dictionary.
+
+        '''
+        existing_definition = self._definitions.get(definition['path'])
+        if existing_definition:
+            if (existing_definition.get('ref') is None or
+                    definition.get('ref') is None):
+                for key in definition:
+                    existing_definition[key] = definition[key]
+
+            for key in definition:
+                if existing_definition.get(key) != definition[key]:
+                    app.log(definition, 'WARNING: multiple definitions of',
+                            key)
+                    app.log(definition,
+                            '%s | %s' % (existing_definition.get(key),
+                                         definition[key]))
         else:
-            self._definitions[this['path']] = this
+            self._definitions[definition['path']] = definition
 
-        return this['path']
+        return definition['path']
 
-    def get(self, this):
-        if type(this) is str:
-            return self._definitions.get(this)
+    def get(self, definition):
+        '''Return a definition from the dictionary.
 
-        return self._definitions.get(this['path'])
+        If `definition` is a string, return the definition with that
+        key.
+
+        If `definition` is a dict, return the definition with key equal
+        to the 'path' value in the given dict.
+
+        '''
+        if type(definition) is str:
+            return self._definitions.get(definition)
+
+        return self._definitions.get(definition['path'])
 
     def _check_trees(self):
         try:
