@@ -48,6 +48,7 @@ def deploy_system(defs, system_spec, parent_location=''):
 
     '''
     system = defs.get(system_spec['path'])
+    deploy_defaults = system_spec.get('deploy-defaults')
 
     if system.get('arch') and system['arch'] != app.settings['arch']:
         app.log(system, 'Skipping deployment for', system['arch'])
@@ -60,10 +61,16 @@ def deploy_system(defs, system_spec, parent_location=''):
               stdin=artifact)
 
     for subsystem_spec in system_spec.get('subsystems', []):
+        if deploy_defaults:
+            subsystem_spec = dict(deploy_defaults.items()
+                                  + subsystem_spec.items())
         deploy_system(defs, subsystem_spec, parent_location=system['sandbox'])
 
     for name, deployment in system_spec.get('deploy', {}).iteritems():
         method = os.path.basename(deployment['type'])
+        if deploy_defaults:
+            deployment = dict(deploy_defaults.items()
+                              + deployment.items())
         if parent_location:
             deployment['location'] = os.path.join(
                 parent_location, deployment['location'].lstrip('/'))
