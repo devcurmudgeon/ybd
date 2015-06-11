@@ -23,13 +23,11 @@ import hashlib
 
 
 class Definitions(object):
-    __definitions = {}
-    __trees = {}
 
     def __init__(self):
         ''' Load all definitions from `cwd` tree. '''
-        if self.__definitions != {}:
-            return
+        self._definitions = {}
+        self._trees = {}
 
         json_schema = self._load(app.settings.get('json-schema'))
         definitions_schema = self._load(app.settings.get('defs-schema'))
@@ -52,8 +50,8 @@ class Definitions(object):
                         self._tidy(contents)
 
         if self._check_trees():
-            for name in self.__definitions:
-                self.__definitions[name]['tree'] = self.__trees.get(name)
+            for name in self._definitions:
+                self._definitions[name]['tree'] = self._trees.get(name)
 
     def _load(self, path):
         try:
@@ -112,7 +110,7 @@ class Definitions(object):
             app.settings['target'] = this['path']
 
     def _insert(self, this):
-        definition = self.__definitions.get(this['path'])
+        definition = self._definitions.get(this['path'])
         if definition:
             if definition.get('ref') is None or this.get('ref') is None:
                 for key in this:
@@ -123,15 +121,15 @@ class Definitions(object):
                     app.log(this, 'WARNING: multiple definitions of', key)
                     app.log(this, '%s | %s' % (definition.get(key), this[key]))
         else:
-            self.__definitions[this['path']] = this
+            self._definitions[this['path']] = this
 
         return this['path']
 
     def get(self, this):
         if type(this) is str:
-            return self.__definitions.get(this)
+            return self._definitions.get(this)
 
-        return self.__definitions.get(this['path'])
+        return self._definitions.get(this['path'])
 
     def _check_trees(self):
         try:
@@ -140,23 +138,23 @@ class Definitions(object):
             checksum = hashlib.md5(checksum).hexdigest()
             with open('.trees') as f:
                 text = f.read()
-            self.__trees = yaml.safe_load(text)
-            if self.__trees.get('.checksum') == checksum:
+            self._trees = yaml.safe_load(text)
+            if self._trees.get('.checksum') == checksum:
                 return True
         except:
             if os.path.exists('.trees'):
                 os.remove('.trees')
-            self.__trees = {}
+            self._trees = {}
             return False
 
     def save_trees(self):
         with app.chdir(app.settings['defdir']):
             checksum = check_output('ls -lRA */', shell=True)
         checksum = hashlib.md5(checksum).hexdigest()
-        self.__trees = {'.checksum': checksum}
-        for name in self.__definitions:
-            if self.__definitions[name].get('tree') is not None:
-                self.__trees[name] = self.__definitions[name]['tree']
+        self._trees = {'.checksum': checksum}
+        for name in self._definitions:
+            if self._definitions[name].get('tree') is not None:
+                self._trees[name] = self._definitions[name]['tree']
 
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
-            f.write(yaml.dump(self.__trees, default_flow_style=False))
+            f.write(yaml.dump(self._trees, default_flow_style=False))
