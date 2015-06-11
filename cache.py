@@ -29,8 +29,7 @@ import requests
 import sys
 
 
-def cache_key(this):
-    defs = definitions.Definitions()
+def cache_key(defs, this):
     definition = defs.get(this)
     if definition is None:
         app.exit(this, 'ERROR: No definition found for', this)
@@ -44,10 +43,10 @@ def cache_key(this):
     hash_factors = {'arch': app.settings['arch']}
 
     for factor in definition.get('build-depends', []):
-        hash_factors[factor] = cache_key(factor)
+        hash_factors[factor] = cache_key(defs, factor)
 
     for factor in definition.get('contents', []):
-        hash_factors[factor] = cache_key(factor)
+        hash_factors[factor] = cache_key(defs, factor)
 
     for factor in ['tree'] + buildsystem.build_steps:
         if definition.get(factor):
@@ -56,10 +55,10 @@ def cache_key(this):
     if definition.get('kind') == 'cluster':
         for system in definition.get('systems', []):
             factor = system.get('path', 'BROKEN')
-            hash_factors[factor] = cache_key(factor)
+            hash_factors[factor] = cache_key(defs, factor)
             for subsystem in system.get('subsystems', []):
                 factor = subsystem.get('path', 'BROKEN')
-                hash_factors[factor] = cache_key(factor)
+                hash_factors[factor] = cache_key(defs, factor)
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
@@ -69,9 +68,9 @@ def cache_key(this):
     return definition['cache']
 
 
-def cache(this, full_root=False):
+def cache(defs, this, full_root=False):
     app.log(this, "Creating cache artifact")
-    cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
+    cachefile = os.path.join(app.settings['artifacts'], cache_key(defs, this))
     if full_root:
         shutil.make_archive(cachefile, 'tar', this['sandbox'])
         os.rename('%s.tar' % cachefile, cachefile)
@@ -79,7 +78,7 @@ def cache(this, full_root=False):
         utils.set_mtime_recursively(this['install'])
         shutil.make_archive(cachefile, 'gztar', this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
-    app.log(this, 'Now cached as', cache_key(this))
+    app.log(this, 'Now cached as', cache_key(defs, this))
     if os.fork() == 0:
         upload(this, cachefile)
         sys.exit()
@@ -98,8 +97,8 @@ def upload(this, cachefile):
             pass
 
 
-def unpack(this):
-    cachefile = get_cache(this)
+def unpack(defs, this):
+    cachefile = get_cache(defs, this)
     if cachefile:
         unpackdir = cachefile + '.unpacked'
         if not os.path.exists(unpackdir):
@@ -111,10 +110,10 @@ def unpack(this):
     app.exit(this, 'ERROR: Cached artifact not found')
 
 
-def get_cache(this):
+def get_cache(defs, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cachefile = os.path.join(app.settings['artifacts'], cache_key(this))
+    cachefile = os.path.join(app.settings['artifacts'], cache_key(defs, this))
     if os.path.exists(cachefile):
         return cachefile
 

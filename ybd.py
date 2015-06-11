@@ -50,11 +50,11 @@ with app.setup(target, arch):
         with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):
-            cache.get_cache(app.settings['target'])
+            cache.get_cache(defs, app.settings['target'])
         defs.save_trees()
 
         sandbox.executor = sandboxlib.executor_for_platform()
         app.log(target, 'Using %s for sandboxing' % sandbox.executor)
 
-        assemble(app.settings['target'])
-        deploy(app.settings['target'])
+        assemble(defs, app.settings['target'])
+        deploy(defs, app.settings['target'])
