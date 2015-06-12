@@ -52,13 +52,15 @@ def cache_key(defs, this):
         if definition.get(factor):
             hash_factors[factor] = definition[factor]
 
+    def hash_system_recursively(system):
+        factor = system.get('path', 'BROKEN')
+        hash_factors[factor] = cache_key(defs, factor)
+        for subsystem in system.get('subsystems', []):
+            hash_system_recursively(subsystem)
+
     if definition.get('kind') == 'cluster':
         for system in definition.get('systems', []):
-            factor = system.get('path', 'BROKEN')
-            hash_factors[factor] = cache_key(defs, factor)
-            for subsystem in system.get('subsystems', []):
-                factor = subsystem.get('path', 'BROKEN')
-                hash_factors[factor] = cache_key(defs, factor)
+            hash_system_recursively(system)
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
