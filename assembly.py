@@ -99,12 +99,15 @@ def assemble(defs, target):
         app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
+    def assemble_system_recursively(system):
+        assemble(defs, system['path'])
+        for subsystem in system.get('subsystems', []):
+            assemble_system_recursively(subsystem)
+
     with app.timer(component, 'Starting assembly'):
         sandbox.setup(component)
         for system_spec in component.get('systems', []):
-            assemble(defs, system_spec['path'])
-            for subsystem in system_spec.get('subsystems', []):
-                assemble(defs, subsystem['path'])
+            assemble_system_recursively(system_spec)
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
