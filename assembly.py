@@ -18,6 +18,7 @@ import os
 import random
 from subprocess import call, check_output
 
+import json
 import app
 import buildsystem
 import cache
@@ -71,6 +72,7 @@ def deploy_system(defs, system_spec, parent_location=''):
         if deploy_defaults:
             deployment = dict(deploy_defaults.items()
                               + deployment.items())
+        do_deployment_manifest(system, deployment)
         if parent_location:
             deployment['location'] = os.path.join(
                 parent_location, deployment['location'].lstrip('/'))
@@ -214,6 +216,14 @@ def gather_integration_commands(defs, this):
         result.extend(all_commands[key])
     return result
 
+def do_deployment_manifest(system, configuration):
+    app.log(system, "Creating deployment manifest in", system['sandbox'])
+    deployment_data = { 'configuration': configuration }
+    metafile = os.path.join(system['sandbox'], 'baserock', 'deployment.meta')
+    with app.chdir(system['sandbox']), open(metafile, "w") as f:
+        json.dump(deployment_data, f, indent=4,
+                  sort_keys=True, encoding='unicode-escape')
+        f.flush()
 
 def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
