@@ -14,14 +14,12 @@
 #
 # =*= License: GPL-2 =*=
 
-import hashlib
-import jsonschema as js
-import os
 import yaml
-from subprocess import check_output, PIPE
-
+import os
 import app
 import cache
+from subprocess import check_output, PIPE
+import hashlib
 
 
 class Definitions(object):
@@ -31,7 +29,12 @@ class Definitions(object):
         self._definitions = {}
         self._trees = {}
 
-        self._validate_schema()
+        json_schema = self._load(app.settings.get('json-schema'))
+        definitions_schema = self._load(app.settings.get('defs-schema'))
+        if json_schema and definitions_schema:
+            import jsonschema as js
+            js.validate(json_schema, json_schema)
+            js.validate(definitions_schema, json_schema)
 
         things_have_changed = not self._check_trees()
         for dirname, dirnames, filenames in os.walk('.'):
@@ -60,13 +63,6 @@ class Definitions(object):
             return None
         contents['path'] = path[2:]
         return contents
-
-    def _validate_schema(self):
-        json_schema = self._load(app.settings.get('json-schema'))
-        definitions_schema = self._load(app.settings.get('defs-schema'))
-        if json_schema and definitions_schema:
-            js.validate(json_schema, json_schema)
-            js.validate(definitions_schema, json_schema)
 
     def _tidy(self, definition):
         '''Insert a definition and its contents into the dictionary.
