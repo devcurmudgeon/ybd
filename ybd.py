@@ -41,6 +41,13 @@ if len(sys.argv) == 3:
     arch = sys.argv[2]
 else:
     arch = platform.machine()
+    if arch in ('mips', 'mips64'):
+        if arch == 'mips':
+	    arch = 'mips32'
+        if sys.byteorder == 'big':
+            arch = arch + 'b'
+        else:
+            arch = arch + 'l'
 
 with app.setup(target, arch):
     with app.timer('TOTAL', 'ybd starts, version %s' %
