@@ -159,6 +159,8 @@ def build(defs, this):
         if this.get(build_step):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
+            if command is False: command = "false"
+            elif command is True: command = "true"
             sandbox.run_sandboxed(
                 this, command, env=env_vars,
                 allow_parallel=('build' in build_step))
