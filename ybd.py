@@ -43,7 +43,7 @@ else:
     arch = platform.machine()
     if arch in ('mips', 'mips64'):
         if arch == 'mips':
-	    arch = 'mips32'
+            arch = 'mips32'
         if sys.byteorder == 'big':
             arch = arch + 'b'
         else:
