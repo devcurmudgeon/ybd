@@ -39,14 +39,11 @@ else:
 
 
 def get_repo_url(repo):
-    url = repo.replace('upstream:', 'git://git.baserock.org/delta/')
-    url = url.replace('baserock:', 'git://git.baserock.org/baserock/')
-    url = url.replace('freedesktop:', 'git://anongit.freedesktop.org/')
-    url = url.replace('github:', 'git://github.com/')
-    url = url.replace('gnome:', 'git://git.gnome.org')
-    if url.endswith('.git'):
-        url = url[:-4]
-    return url
+    for alias, url in app.settings.get('aliases', {}).items():
+        repo = repo.replace(alias, url)
+    if repo.endswith('.git'):
+        repo = repo[:-4]
+    return repo
 
 
 def get_repo_name(repo):

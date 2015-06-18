@@ -1,3 +1,9 @@
+aliases:
+  'baserock:': 'git://git.baserock.org/baserock/'
+  'freedesktop:': 'git://anongit.freedesktop.org/'
+  'github:': 'git://github.com/'
+  'gnome:': 'git://git.gnome.org/'
+  'upstream:': 'git://git.baserock.org/delta/'
 base-path: ['/usr/bin', '/bin', '/usr/sbin', '/sbin']
 base: 'ybd'
 cache-server: 'http://git.baserock.org:8080/1.0/sha1s?'
