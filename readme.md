@@ -2,21 +2,22 @@
 
 ybd is a tool for integrating software stacks. it does four things:
 
-- parse some yaml files describing integrated collections of software components
-- collect the source for one target collection (from git repos)
+- parse yaml files which describe integrated collections of software components
+- gather source code (from git repos) for a user-specified target collection
 - build the collection
-- (optionally) deploy the collection
+- deploy the collection (if the yaml files describe where/how to deploy)
 
 currently ybd understands the semantics of yaml
 [definitions](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/definitions.git/tree/)
-from the [Baserock](http://wiki.baserock.org) project. ybd does some of the things that Baserock morph does, without most of the complexity that morph has
+from the [Baserock](http://wiki.baserock.org) project. ybd provides some of the
+functionality of Baserock morph, without most of the complexity that morph has
 accrued since development started in 2011.
 
 ybd can be a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
-projects. with a little work it can be used to build other stacks too.
+projects. with a little work it can be used to build other software stacks too.
 
-the ybd codebase is currently only ~ 1560 lines of Python in ten source files.
+the ybd codebase is currently only ~ 1600 lines of Python in ten source files.
 even so ybd can reproducibly build all systems in Baserock's definitions.git,
 i.e. all of the FOSS components required for Linux appliances up to and
 including, for example
@@ -39,7 +40,8 @@ ybd also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 and optionally Julian Berman's
 [jsonschema](https://github.com/Julian/jsonschema)
 
-if you trust the Python Package Index (PyPI) you can install them with:
+if you trust (and have installed) the Python Package Index (PyPI), you can
+install them with:
 
 ```
     pip install pyyaml sandboxlib jsonschema
@@ -53,7 +55,7 @@ if you trust the Python Package Index (PyPI) you can install them with:
     cd definitions
 ```
 
-once there you can run
+once there you can run (as root)
 
 ```
     ../ybd/ybd.py $1 $2
@@ -74,6 +76,9 @@ Some examples to try:
 ```
    # on an x86_64 laptop running linux, to build a build-system...
    ../ybd/ybd.py systems/build-system-x86_64.morph
+
+   # on the same laptop, to build gcc (and its dependencies)
+   ../ybd/ybd.py gcc
 
    # on the same laptop, to build the genivi stratum (and its dependencies)
    ../ybd/ybd.py strata/genivi.morph x86_64
