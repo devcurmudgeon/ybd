@@ -40,8 +40,8 @@ ybd also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 and optionally Julian Berman's
 [jsonschema](https://github.com/Julian/jsonschema)
 
-if you trust (and have installed) the Python Package Index (PyPI), you can
-install them with:
+if you trust the Python Package Index (PyPI) and pip is available on your
+machine, you can install them with:
 
 ```
     pip install pyyaml sandboxlib jsonschema
