@@ -279,10 +279,10 @@ def env_vars_for_build(defs, this):
         'i686': "x86_32",
         'armv8l64': "aarch64",
         'armv8b64': "aarch64_be",
-        'mips64b' : 'mips64',
-        'mips64l' : 'mips64',
-        'mips32b' : 'mips',
-        'mips32l' : 'mips',
+        'mips64b': 'mips64',
+        'mips64l': 'mips64',
+        'mips32b': 'mips',
+        'mips32l': 'mips',
     }
 
     if app.settings['no-ccache']:

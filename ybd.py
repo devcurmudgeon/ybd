@@ -32,7 +32,7 @@ import sandbox
 
 
 print('')
-if len(sys.argv) not in [2,3]:
+if len(sys.argv) not in [2, 3]:
     sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
     sys.exit(1)
 
@@ -53,7 +53,7 @@ with app.setup(target, arch):
     with app.timer('TOTAL', 'ybd starts, version %s' %
                    app.settings['ybd-version']):
         app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
-                                                      target), arch)
+                                                        target), arch)
         with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
             defs = Definitions()
         with app.timer('CACHE-KEYS', 'Calculating'):

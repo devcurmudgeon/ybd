@@ -28,7 +28,7 @@ from repos import get_version
 
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
-                 os.path.join(os.path.expanduser('~'), '.cache')
+    os.path.join(os.path.expanduser('~'), '.cache')
 settings = {}
 
 

@@ -58,8 +58,7 @@ def deploy_system(defs, system_spec, parent_location=''):
     sandbox.setup(system)
     app.log(system, 'Extracting system artifact into', system['sandbox'])
     with open(cache.get_cache(defs, system), 'r') as artifact:
-        call(['tar', 'x', '--directory', system['sandbox']],
-              stdin=artifact)
+        call(['tar', 'x', '--directory', system['sandbox']], stdin=artifact)
 
     for subsystem_spec in system_spec.get('subsystems', []):
         if deploy_defaults:
@@ -159,8 +158,10 @@ def build(defs, this):
         if this.get(build_step):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
-            if command is False: command = "false"
-            elif command is True: command = "true"
+            if command is False:
+                command = "false"
+            elif command is True:
+                command = "true"
             sandbox.run_sandboxed(
                 this, command, env=env_vars,
                 allow_parallel=('build' in build_step))
@@ -224,7 +225,7 @@ def gather_integration_commands(defs, this):
 
 def do_deployment_manifest(system, configuration):
     app.log(system, "Creating deployment manifest in", system['sandbox'])
-    deployment_data = { 'configuration': configuration }
+    deployment_data = {'configuration': configuration}
     metafile = os.path.join(system['sandbox'], 'baserock', 'deployment.meta')
     with app.chdir(system['sandbox']), open(metafile, "w") as f:
         json.dump(deployment_data, f, indent=4,

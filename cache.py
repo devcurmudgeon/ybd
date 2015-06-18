@@ -120,6 +120,7 @@ def make_deterministic_tar_archive(base_name, root_dir):
 
     '''
     real_listdir = os.listdir
+
     def stable_listdir(path):
         return sorted(real_listdir(path))
 
