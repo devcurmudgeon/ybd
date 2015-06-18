@@ -97,11 +97,10 @@ def setup(target, arch):
         settings['artifacts'] = os.path.join(settings['base'], 'artifacts')
         settings['gits'] = os.path.join(settings['base'], 'gits')
         settings['tmp'] = os.path.join(settings['base'], 'tmp')
-        settings['ccache_dir'] = os.path.join(settings['base'], 'ccache_dir')
+        settings['ccache'] = os.path.join(settings['base'], 'ccache_dir')
         settings['deployment'] = os.path.join(settings['base'], 'deployment')
 
-        for directory in ['artifacts', 'gits', 'tmp',
-                          'ccache_dir', 'deployment']:
+        for directory in ['artifacts', 'gits', 'tmp', 'ccache', 'deployment']:
             try:
                 os.makedirs(settings[directory])
             except OSError:
