@@ -192,6 +192,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         if exit_code != 0:
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(argv))
+            call(['tail', '-n', '200', this['log']])
             app.exit(this, 'ERROR: log file is at', this['log'])
     finally:
         if cur_makeflags is not None:
@@ -204,6 +205,7 @@ def run_logged(this, cmd_list):
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(cmd_list))
+            call(['tail', '-n', '200', this['log']])
             app.exit(this, 'ERROR: log file is at', this['log'])
 
 
