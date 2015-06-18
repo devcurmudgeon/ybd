@@ -136,11 +136,9 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         # can use the compilers etc.
         tmpdir = app.settings.get("TMPDIR", "/tmp")
 
-        writable_paths = [
-            this['build'], this['install'], tmpdir,
-        ]
+        writable_paths = [this['build'], this['install'], tmpdir, ]
 
-        sandbox_config = dict(
+        config = dict(
             cwd=this['build'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
@@ -152,10 +150,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         # normal mode: builds run in a chroot with only their dependencies
         # present.
 
-        mounts.extend([
-            (None, '/dev/shm', 'tmpfs'),
-            (None, '/proc', 'proc'),
-        ])
+        mounts.extend([(None, '/dev/shm', 'tmpfs'), (None, '/proc', 'proc'), ])
 
         if this.get('kind') == 'system':
             writable_paths = 'all'
@@ -166,7 +161,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
                 '/dev', '/proc', '/tmp',
             ]
 
-        sandbox_config = dict(
+        config = dict(
             cwd=builddir_for_component(this),
             filesystem_root=this['sandbox'],
             filesystem_writable_paths=writable_paths,
@@ -181,8 +176,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
 
     # Adjust config for what the backend is capable of. The user will be warned
     # about any changes made.
-    sandbox_config = executor.degrade_config_for_capabilities(
-        sandbox_config, warn=True)
+    config = executor.degrade_config_for_capabilities(config, warn=True)
 
     try:
         if not allow_parallel:
@@ -193,7 +187,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         with open(this['log'], "a") as logfile:
             exit_code = executor.run_sandbox_with_redirection(
                 argv, stdout=logfile, stderr=sandboxlib.STDOUT,
-                env=env, **sandbox_config)
+                env=env, **config)
 
         if exit_code != 0:
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
