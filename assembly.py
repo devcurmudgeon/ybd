@@ -60,17 +60,15 @@ def deploy_system(defs, system_spec, parent_location=''):
     with open(cache.get_cache(defs, system), 'r') as artifact:
         call(['tar', 'x', '--directory', system['sandbox']], stdin=artifact)
 
-    for subsystem_spec in system_spec.get('subsystems', []):
+    for subsystem in system_spec.get('subsystems', []):
         if deploy_defaults:
-            subsystem_spec = dict(deploy_defaults.items()
-                                  + subsystem_spec.items())
-        deploy_system(defs, subsystem_spec, parent_location=system['sandbox'])
+            subsystem = dict(deploy_defaults.items() + subsystem.items())
+        deploy_system(defs, subsystem, parent_location=system['sandbox'])
 
     for name, deployment in system_spec.get('deploy', {}).iteritems():
         method = os.path.basename(deployment['type'])
         if deploy_defaults:
-            deployment = dict(deploy_defaults.items()
-                              + deployment.items())
+            deployment = dict(deploy_defaults.items() + deployment.items())
         do_deployment_manifest(system, deployment)
         if parent_location:
             deployment['location'] = os.path.join(
@@ -78,8 +76,8 @@ def deploy_system(defs, system_spec, parent_location=''):
         try:
             sandbox.run_extension(system, deployment, 'check', method)
         except KeyError:
-            app.log(system, "Couldn't find a check extension for",
-                    method)
+            app.log(system, "Couldn't find a check extension for", method)
+
         for ext in system.get('configuration-extensions', []):
             sandbox.run_extension(system, deployment, 'configure',
                                   os.path.basename(ext))
@@ -225,11 +223,10 @@ def gather_integration_commands(defs, this):
 
 def do_deployment_manifest(system, configuration):
     app.log(system, "Creating deployment manifest in", system['sandbox'])
-    deployment_data = {'configuration': configuration}
+    data = {'configuration': configuration}
     metafile = os.path.join(system['sandbox'], 'baserock', 'deployment.meta')
     with app.chdir(system['sandbox']), open(metafile, "w") as f:
-        json.dump(deployment_data, f, indent=4,
-                  sort_keys=True, encoding='unicode-escape')
+        json.dump(data, f, indent=4, sort_keys=True, encoding='unicode-escape')
         f.flush()
 
 

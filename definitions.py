@@ -127,38 +127,35 @@ class Definitions(object):
         if definition['name'] == app.settings['target']:
             app.settings['target'] = definition['path']
 
-    def _insert(self, definition):
-        '''Insert a definition into the dictionary, return the key.
+    def _insert(self, new_def):
+        '''Insert a new definition into the dictionary, return the key.
 
         Takes a dict representing a single definition.
 
         If a definition with the same 'path' already exists, extend the
-        existing definition with the contents of `definition` unless it
+        existing definition with the contents of `new_def` unless it
         and the new definition contain a 'ref'. If any keys are
-        duplicated in the already-present definition, output a warning.
+        duplicated in the existing definition, output a warning.
 
         If a definition with the same 'path' doesn't exist, just add
-        `definition` to the dictionary.
+        `new_def` to the dictionary.
 
         '''
-        existing_definition = self._definitions.get(definition['path'])
-        if existing_definition:
-            if (existing_definition.get('ref') is None or
-                    definition.get('ref') is None):
-                for key in definition:
-                    existing_definition[key] = definition[key]
+        definition = self._definitions.get(new_def['path'])
+        if definition:
+            if (definition.get('ref') is None or new_def.get('ref') is None):
+                for key in new_def:
+                    definition[key] = new_def[key]
 
-            for key in definition:
-                if existing_definition.get(key) != definition[key]:
-                    app.log(definition, 'WARNING: multiple definitions of',
-                            key)
-                    app.log(definition,
-                            '%s | %s' % (existing_definition.get(key),
-                                         definition[key]))
+            for key in new_def:
+                if definition.get(key) != new_def[key]:
+                    app.log(new_def, 'WARNING: multiple definitions of', key)
+                    app.log(new_def,
+                            '%s | %s' % (definition.get(key), new_def[key]))
         else:
-            self._definitions[definition['path']] = definition
+            self._definitions[new_def['path']] = new_def
 
-        return definition['path']
+        return new_def['path']
 
     def get(self, definition):
         '''Return a definition from the dictionary.

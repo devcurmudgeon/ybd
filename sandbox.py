@@ -220,10 +220,7 @@ def run_extension(this, deployment, step, method):
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
-    if method == 'ssh-rsync':
-        envlist = ['UPGRADE=yes']
-    else:
-        envlist = ['UPGRADE=no']
+    envlist = ['UPGRADE=no'] if method == 'ssh-rsync' else ['UPGRADE=yes']
 
     if 'PYTHONPATH' in os.environ:
         envlist.append('PYTHONPATH=%s:%s' % (os.environ['PYTHONPATH'],
@@ -310,8 +307,7 @@ def env_vars_for_build(defs, this):
 
     if this.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
-        full_path = [os.path.normpath(this['sandbox'] + p)
-                     for p in rel_path]
+        full_path = [os.path.normpath(this['sandbox'] + p) for p in rel_path]
         path = full_path + app.settings['base-path']
         env['DESTDIR'] = this.get('install')
     else:
