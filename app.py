@@ -37,11 +37,7 @@ def log(component, message='', data=''):
     if os.getpid() != settings.get('pid'):
         return
 
-    name = component
-    try:
-        name = component['name']
-    except:
-        pass
+    name = component['name'] if type(component) is dict else component
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log_entry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
