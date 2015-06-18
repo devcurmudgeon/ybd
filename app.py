@@ -74,9 +74,9 @@ def setup(target, arch):
     warnings.formatwarning = warning_handler
 
     try:
-        settings_file = './ybd.def'
+        settings_file = './ybd.conf'
         if not os.path.exists(settings_file):
-            settings_file = os.path.join(os.path.dirname(__file__), 'ybd.def')
+            settings_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
         with open(settings_file) as f:
             text = f.read()
         for key, value in yaml.safe_load(text).items():
