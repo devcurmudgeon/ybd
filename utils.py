@@ -14,11 +14,10 @@
 #
 # =*= License: GPL-2 =*=
 
-import glob
+import contextlib
 import os
-import stat
 import shutil
-import textwrap
+import stat
 
 import app
 
@@ -138,3 +137,20 @@ def find_extensions():
     paths = [app.settings['extsdir']]
 
     return _find_extensions(paths)
+
+
+@contextlib.contextmanager
+def monkeypatch(obj, attr, new_value):
+    '''Temporarily override the attribute of some object.
+
+    For example, to override the time.time() function, so that it returns a
+    fixed timestamp, you could do:
+
+        with monkeypatch(time, 'time', lambda: 1234567):
+            print time.time()
+
+    '''
+    old_value = getattr(obj, attr)
+    setattr(obj, attr, new_value)
+    yield
+    setattr(obj, attr, old_value)
