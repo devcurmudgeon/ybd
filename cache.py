@@ -169,7 +169,7 @@ def unpack(defs, this):
                 app.exit(this, 'ERROR: Problem unpacking', cachefile)
         return unpackdir
 
-    app.exit(this, 'ERROR: Cached artifact not found')
+    app.exit(this, 'ERROR: Cached artifact not found', cache_key(defs, this))
 
 
 def get_cache(defs, this):
