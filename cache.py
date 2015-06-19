@@ -99,7 +99,7 @@ def make_deterministic_gztar_archive(base_name, root_dir,
 
             f_tar.add(name=name, arcname=arcname, recursive=False)
 
-            if os.path.isdir(name):
+            if os.path.isdir(name) and not os.path.islink(name):
                 add_directory_to_tarfile(f_tar, name, arcname)
 
     with open(base_name + '.tar.gz', 'wb') as f:
