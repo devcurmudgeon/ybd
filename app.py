@@ -34,7 +34,7 @@ settings = {}
 
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
-    if os.getpid() != settings.get('pid'):
+    if settings.get('pid') and os.getpid() != settings.get('pid'):
         return
 
     name = component['name'] if type(component) is dict else component
@@ -72,6 +72,9 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
 @contextlib.contextmanager
 def setup(target, arch):
     warnings.formatwarning = warning_handler
+    with open(os.devnull, "w") as fnull:
+        if call(['git', 'describe', '--all'], stdout=fnull, stderr=fnull):
+            exit(target, 'ERROR: %s is not a git repo' % os.getcwd(),'')
 
     try:
         settings_file = './ybd.conf'
@@ -82,10 +85,6 @@ def setup(target, arch):
         for key, value in yaml.safe_load(text).items():
             settings[key] = value
         settings['pid'] = os.getpid()
-        with open(os.devnull, "w") as fnull:
-            if call(['git', 'describe', '--all'], stdout=fnull, stderr=fnull):
-                exit(target, 'ERROR: not a git repo', os.getcwd())
-
         settings['ybd-version'] = get_version(os.path.dirname(__file__))
         settings['defdir'] = os.getcwd()
         settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
