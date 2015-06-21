@@ -104,15 +104,11 @@ def setup(args):
     settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
     settings['def-version'] = get_version('.')
 
+    dirs = [ 'artifacts', 'ccache_dir', 'deployment', 'gits', 'tidy', 'tmp' ]
     settings['base'] = os.path.join(xdg_cache_home, settings['base'])
-    settings['artifacts'] = os.path.join(settings['base'], 'artifacts')
-    settings['gits'] = os.path.join(settings['base'], 'gits')
-    settings['tmp'] = os.path.join(settings['base'], 'tmp')
-    settings['ccache'] = os.path.join(settings['base'], 'ccache_dir')
-    settings['deployment'] = os.path.join(settings['base'], 'deployment')
-
-    for directory in ['artifacts', 'gits', 'tmp', 'ccache', 'deployment']:
+    for directory in dirs:
         try:
+            settings[directory] = os.path.join(settings['base'], directory)
             os.makedirs(settings[directory])
         except OSError:
             if not os.path.isdir(settings[directory]):

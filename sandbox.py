@@ -257,7 +257,7 @@ def ccache_mounts(this, ccache_target):
     else:
         name = os.path.basename(get_repo_url(this['repo']))
 
-        ccache_dir = os.path.join(app.settings['ccache'], name)
+        ccache_dir = os.path.join(app.settings['ccache_dir'], name)
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
 
