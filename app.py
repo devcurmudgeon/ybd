@@ -23,6 +23,7 @@ import warnings
 import yaml
 from multiprocessing import cpu_count
 from subprocess import call, check_output
+import platform
 
 from repos import get_version
 
@@ -69,54 +70,61 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
     return 'WARNING: %s\n' % (message)
 
 
-@contextlib.contextmanager
-def setup(target, arch):
+def setup(args):
+    if len(args) not in [2, 3]:
+        sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
+        sys.exit(1)
+
+    settings['target'] = args[1]
+    if len(args) == 3:
+        arch = args[2]
+    else:
+        arch = platform.machine()
+        if arch in ('mips', 'mips64'):
+            if arch == 'mips':
+                arch = 'mips32'
+            if sys.byteorder == 'big':
+                arch = arch + 'b'
+            else:
+                arch = arch + 'l'
+    settings['arch'] = arch
+
     warnings.formatwarning = warning_handler
-    with open(os.devnull, "w") as fnull:
-        if call(['git', 'describe', '--all'], stdout=fnull, stderr=fnull):
-            exit(target, 'ERROR: %s is not a git repo' % os.getcwd(),'')
+    settings_file = './ybd.conf'
+    if not os.path.exists(settings_file):
+        settings_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
+    with open(settings_file) as f:
+        text = f.read()
+    for key, value in yaml.safe_load(text).items():
+        settings[key] = value
+    settings['pid'] = os.getpid()
+    settings['program'] = os.path.basename(args[0])
+    settings['program-version'] = get_version(os.path.dirname(__file__))
+    settings['defdir'] = os.getcwd()
+    settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
+    settings['def-version'] = get_version('.')
 
-    try:
-        settings_file = './ybd.conf'
-        if not os.path.exists(settings_file):
-            settings_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
-        with open(settings_file) as f:
-            text = f.read()
-        for key, value in yaml.safe_load(text).items():
-            settings[key] = value
-        settings['pid'] = os.getpid()
-        settings['ybd-version'] = get_version(os.path.dirname(__file__))
-        settings['defdir'] = os.getcwd()
-        settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
-        settings['def-ver'] = get_version('.')
-        settings['target'] = target
-        settings['arch'] = arch
+    settings['base'] = os.path.join(xdg_cache_home, settings['base'])
+    settings['artifacts'] = os.path.join(settings['base'], 'artifacts')
+    settings['gits'] = os.path.join(settings['base'], 'gits')
+    settings['tmp'] = os.path.join(settings['base'], 'tmp')
+    settings['ccache'] = os.path.join(settings['base'], 'ccache_dir')
+    settings['deployment'] = os.path.join(settings['base'], 'deployment')
 
-        settings['base'] = os.path.join(xdg_cache_home, settings['base'])
-        settings['artifacts'] = os.path.join(settings['base'], 'artifacts')
-        settings['gits'] = os.path.join(settings['base'], 'gits')
-        settings['tmp'] = os.path.join(settings['base'], 'tmp')
-        settings['ccache'] = os.path.join(settings['base'], 'ccache_dir')
-        settings['deployment'] = os.path.join(settings['base'], 'deployment')
+    for directory in ['artifacts', 'gits', 'tmp', 'ccache', 'deployment']:
+        try:
+            os.makedirs(settings[directory])
+        except OSError:
+            if not os.path.isdir(settings[directory]):
+                exit(target, 'ERROR: Can not find or create',
+                     settings[directory])
 
-        for directory in ['artifacts', 'gits', 'tmp', 'ccache', 'deployment']:
-            try:
-                os.makedirs(settings[directory])
-            except OSError:
-                if not os.path.isdir(settings[directory]):
-                    exit(target, 'ERROR: Can not find or create',
-                         settings[directory])
+    # git replace means we can't trust that just the sha1 of a branch
+    # is enough to say what it contains, so we turn it off by setting
+    # the right flag in an environment variable.
+    os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
-        # git replace means we can't trust that just the sha1 of a branch
-        # is enough to say what it contains, so we turn it off by setting
-        # the right flag in an environment variable.
-        os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
-
-        settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
-        yield
-
-    finally:
-        log(target, 'Finished')
+    settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
 
 
 @contextlib.contextmanager

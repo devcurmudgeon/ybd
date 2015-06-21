@@ -27,41 +27,25 @@ import app
 from assembly import assemble, deploy
 from definitions import Definitions
 import cache
-import platform
 import sandbox
 
 
 print('')
-if len(sys.argv) not in [2, 3]:
-    sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
-    sys.exit(1)
 
-target = sys.argv[1]
-if len(sys.argv) == 3:
-    arch = sys.argv[2]
-else:
-    arch = platform.machine()
-    if arch in ('mips', 'mips64'):
-        if arch == 'mips':
-            arch = 'mips32'
-        if sys.byteorder == 'big':
-            arch = arch + 'b'
-        else:
-            arch = arch + 'l'
+app.setup(sys.argv)
+with app.timer('TOTAL', '%s starts, version %s' % (app.settings['program'],
+               app.settings['program-version'])):
+    app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
+                                                    app.settings['target']),
+                                                    app.settings['arch'])
+    with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-version']):
+        defs = Definitions()
+    with app.timer('CACHE-KEYS', 'Calculating'):
+        cache.get_cache(defs, app.settings['target'])
+    defs.save_trees()
 
-with app.setup(target, arch):
-    with app.timer('TOTAL', 'ybd starts, version %s' %
-                   app.settings['ybd-version']):
-        app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
-                                                        target), arch)
-        with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-ver']):
-            defs = Definitions()
-        with app.timer('CACHE-KEYS', 'Calculating'):
-            cache.get_cache(defs, app.settings['target'])
-        defs.save_trees()
+    sandbox.executor = sandboxlib.executor_for_platform()
+    app.log(app.settings['target'], 'Sandbox using %s' % sandbox.executor)
 
-        sandbox.executor = sandboxlib.executor_for_platform()
-        app.log(target, 'Using %s for sandboxing' % sandbox.executor)
-
-        assemble(defs, app.settings['target'])
-        deploy(defs, app.settings['target'])
+    assemble(defs, app.settings['target'])
+    deploy(defs, app.settings['target'])
