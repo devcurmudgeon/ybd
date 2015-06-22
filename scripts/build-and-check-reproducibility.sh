@@ -16,8 +16,6 @@ CURRENT_DIR=`pwd`
 # artifacts for each build and checking for differences in
 # SHA1, which would indicate that a component is not reproducible.
 
-build1=build1
-build2=build2
 build_system="$1"
 
 DIR=$( dirname -- "$0" )
@@ -28,7 +26,6 @@ cd ..
 artifact_dir=`sed -e "s%artifacts: '%%" -e "s%'%%" artifact.def`
 
 cd "$CURRENT_DIR"
-echo "CURRENT DIRECTORY = "$CURRENT_DIR""
 
 if [ -f build1.shasum ]
 then
@@ -55,19 +52,22 @@ do
     find "$line" -type f -print0 | xargs -r0 sha1sum >> build2.shasum
 done < artifacts.list
 
-cp $build1 $build1.orig
 echo "Contracting filenames to make the comparison more readable..."
-cat $build1.clean | sed -re 's%/src/cache/ybd-artifacts/%%' -e 's%\.[0-9a-f]+%%' -e 's%\.unpacked%\t%' -e 's%  %\t%' | sort -k 2 > $build1.compare
+cp build1.shasum build1.orig
+sed -re "s%$artifact_dir%%" -e 's%\.[0-9a-f]+%%' -e 's%\.unpacked%\t%' -e 's%  %\t%' build1.orig > build1.clean
 
-cp $build2 $build2.orig
-echo "Contracting filenames to make the comparison more readable..."
-sed -re 's%/src/cache/ybd-artifacts/%%' -e 's%\.[0-9a-f]+%%' -e 's%\.unpacked%\t%' -e 's%  %\t%' $build2.orig > $build2.clean
+cp build2.shasum build2.orig
+sed -re "s%$artifact_dir%%" -e 's%\.[0-9a-f]+%%' -e 's%\.unpacked%\t%' -e 's%  %\t%' build2.orig > build2.clean
 
 echo "Sorting alphabetically by component..."
-sort -k 2 $build2.clean > $build2.compare
+sort -k 2 build2.clean > build2.compare
 
-diff -u0 $build1.compare $build2.compare > diff.compare
+`diff -u0 build1.compare build2.compare > diff.compare`
+`cp diff.compare diff.orig`
+`grep -ve '+++' -e '^\-' diff.orig > diff.compare`
+`sed -re 's%\@@ \-[0-9]+ \+[0-9]+ \@@%%' -e 's%\@@ \-[0-9]+\,[0-9]+ \+[0-9]+\,[0-9]+ \@@%%' -e 's%\+[0-9a-f]+\t%%' diff.compare > diff.clean`
 
-grep -ve '^-' -e '+++' diff.compare > diff.compare-temp
-sed -re 's%\@@ \-[0-9]+ \+[0-9]+ \@@%%' -e 's%\@@ \-[0-9]+\,[0-9]+ \+[0-9]+\,[0-9]+ \@@%%' -e 's%\+[0-9a-f]+\t%%' diff.compare-temp > diff.clean
+echo "Performing cleanup operations..."
+`rm build*.c* build*.orig diff.compare diff.orig`
+
 echo "List of differing components (no shasum) outputted to diff.clean"
