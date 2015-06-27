@@ -31,13 +31,11 @@ import sandbox
 
 
 print('')
-
 app.setup(sys.argv)
 with app.timer('TOTAL', '%s starts, version %s' % (app.settings['program'],
                app.settings['program-version'])):
-    app.log('TARGET', 'Target is %s' % os.path.join(app.settings['defdir'],
-                                                    app.settings['target']),
-                                                    app.settings['arch'])
+    target = os.path.join(app.settings['defdir'], app.settings['target'])
+    app.log('TARGET', 'Target is %s' % target, app.settings['arch'])
     with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-version']):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'Calculating'):
