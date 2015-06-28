@@ -123,6 +123,7 @@ def assemble(defs, target):
                 assemble(defs, subcomponent)
                 sandbox.install(defs, component, subcomponent)
 
+        app.settings['counter'] += 1
         if 'systems' not in component:
             build(defs, component)
         do_manifest(component)

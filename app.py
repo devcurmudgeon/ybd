@@ -40,11 +40,14 @@ def log(component, message='', data=''):
 
     name = component['name'] if type(component) is dict else component
 
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    log_entry = '%s [%s] %s %s\n' % (timestamp, name, message, data)
-    if 'ERROR' in log_entry:
-        log_entry = '\n\n%s\n\n' % log_entry
-    print(log_entry),
+    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    progress = ''
+    if settings['counter'] > 0:
+        progress = '[%s/%s] ' % (settings['counter'], settings['tasks'])
+    entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
+    if 'ERROR' in entry:
+        entry = '\n\n%s\n\n' % entry
+    print(entry),
 
 
 def log_env(log, env, message=''):
@@ -97,6 +100,7 @@ def setup(args):
         text = f.read()
     for key, value in yaml.safe_load(text).items():
         settings[key] = value
+    settings['tasks'] = settings['counter'] = 0
     settings['pid'] = os.getpid()
     settings['program'] = os.path.basename(args[0])
     settings['program-version'] = get_version(os.path.dirname(__file__))
