@@ -216,7 +216,7 @@ def run_extension(this, deployment, step, method):
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
-    envlist = ['UPGRADE=no'] if method == 'ssh-rsync' else ['UPGRADE=yes']
+    envlist = ['UPGRADE=yes'] if method == 'ssh-rsync' else ['UPGRADE=no']
 
     if 'PYTHONPATH' in os.environ:
         envlist.append('PYTHONPATH=%s:%s' % (os.environ['PYTHONPATH'],
