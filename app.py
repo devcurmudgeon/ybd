@@ -43,7 +43,8 @@ def log(component, message='', data=''):
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     progress = ''
     if settings['counter'] > 0:
-        progress = '[%s/%s] ' % (settings['counter'], settings['tasks'])
+        progress = '[%s/%s/%s] ' % (settings['counter'], settings['tasks'],
+                                    settings['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
     if 'ERROR' in entry:
         entry = '\n\n%s\n\n' % entry
@@ -100,7 +101,7 @@ def setup(args):
         text = f.read()
     for key, value in yaml.safe_load(text).items():
         settings[key] = value
-    settings['tasks'] = settings['counter'] = 0
+    settings['total'] = settings['tasks'] = settings['counter'] = 0
     settings['pid'] = os.getpid()
     settings['program'] = os.path.basename(args[0])
     settings['program-version'] = get_version(os.path.dirname(__file__))
