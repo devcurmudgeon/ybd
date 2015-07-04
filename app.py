@@ -42,7 +42,7 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     progress = ''
-    if settings['counter'] > 0:
+    if settings.get('counter'):
         progress = '[%s/%s/%s] ' % (settings['counter'], settings['tasks'],
                                     settings['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
@@ -104,7 +104,7 @@ def setup(args):
     settings['total'] = settings['tasks'] = settings['counter'] = 0
     settings['pid'] = os.getpid()
     settings['program'] = os.path.basename(args[0])
-    settings['program-version'] = get_version(os.path.dirname(__file__))
+    settings['my-version'] = get_version(os.path.dirname(__file__))
     settings['defdir'] = os.getcwd()
     settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
     settings['def-version'] = get_version('.')
@@ -126,6 +126,8 @@ def setup(args):
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
     settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
+    log('SETUP', '%s version is' % settings['program'], settings['my-version'])
+    log('SETUP', 'Default configuration is:\n\n%s' % text)
 
 
 @contextlib.contextmanager

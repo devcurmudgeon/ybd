@@ -329,7 +329,7 @@ def env_vars_for_build(defs, this):
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
     env['DEFINITIONS_REF'] = app.settings['def-version']
-    env['PROGRAM_REF'] = app.settings['program-version']
+    env['PROGRAM_REF'] = app.settings['my-version']
 
     return env
 
