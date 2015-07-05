@@ -17,7 +17,7 @@ ybd can be a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
 projects. with a little work it can be used to build other software stacks too.
 
-the ybd codebase is currently only ~ 1600 lines of Python in ten source files.
+the ybd codebase is currently only ~ 1700 lines of Python in ten source files.
 even so ybd can reproducibly build all systems in Baserock's definitions.git,
 i.e. all of the FOSS components required for Linux appliances up to and
 including, for example
@@ -25,6 +25,7 @@ including, for example
 - self-hosting Linux development systems
 - GENIVI baseline systems
 - OpenStack appliances
+- OpenWRT appliances
 
 it can also deploy some systems in some ways.
 
@@ -33,7 +34,8 @@ ybd is under development. things will change :)
 ### dependencies
 
 currently ybd is for Linux only, and requires git, gcc, make, autotools,
-linux-user-chroot, python, tar, wget.
+linux-user-chroot, python, tar, wget. note that the Baserock definitions also
+require gawk.
 
 ybd also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 [sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
@@ -45,6 +47,13 @@ machine, you can install them with:
 
 ```
     pip install pyyaml sandboxlib jsonschema
+```
+
+if you need to install pip itself:
+
+```
+    wget https://bootstrap.pypa.io/get-pip.py
+    python get-pip.py
 ```
 
 ### quick start
