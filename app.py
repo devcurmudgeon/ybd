@@ -126,11 +126,13 @@ def setup(args):
     # the right flag in an environment variable.
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
+    cores = cpu_count() / settings.get('instances', 1)
     if not settings.get('max-jobs'):
-        settings['max-jobs'] = max(int(cpu_count() * 1.5 + 0.5), 1)
+        settings['max-jobs'] = max(int(cores * 1.5 + 0.5), 1)
 
     log('SETUP', '%s version is' % settings['program'], settings['my-version'])
     log('SETUP', 'Default configuration is:\n\n%s' % text)
+    log('SETUP', 'Max-jobs is set to', settings['max-jobs'])
 
 
 @contextlib.contextmanager
