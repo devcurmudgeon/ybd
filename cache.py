@@ -30,6 +30,7 @@ import app
 import buildsystem
 import repos
 import utils
+import tempfile
 
 
 def cache_key(defs, this):
@@ -76,8 +77,7 @@ def cache_key(defs, this):
     return definition['cache']
 
 
-def make_deterministic_gztar_archive(base_name, root_dir,
-                                     fixed_time=1321009871.0):
+def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
     '''Make a gzipped tar archive of contents of 'root_dir'.
 
     This function takes extra steps to ensure the output is deterministic,
@@ -107,7 +107,7 @@ def make_deterministic_gztar_archive(base_name, root_dir,
 
     with open(base_name + '.tar.gz', 'wb') as f:
         gzip_context = gzip.GzipFile(
-            filename='', mode='wb', fileobj=f, mtime=fixed_time)
+            filename='', mode='wb', fileobj=f, mtime=time)
         with gzip_context as f_gzip:
             with tarfile.TarFile(mode='w', fileobj=f_gzip) as f_tar:
                 add_directory_to_tarfile(f_tar, root_dir, '.')
@@ -132,8 +132,13 @@ def make_deterministic_tar_archive(base_name, root_dir):
 
 
 def cache(defs, this, full_root=False):
+    if get_cache(defs, this):
+        app.log(this, "Bah! I could have cached", cache_key(defs, this))
+        return
     app.log(this, "Creating cache artifact")
-    cachefile = os.path.join(app.settings['artifacts'], cache_key(defs, this))
+    tempfile.tempdir = app.settings['tmp']
+    tmpdir= tempfile.mkdtemp()
+    cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
         # This won't actually be deterministic, because we aren't setting a
         # uniform mtime. (I'm not sure why not).
@@ -143,22 +148,29 @@ def cache(defs, this, full_root=False):
         utils.set_mtime_recursively(this['install'])
         make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
-    app.log(this, 'Now cached as', cache_key(defs, this))
-    if os.fork() == 0:
-        upload(this, cachefile)
-        sys.exit()
+
+    try:
+        target = os.path.join(app.settings['artifacts'], cache_key(defs, this))
+        os.rename(tmpdir, target)
+        app.log(this, 'Now cached as', cache_key(defs, this))
+#        if os.fork() == 0:
+#            upload(this, cachefile)
+#            sys.exit()
+    except:
+        app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
 
 
 def upload(this, cachefile):
-    url = app.settings['server'] + '/post'
+    url = app.settings['server'] + '/put'
     params = {"upfile": os.path.basename(cachefile),
               "folder": os.path.dirname(cachefile), "submit": "Submit"}
     with open(cachefile, 'rb') as local_file:
         try:
-            response = requests.post(url=url, data=params,
-                                     files={"file": local_file})
-            app.log(this, 'Artifact uploaded')
+            response = requests.put(url=url, data=params,
+                                    files={"file": local_file})
+            app.log(this, 'Uploaded artifact', cachefile)
         except:
+            app.log(this, 'Failed to upload', cachefile)
             pass
 
 
@@ -178,8 +190,8 @@ def unpack(defs, this):
 def get_cache(defs, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cachefile = os.path.join(app.settings['artifacts'], cache_key(defs, this))
-    if os.path.exists(cachefile):
-        return cachefile
+    cachedir = os.path.join(app.settings['artifacts'], cache_key(defs, this))
+    if os.path.isdir(cachedir):
+        return os.path.join(cachedir, cache_key(defs, this))
 
     return False
