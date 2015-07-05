@@ -58,6 +58,8 @@ def setup(this):
         os.makedirs(this[directory])
     this['log'] = os.path.join(app.settings['artifacts'],
                                this['cache'] + '.build-log')
+    if app.settings.get('instances'):
+        this['log'] += '.' + str(app.settings.get('fork', 0))
     assembly_dir = this['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])

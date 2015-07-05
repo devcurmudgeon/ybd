@@ -35,8 +35,6 @@ settings = {}
 
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
-    if settings.get('pid') and os.getpid() != settings.get('pid'):
-        return
 
     name = component['name'] if type(component) is dict else component
 
@@ -46,6 +44,9 @@ def log(component, message='', data=''):
         progress = '[%s/%s/%s] ' % (settings['counter'], settings['tasks'],
                                     settings['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
+    if settings.get('instances'):
+	    entry = str(settings.get('fork', 0)) + ' ' + entry
+
     if 'ERROR' in entry:
         entry = '\n\n%s\n\n' % entry
     print(entry),
