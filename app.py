@@ -24,7 +24,7 @@ import yaml
 from multiprocessing import cpu_count
 from subprocess import call, check_output
 import platform
-
+import random
 from repos import get_version
 
 
@@ -163,3 +163,12 @@ def elapsed(starttime):
     hours, remainder = divmod(int(td.total_seconds()), 60*60)
     minutes, seconds = divmod(remainder, 60)
     return "%02d:%02d:%02d" % (hours, minutes, seconds)
+
+
+def spawn():
+    for fork in range(1, settings.get('instances')):
+        if os.fork() == 0:
+            settings['fork'] = fork
+            random.seed(datetime.datetime.now())
+            log('FORKS', 'I am fork', settings.get('fork'))
+            break

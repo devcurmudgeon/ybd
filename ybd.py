@@ -17,18 +17,14 @@
 
 '''A module to build a definition.'''
 
-
-import sandboxlib
-
 import os
 import sys
-
 import app
 from assembly import assemble, deploy
 from definitions import Definitions
 import cache
 import sandbox
-import random
+import sandboxlib
 
 
 print('')
@@ -46,12 +42,7 @@ with app.timer('TOTAL', 'Starting'):
     app.log(app.settings['target'], 'Sandbox using %s' % sandbox.executor)
 
     if app.settings.get('instances'):
-        for fork in range(1, app.settings.get('instances')):
-            if os.fork() == 0:
-                app.settings['fork'] = fork
-                random.seed(app.settings['fork'])
-                app.log('FORKS', 'I am fork', app.settings.get('fork'))
-                break
+        app.spawn()
 
     assemble(defs, app.settings['target'])
     deploy(defs, app.settings['target'])
