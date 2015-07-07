@@ -127,9 +127,10 @@ def assemble(defs, target):
         if 'systems' not in component:
             with app.timer(component, 'build'):
                 build(defs, component)
-        do_manifest(component)
-        cache.cache(defs, component,
-                    full_root=component.get('kind') == "system")
+        with app.timer(component, 'artifact creation'):
+            do_manifest(component)
+            cache.cache(defs, component,
+                        full_root=component.get('kind') == "system")
         sandbox.remove(component)
 
     return cache.cache_key(defs, component)

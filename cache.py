@@ -135,7 +135,6 @@ def cache(defs, this, full_root=False):
     if get_cache(defs, this):
         app.log(this, "Bah! I could have cached", cache_key(defs, this))
         return
-    app.log(this, "Creating cache artifact")
     tempfile.tempdir = app.settings['tmp']
     tmpdir= tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
