@@ -80,7 +80,7 @@ def setup(args):
         sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
         sys.exit(1)
 
-    settings['target'] = args[1]
+    settings['target'] = os.path.basename(os.path.splitext(args[1])[0])
     if len(args) == 3:
         arch = args[2]
     else:
