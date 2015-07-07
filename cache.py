@@ -136,7 +136,7 @@ def cache(defs, this, full_root=False):
         app.log(this, "Bah! I could have cached", cache_key(defs, this))
         return
     tempfile.tempdir = app.settings['tmp']
-    tmpdir= tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
         # This won't actually be deterministic, because we aren't setting a

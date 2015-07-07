@@ -45,7 +45,7 @@ def log(component, message='', data=''):
                                     settings['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
     if settings.get('instances'):
-	    entry = str(settings.get('fork', 0)) + ' ' + entry
+        entry = str(settings.get('fork', 0)) + ' ' + entry
 
     if 'ERROR' in entry:
         entry = '\n\n%s\n\n' % entry
@@ -110,7 +110,7 @@ def setup(args):
     settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
     settings['def-version'] = get_version('.')
 
-    dirs = [ 'artifacts', 'ccache_dir', 'deployment', 'gits', 'tidy', 'tmp' ]
+    dirs = ['artifacts', 'ccache_dir', 'deployment', 'gits', 'tidy', 'tmp']
     settings['base'] = os.path.join(xdg_cache_home, settings['base'])
     for directory in dirs:
         try:
