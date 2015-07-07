@@ -275,9 +275,9 @@ def env_vars_for_build(defs, this):
         'armv8l64': "aarch64",
         'armv8b64': "aarch64_be",
         'mips64b': 'mips64',
-        'mips64l': 'mips64',
+        'mips64l': 'mips64el',
         'mips32b': 'mips',
-        'mips32l': 'mips',
+        'mips32l': 'mipsel',
     }
 
     if app.settings['no-ccache']:
@@ -326,7 +326,11 @@ def env_vars_for_build(defs, this):
 
     arch = app.settings['arch']
     cpu = arch_dict.get(arch, arch)
-    abi = 'eabi' if arch.startswith(('armv7', 'armv5')) else ''
+    abi = ''
+    if arch.startswith(('armv7', 'armv5')):
+        abi = 'eabi'
+    elif arch.startswith('mips64'):
+        abi = 'abi64'
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
