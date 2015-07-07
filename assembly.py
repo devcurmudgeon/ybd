@@ -33,7 +33,7 @@ def deploy(defs, target):
 
     deployment = target if type(target) is dict else defs.get(target)
 
-    with app.timer(deployment, 'Starting deployment'):
+    with app.timer(deployment, 'deployment'):
         for system in deployment.get('systems', []):
             deploy_system(defs, system)
 
@@ -103,7 +103,7 @@ def assemble(defs, target):
         for subsystem in system.get('subsystems', []):
             assemble_system_recursively(subsystem)
 
-    with app.timer(component, 'Starting assembly'):
+    with app.timer(component, 'assembly'):
         sandbox.setup(component)
         for system_spec in component.get('systems', []):
             assemble_system_recursively(system_spec)
@@ -125,7 +125,8 @@ def assemble(defs, target):
 
         app.settings['counter'] += 1
         if 'systems' not in component:
-            build(defs, component)
+            with app.timer(component, 'build'):
+                build(defs, component)
         do_manifest(component)
         cache.cache(defs, component,
                     full_root=component.get('kind') == "system")

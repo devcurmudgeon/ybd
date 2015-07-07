@@ -28,13 +28,13 @@ import sandboxlib
 
 
 print('')
-with app.timer('TOTAL', 'Starting'):
+with app.timer('TOTAL'):
     app.setup(sys.argv)
     target = os.path.join(app.settings['defdir'], app.settings['target'])
     app.log('TARGET', 'Target is %s' % target, app.settings['arch'])
-    with app.timer('DEFINITIONS', 'Parsing %s' % app.settings['def-version']):
+    with app.timer('DEFINITIONS', 'parsing %s' % app.settings['def-version']):
         defs = Definitions()
-    with app.timer('CACHE-KEYS', 'Calculating'):
+    with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.get_cache(defs, app.settings['target'])
     defs.save_trees()
 

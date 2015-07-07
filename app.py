@@ -147,15 +147,16 @@ def chdir(dirname=None):
 
 
 @contextlib.contextmanager
-def timer(this, start_message=''):
+def timer(this, message=''):
     starttime = datetime.datetime.now()
-    log(this, start_message)
+    log(this, 'Starting ' + message)
     if type(this) is dict:
         this['start-time'] = starttime
     try:
         yield
     finally:
-        log(this, 'Elapsed time', elapsed(starttime))
+        text = '' if message == '' else ' for ' + message
+        log(this, 'Elapsed time' + text, elapsed(starttime))
 
 
 def elapsed(starttime):
