@@ -178,7 +178,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
 
     # Adjust config for what the backend is capable of. The user will be warned
     # about any changes made.
-    config = executor.degrade_config_for_capabilities(config, warn=True)
+    config = executor.degrade_config_for_capabilities(config, warn=False)
 
     try:
         if not allow_parallel:
