@@ -142,8 +142,6 @@ def build(defs, this):
     By the time we get here, all dependencies for 'this' have been assembled.
     '''
 
-    app.log(this, 'Start build')
-
     if this.get('build-mode') != 'bootstrap':
         sandbox.ldconfig(this)
 
