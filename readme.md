@@ -93,7 +93,7 @@ Some examples to try:
    ../ybd/ybd.py strata/genivi.morph x86_64
 
    # on a jetson, to build a GENIVI baseline system...
-   ../ybd/ybd.py systems/enivi-baseline-system-armv7lhf-jetson.morph
+   ../ybd/ybd.py systems/genivi-baseline-system-armv7lhf-jetson.morph
 
    # on anything, to build (and deploy?) parts of baserock release...
    ../ybd/ybd.py clusters/release.morph
