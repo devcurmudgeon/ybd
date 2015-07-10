@@ -38,8 +38,13 @@ def cache_key(defs, this):
     if definition is None:
         app.exit(this, 'ERROR: No definition found for', this)
 
+    if definition.get('cache') == 'calculating':
+        app.exit(this, 'ERROR: recursion loop for', this)
+
     if definition.get('cache'):
         return definition['cache']
+
+    definition['cache'] = 'calculating'
 
     if definition.get('repo') and not definition.get('tree'):
         definition['tree'] = repos.get_tree(definition)
