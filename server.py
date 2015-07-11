@@ -43,7 +43,6 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
         SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
-        SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
 def start():
     server = 'http://192.168.56.101:8000/'

@@ -157,21 +157,20 @@ def cache(defs, this, full_root=False):
         target = os.path.join(app.settings['artifacts'], cache_key(defs, this))
         os.rename(tmpdir, target)
         app.log(this, 'Now cached as', cache_key(defs, this))
-#        if os.fork() == 0:
-#            upload(this, cachefile)
-#            sys.exit()
     except:
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
 
+    upload(this, os.path.join(target, cache_key(defs, this)))
+
 
 def upload(this, cachefile):
-    url = app.settings['server'] + '/put'
+    url = app.settings['server'] + '/post'
     params = {"upfile": os.path.basename(cachefile),
               "folder": os.path.dirname(cachefile), "submit": "Submit"}
     with open(cachefile, 'rb') as local_file:
         try:
-            response = requests.put(url=url, data=params,
-                                    files={"file": local_file})
+            response = requests.post(url=url, data=params,
+                                     files={"file": local_file})
             app.log(this, 'Uploaded artifact', cachefile)
         except:
             app.log(this, 'Failed to upload', cachefile)
