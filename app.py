@@ -96,7 +96,7 @@ def setup(args):
 
     warnings.formatwarning = warning_handler
     # Suppress multiple instances of the same warning.
-    warnings.simplefilter('once')
+    warnings.simplefilter('once', append=True)
 
     settings_file = './ybd.conf'
     if not os.path.exists(settings_file):
