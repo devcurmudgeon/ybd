@@ -95,6 +95,9 @@ def setup(args):
     settings['arch'] = arch
 
     warnings.formatwarning = warning_handler
+    # Suppress multiple instances of the same warning.
+    warnings.simplefilter('once')
+
     settings_file = './ybd.conf'
     if not os.path.exists(settings_file):
         settings_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
