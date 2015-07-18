@@ -160,7 +160,7 @@ def cache(defs, this, full_root=False):
     except:
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
 
-    upload(this, os.path.join(target, cache_key(defs, this)))
+#    upload(this, os.path.join(target, cache_key(defs, this)))
 
 
 def upload(this, cachefile):
