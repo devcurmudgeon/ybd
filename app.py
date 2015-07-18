@@ -24,7 +24,6 @@ import yaml
 from multiprocessing import cpu_count
 from subprocess import call, check_output
 import platform
-import random
 from repos import get_version
 
 
@@ -173,6 +172,5 @@ def spawn():
     for fork in range(1, settings.get('instances')):
         if os.fork() == 0:
             settings['fork'] = fork
-            random.seed(datetime.datetime.now())
             log('FORKS', 'I am fork', settings.get('fork'))
             break

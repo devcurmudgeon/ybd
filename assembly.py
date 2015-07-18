@@ -26,6 +26,7 @@ import repos
 import sandbox
 from shutil import copyfile
 import utils
+import datetime
 
 
 def deploy(defs, target):
@@ -92,6 +93,7 @@ def assemble(defs, target):
     if cache.get_cache(defs, target):
         return cache.cache_key(defs, target)
 
+    random.seed(datetime.datetime.now())
     component = defs.get(target)
 
     if component.get('arch') and component['arch'] != app.settings['arch']:
@@ -100,13 +102,17 @@ def assemble(defs, target):
 
     def assemble_system_recursively(system):
         assemble(defs, system['path'])
+
         for subsystem in system.get('subsystems', []):
             assemble_system_recursively(subsystem)
 
     with app.timer(component, 'assembly'):
         sandbox.setup(component)
-        for system_spec in component.get('systems', []):
-            assemble_system_recursively(system_spec)
+
+        systems = component.get('systems', [])
+        random.shuffle(systems)
+        for system in systems:
+            assemble_system_recursively(system)
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
