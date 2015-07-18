@@ -120,17 +120,14 @@ def mirror(name, repo):
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(app.settings['tar-url'], tar_file)])
-            call(['tar', 'xf', tar_file], stdout=fnull, stderr=fnull)
+            call(['tar', 'xf', tar_file])
             os.remove(tar_file)
-            call(['git', 'config', 'remote.origin.url', repo_url],
-                 stdout=fnull, stderr=fnull)
-            call(['git', 'config', 'remote.origin.mirror', 'true'],
-                 stdout=fnull, stderr=fnull)
+            call(['git', 'config', 'remote.origin.url', repo_url])
+            call(['git', 'config', 'remote.origin.mirror', 'true'])
             if call(['git', 'config', 'remote.origin.fetch',
-                     '+refs/*:refs/*'],
-                    stdout=fnull, stderr=fnull) != 0:
+                     '+refs/*:refs/*']) != 0:
                 raise BaseException('Did not get a valid git repo')
-            call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
+            call(['git', 'fetch', 'origin'])
     except:
         app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
