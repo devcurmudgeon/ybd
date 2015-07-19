@@ -102,9 +102,10 @@ Some examples to try:
    ../ybd/ybd.py clusters/upgrade-devel.morph
 ```
 
-currently ybd generates a lot of log output, which hopefully helps to explain
-what is happening. As we approach the singularity, most of the logging will
-probably end up being turned off.
+currently ybd generates a lot of log output to stdout, which hopefully helps to
+explain what is happening. if you need a permanent log then try
+
+    ../ybd/ybd.py clusters/upgrade-devel.morph | tee some-memorable-name.log
 
 ### comparison with morph
 
