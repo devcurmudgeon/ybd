@@ -1,0 +1,370 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2013, 2014-2015 Codethink Limited
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import base64
+import ConfigParser
+import json
+import logging
+import os
+import urllib
+import urllib2
+import shutil
+
+from bottle import Bottle, request, response, run, static_file
+from flup.server.fcgi import WSGIServer
+from artifactserver.repocache import RepoCache
+
+
+defaults = {
+    'repo-dir': '/var/cache/morph-cache-server/gits',
+    'bundle-dir': '/var/cache/morph-cache-server/bundles',
+    'artifact-dir': '/var/cache/morph-cache-server/artifacts',
+    'port': 8080,
+}
+
+global configuration
+
+class KeyedBinaryArtifactServer(object):
+
+    ''' Generic artifact cache server
+
+    Configuration can be found in the associated kbas.conf file.'''
+
+    def __init__(self):
+        config = ConfigParser.ConfigParser()
+        config.read('kbas.conf')
+        configuration = {}
+
+        options = config.options('config')
+        try:
+            configuration['port'] = config.get('config', 'port')
+            configuration['repo_dir'] = config.get('config', 'repo-dir')
+            configuration['bundle_dir'] = config.get('config', 'bundle-dir')
+            configuration['artifact_dir'] = config.get('config', 'artifact-dir')
+            configuration['direct_mode'] = config.get('config', 'direct-mode')
+            configuration['fcgi_server'] = config.get('config', 'fcgi-server')
+        except ConfigParser.NoOptionError as ex:
+            for key, value in defaults.items():
+                configuration[key] = defaults[key]
+                if value is None or value == '':
+                    if key == 'port-file':
+                        pass # Not required
+                    else:
+                        raise Exception(ex)
+        self.process_args(configuration)
+
+    def _fetch_artifact(self, url, filename):
+        in_fh = None
+        try:
+            in_fh = urllib2.urlopen(url)
+            with open(filename, "w") as localtmp:
+                shutil.copyfileobj(in_fh, localtmp)
+            in_fh.close()
+        except Exception, e:
+            if in_fh is not None:
+                in_fh.close()
+            raise
+        else:
+            if in_fh is not None:
+                in_fh.close()
+        return os.stat(filename)
+
+    def _fetch_artifacts(self, server, cacheid, artifacts):
+        ret = {}
+        try:
+            for artifact in artifacts:
+                artifact_name = "%s.%s" % (cacheid, artifact)
+                tmpname = os.path.join(configuration['artifact-dir'],
+                                       ".dl.%s" % artifact_name)
+                url = "http://%s/1.0/artifacts?filename=%s" % (
+                    server, urllib.quote(artifact_name))
+                stinfo = self._fetch_artifact(url, tmpname)
+                ret[artifact_name] = {
+                    "size": stinfo.st_size,
+                    "used": stinfo.st_blocks * 512,
+                    }
+        except Exception, e:
+            for artifact in ret.iterkeys():
+                os.unlink(os.path.join(configuration['artifact-dir'],
+                                       ".dl.%s" % artifact))
+            raise
+
+        for artifact in ret.iterkeys():
+            tmpname = os.path.join(configuration['artifact-dir'],
+                                   ".dl.%s" % artifact)
+            artifilename = os.path.join(configuration['artifact-dir'],
+                                        artifact)
+            os.rename(tmpname, artifilename)
+
+        return ret
+
+
+    def process_args(self, args):
+        app = Bottle()
+
+        repo_cache = RepoCache(self,
+                               args['repo-dir'],
+                               args['bundle-dir'],
+                               args['direct-mode'])
+
+        def writable(prefix):
+            """Selectively enable bottle prefixes.
+
+            prefix -- The path prefix we are enabling
+
+            If the runtime configuration setting --enable-writes is provided
+            then we return the app.get() decorator for the given path prefix
+            otherwise we return a lambda which passes the function through
+            undecorated.
+
+            This has the effect of being a runtime-enablable @app.get(...)
+
+            """
+            if args['enable-writes']:
+                return app.get(prefix)
+            return lambda fn: fn
+
+        @writable('/list')
+        def list():
+            response.set_header('Cache-Control', 'no-cache')
+            results = {}
+            files = {}
+            results["files"] = files
+            for artifactdir, __, filenames in \
+                    os.walk(args['artifact-dir']):
+                fsstinfo = os.statvfs(artifactdir)
+                results["freespace"] = fsstinfo.f_bsize * fsstinfo.f_bavail
+                for fname in filenames:
+                    if not fname.startswith(".dl."):
+                        try:
+                            stinfo = os.stat("%s/%s" % (artifactdir, fname))
+                            files[fname] = {
+                                "atime": stinfo.st_atime,
+                                "size": stinfo.st_size,
+                                "used": stinfo.st_blocks * 512,
+                                }
+                        except Exception, e:
+                            print(e)
+            return results
+
+        @writable('/fetch')
+        def fetch():
+            host = self._unescape_parameter(request.query.host)
+            cacheid = self._unescape_parameter(request.query.cacheid)
+            artifacts = self._unescape_parameter(request.query.artifacts)
+            try:
+                response.set_header('Cache-Control', 'no-cache')
+                artifacts = artifacts.split(",")
+                return self._fetch_artifacts(host, cacheid, artifacts)
+
+            except Exception, e:
+                response.status = 500
+                logging.debug('%s' % e)
+
+        @writable('/delete')
+        def delete():
+            artifact = self._unescape_parameter(request.query.artifact)
+            try:
+                os.unlink('%s/%s' % (args['artifact-dir'],
+                                     artifact))
+                return { "status": 0, "reason": "success" }
+            except OSError, ose:
+                return { "status": ose.errno, "reason": ose.strerror }
+            except Exception, e:
+                response.status = 500
+                logging.debug('%s' % e)
+
+        @app.get('/sha1s')
+        def sha1():
+            repo = self._unescape_parameter(request.query.repo)
+            ref = self._unescape_parameter(request.query.ref)
+            try:
+                response.set_header('Cache-Control', 'no-cache')
+                sha1, tree = repo_cache.resolve_ref(repo, ref)
+                return {
+                    'repo': '%s' % repo,
+                    'ref': '%s' % ref,
+                    'sha1': '%s' % sha1,
+                    'tree': '%s' % tree
+                }
+            except Exception, e:
+                response.status = 404
+                logging.debug('%s' % e)
+
+        @app.post('/sha1s')
+        def sha1s():
+            result = []
+            for pair in request.json:
+                repo = pair['repo']
+                ref = pair['ref']
+                try:
+                    sha1, tree = repo_cache.resolve_ref(repo, ref)
+                    result.append({
+                        'repo': '%s' % repo,
+                        'ref': '%s' % ref,
+                        'sha1': '%s' % sha1,
+                        'tree': '%s' % tree
+                    })
+                except Exception, e:
+                    logging.debug('%s' % e)
+                    result.append({
+                        'repo': '%s' % repo,
+                        'ref': '%s' % ref,
+                        'error': '%s' % e
+                    })
+            response.set_header('Cache-Control', 'no-cache')
+            response.set_header('Content-Type', 'application/json')
+            return json.dumps(result)
+
+        @app.get('/files')
+        def file():
+            repo = self._unescape_parameter(request.query.repo)
+            ref = self._unescape_parameter(request.query.ref)
+            filename = self._unescape_parameter(request.query.filename)
+            try:
+                content = repo_cache.cat_file(repo, ref, filename)
+                response.set_header('Content-Type', 'application/octet-stream')
+                return content
+            except Exception, e:
+                response.status = 404
+                logging.debug('%s' % e)
+
+        @app.post('/files')
+        def files():
+            result = []
+            for pair in request.json:
+                repo = pair['repo']
+                ref = pair['ref']
+                filename = pair['filename']
+                try:
+                    content = repo_cache.cat_file(repo, ref, filename)
+                    result.append({
+                        'repo': '%s' % repo,
+                        'ref': '%s' % ref,
+                        'filename': '%s' % filename,
+                        'data': '%s' % base64.b64encode(content),
+                    })
+                except Exception, e:
+                    logging.debug('%s' % e)
+                    result.append({
+                        'repo': '%s' % repo,
+                        'ref': '%s' % ref,
+                        'filename': '%s' % filename,
+                        'error': '%s' % e
+                    })
+            response.set_header('Content-Type', 'application/json')
+            return json.dumps(result)
+
+        @app.get('/trees')
+        def tree():
+            repo = self._unescape_parameter(request.query.repo)
+            ref = self._unescape_parameter(request.query.ref)
+            path = self._unescape_parameter(request.query.path)
+            try:
+                tree = repo_cache.ls_tree(repo, ref, path)
+                return {
+                    'repo': '%s' % repo,
+                    'ref': '%s' % ref,
+                    'tree': tree,
+                }
+            except Exception, e:
+                response.status = 404
+                logging.debug('%s' % e)
+
+        @app.get('/bundles')
+        def bundle():
+            repo = self._unescape_parameter(request.query.repo)
+            filename = repo_cache.get_bundle_filename(repo)
+            dirname = os.path.dirname(filename)
+            basename = os.path.basename(filename)
+            return static_file(basename, root=dirname, download=True)
+
+        @app.get('/artifacts')
+        def artifact():
+            basename = self._unescape_parameter(request.query.filename)
+            filename = os.path.join(args['artifact-dir'], basename)
+            if os.path.exists(filename):
+                return static_file(basename,
+                                   root=configuration['artifact-dir'],
+                                   download=True)
+            else:
+                response.status = 404
+                logging.debug('artifact %s does not exist' % basename)
+
+        @app.post('/artifacts')
+        def post_artifacts():
+            if request.content_type != 'application/json':
+                logging.warning('Content-type is not json: '
+                    'expecting a json post request')
+
+            artifacts = json.load(request.body)
+            results = {}
+
+            logging.debug('Received a POST request for /artifacts')
+
+            for artifact in artifacts:
+                if artifact.startswith('/'):
+                    response.status = 500
+                    logging.error("%s: artifact name cannot start with a '/'"
+                        % artifact)
+                    return
+
+                filename = os.path.join(configuration['artifact-dir'],
+                                        artifact)
+                results[artifact] = os.path.exists(filename)
+
+                if results[artifact]:
+                    logging.debug('%s is in the cache', artifact)
+                else:
+                    logging.debug('%s is NOT in the cache', artifact)
+
+            return results
+
+        root = Bottle()
+        root.mount(app, '/1.0')
+        run(root, host='0.0.0.0', port=args['port'], reloader=True)
+
+        if args['fcgi-server']:
+            WSGIServer(root).run()
+        elif args['port-file']:
+            import wsgiref.simple_server
+
+            server_port_file = args['port-file']
+        else:
+            run(root, host='localhost', port=configuration['port'], reloader=True)
+        class DebugServer(wsgiref.simple_server.WSGIServer):
+                '''WSGI-like server that uses an ephemeral port.
+
+                Rather than use a specified port, or default, the
+                DebugServer binds to an ephemeral port on 127.0.0.1
+                and writes its number to port-file, so a non-racy
+                temporary port can be used.
+
+                '''
+
+                def __init__(self, (host, port), *args, **kwargs):
+                    wsgiref.simple_server.WSGIServer.__init__(
+                        self, ('127.0.0.1', 0), *args, **kwargs)
+                    with open(server_port_file, 'w') as f:
+                        f.write(str(self.server_port) + '\n')
+                        run(root, server_class=DebugServer, debug=True)
+
+    def _unescape_parameter(self, param):
+        return urllib.unquote(param)
+
+if __name__ == '__main__':
+    KeyedBinaryArtifactServer().__init__()
