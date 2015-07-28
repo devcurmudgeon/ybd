@@ -273,7 +273,7 @@ def detect_build_system(file_list):
     return ManualBuildSystem()
 
 
-def lookup_build_system(name, default=None):
+def lookup(name):
     '''Return build system that corresponds to the name.
 
     If the name does not match any build system, raise ``KeyError``.
@@ -283,7 +283,5 @@ def lookup_build_system(name, default=None):
     for bs in build_systems:
         if bs.name == name:
             return bs
-    if default:
-        return default()
     else:
         raise KeyError('Unknown build system: %s' % name)

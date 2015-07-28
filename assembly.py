@@ -201,19 +201,13 @@ def get_build_commands(defs, this):
         this['install-commands'] = gather_integration_commands(defs, this)
         return
 
-    build_system = None
-    if 'build-system' in this:
-        build_system = buildsystem.lookup_build_system(this['build-system'])
+    if this.get('build-system') or os.path.exists(this['path']):
+        build_system = buildsystem.lookup(this.get('build-system', 'manual'))
+        app.log(this, 'Defined build system is', build_system.name)
     else:
-        if os.path.exists(this['path']):
-            build_system = buildsystem.lookup_build_system(
-                this.get('build-system'),
-                default=buildsystem.ManualBuildSystem)
-        else:
-            files = os.listdir(this['build'])
-            build_system = buildsystem.detect_build_system(files)
-            app.log(this, 'Attempting to autodetect build system, got:',
-                    build_system.name)
+        files = os.listdir(this['build'])
+        build_system = buildsystem.detect_build_system(files)
+        app.log(this, 'Autodetected build system is', build_system.name)
 
     for build_step in buildsystem.build_steps:
         if this.get(build_step, None) is None:
