@@ -50,7 +50,7 @@ class Definitions(object):
                         if things_have_changed and definitions_schema:
                             app.log(filename, 'Validating schema')
                             js.validate(definition_data, definitions_schema)
-                        self._tidy(definition_data)
+                        self._tidy_and_insert_recursively(definition_data)
 
         if self._check_trees():
             for name in self._definitions:
@@ -67,7 +67,7 @@ class Definitions(object):
         contents['path'] = path[2:]
         return contents
 
-    def _tidy(self, definition):
+    def _tidy_and_insert_recursively(self, definition):
         '''Insert a definition and its contents into the dictionary.
 
         Takes a dict containing the content of a definition file.
