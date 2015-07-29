@@ -72,9 +72,9 @@ class Definitions(object):
 
         Takes a dict containing the content of a definition file.
 
-        Inserts the definitions references or defined in the
-        'build-dependencies' and 'contents' keys of `definition` into
-        the dictionary, and then inserts `definition` itself into the
+        Inserts the definitions referenced or defined in the
+        'build-dependencies' and 'contents' keys of `definition` into the
+        dictionary, and then inserts `definition` itself into the
         dictionary.
 
         '''
