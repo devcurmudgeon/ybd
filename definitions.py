@@ -44,12 +44,13 @@ class Definitions(object):
                 dirnames.remove('.git')
             for filename in filenames:
                 if filename.endswith(('.def', '.morph')):
-                    contents = self._load(os.path.join(dirname, filename))
-                    if contents is not None:
+                    definition_data = self._load(
+                        os.path.join(dirname, filename))
+                    if definition_data is not None:
                         if things_have_changed and definitions_schema:
                             app.log(filename, 'Validating schema')
-                            js.validate(contents, definitions_schema)
-                        self._tidy(contents)
+                            js.validate(definition_data, definitions_schema)
+                        self._tidy(definition_data)
 
         if self._check_trees():
             for name in self._definitions:
@@ -93,6 +94,9 @@ class Definitions(object):
             self._fix_path_name(component)
             definition['build-depends'][index] = self._insert(component)
 
+        # The 'contents' field in the internal data model corresponds to the
+        # 'chunks' field in a stratum .morph file, or the 'strata' field in a
+        # system .morph file.
         for subset in ['chunks', 'strata']:
             if subset in definition:
                 definition['contents'] = definition.pop(subset)
