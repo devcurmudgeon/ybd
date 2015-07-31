@@ -18,9 +18,12 @@ import contextlib
 import os
 import shutil
 import stat
+import calendar
 
 import app
 
+# The magic number for timestamps: 2011-11-11 11:11:11
+default_magic_timestamp = calendar.timegm([2011,11,11,11,11,11])
 
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
@@ -89,10 +92,10 @@ def _process_tree(srcpath, destpath, actionfunc):
                       ' type.' % srcpath)
 
 
-def set_mtime_recursively(root, set_time=1321009871.0):
+def set_mtime_recursively(root, set_time=default_magic_timestamp):
     '''Set the mtime for every file in a directory tree to the same.
 
-    The magic number default is 11-11-2011 11:11:11
+    The magic number default is 2011-11-11 11:11:11
     The aim is to make builds more predictable.
 
     '''
