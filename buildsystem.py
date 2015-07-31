@@ -254,6 +254,7 @@ class QMakeBuildSystem(BuildSystem):
         return False
 
 build_systems = [
+    ManualBuildSystem(),
     AutotoolsBuildSystem(),
     PythonDistutilsBuildSystem(),
     CPANBuildSystem(),
@@ -270,3 +271,19 @@ def detect_build_system(file_list):
         if build_system.used_by_project(file_list):
             return build_system
     return ManualBuildSystem()
+
+
+def lookup_build_system(name, default=None):
+    '''Return build system that corresponds to the name.
+
+    If the name does not match any build system, raise ``KeyError``.
+
+    '''
+
+    for bs in build_systems:
+        if bs.name == name:
+            return bs
+    if default:
+        return default()
+    else:
+        raise KeyError('Unknown build system: %s' % name)

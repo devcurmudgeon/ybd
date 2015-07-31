@@ -179,11 +179,21 @@ def build(defs, this):
 
 
 def get_build_commands(defs, this):
-    '''Get commands specified in this, plus commmands implied by build_system
+    '''Get commands specified in 'this', plus commands implied by build-system
 
-    If definition file doesn't exist, detect bs and use its commands.
-    If bs is unspecified assume it's the manual build system.
-    Use commands from the build system to fill in empty steps.
+    The containing definition may point to another definition file (using
+    the 'path' field in YBD's internal data model) that contains build
+    instructions, or it may only specify a predefined build system, using
+    'build-system' field.
+
+    The definition containing build instructions can specify a predefined
+    build-system and then override some or all of the command sequences it
+    defines.
+
+    If the definition file doesn't exist and no build-system is specified,
+    this function will scan the contents the checked-out source repo and try
+    to autodetect what build system is used.
+
     '''
 
     if this.get('kind', None) == "system":
@@ -191,14 +201,19 @@ def get_build_commands(defs, this):
         this['install-commands'] = gather_integration_commands(defs, this)
         return
 
-    if os.path.exists(this['path']):
-        build_system = buildsystem.ManualBuildSystem()
-        for bs in buildsystem.build_systems:
-            if this.get('build-system') == bs.name:
-                build_system = bs
+    build_system = None
+    if 'build-system' in this:
+        build_system = buildsystem.lookup_build_system(this['build-system'])
     else:
-        files = os.listdir(this['build'])
-        build_system = buildsystem.detect_build_system(files)
+        if os.path.exists(this['path']):
+            build_system = buildsystem.lookup_build_system(
+                this.get('build-system'),
+                default=buildsystem.ManualBuildSystem)
+        else:
+            files = os.listdir(this['build'])
+            build_system = buildsystem.detect_build_system(files)
+            app.log(this, 'Attempting to autodetect build system, got:',
+                    build_system.name)
 
     for build_step in buildsystem.build_steps:
         if this.get(build_step, None) is None:
