@@ -23,7 +23,8 @@ import calendar
 import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
-default_magic_timestamp = calendar.timegm([2011,11,11,11,11,11])
+default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
+
 
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
