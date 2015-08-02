@@ -29,8 +29,8 @@ class Definitions(object):
         self._definitions = {}
         self._trees = {}
 
-        json_schema = self._load(app.settings.get('json-schema'))
-        definitions_schema = self._load(app.settings.get('defs-schema'))
+        json_schema = self._load(app.config.get('json-schema'))
+        definitions_schema = self._load(app.config.get('defs-schema'))
         if json_schema and definitions_schema:
             import jsonschema as js
             js.validate(json_schema, json_schema)
@@ -128,8 +128,8 @@ class Definitions(object):
                 app.exit(definition, 'ERROR: no path, no name?')
         if definition.get('name') is None:
             definition['name'] = definition['path'].replace('/', '-')
-        if definition['name'] == app.settings['target']:
-            app.settings['target'] = definition['path']
+        if definition['name'] == app.config['target']:
+            app.config['target'] = definition['path']
 
     def _insert(self, new_def):
         '''Insert a new definition into the dictionary, return the key.
@@ -178,7 +178,7 @@ class Definitions(object):
 
     def _check_trees(self):
         try:
-            with app.chdir(app.settings['defdir']):
+            with app.chdir(app.config['defdir']):
                 checksum = check_output('ls -lRA */', shell=True)
             checksum = hashlib.md5(checksum).hexdigest()
             with open('.trees') as f:
@@ -193,7 +193,7 @@ class Definitions(object):
             return False
 
     def save_trees(self):
-        with app.chdir(app.settings['defdir']):
+        with app.chdir(app.config['defdir']):
             checksum = check_output('ls -lRA */', shell=True)
         checksum = hashlib.md5(checksum).hexdigest()
         self._trees = {'.checksum': checksum}

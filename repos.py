@@ -39,7 +39,7 @@ else:
 
 
 def get_repo_url(repo):
-    for alias, url in app.settings.get('aliases', {}).items():
+    for alias, url in app.config.get('aliases', {}).items():
         repo = repo.replace(alias, url)
     if repo.endswith('.git'):
         repo = repo[:-4]
@@ -76,11 +76,11 @@ def get_version(gitdir, ref='HEAD'):
 
 def get_tree(this):
     ref = this['ref']
-    gitdir = os.path.join(app.settings['gits'], get_repo_name(this['repo']))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(this['repo']))
 
     if not os.path.exists(gitdir):
         try:
-            url = (app.settings['cache-server'] + 'repo=' +
+            url = (app.config['cache-server'] + 'repo=' +
                    get_repo_url(this['repo']) + '&ref=' + ref)
             with urlopen(url) as response:
                 tree = json.loads(response.read().decode())['tree']
@@ -108,7 +108,7 @@ def get_tree(this):
 
 
 def mirror(name, repo):
-    gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     tmpdir = gitdir + '.tmp'
     if os.path.isdir(tmpdir):
         shutil.rmtree(tmpdir)
@@ -119,7 +119,7 @@ def mirror(name, repo):
         app.log(name, 'Try fetching tarball %s' % tar_file)
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
-            call(['wget', os.path.join(app.settings['tar-url'], tar_file)])
+            call(['wget', os.path.join(app.config['tar-url'], tar_file)])
             call(['tar', 'xf', tar_file])
             os.remove(tar_file)
             call(['git', 'config', 'remote.origin.url', repo_url])
@@ -162,7 +162,7 @@ def update_mirror(name, repo, gitdir):
 
 
 def checkout(name, repo, ref, checkout):
-    gitdir = os.path.join(app.settings['gits'], get_repo_name(repo))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):

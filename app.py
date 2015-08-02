@@ -29,7 +29,7 @@ from repos import get_version
 
 xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
     os.path.join(os.path.expanduser('~'), '.cache')
-settings = {}
+config = {}
 
 
 def log(component, message='', data=''):
@@ -39,12 +39,12 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     progress = ''
-    if settings.get('counter'):
-        progress = '[%s/%s/%s] ' % (settings['counter'], settings['tasks'],
-                                    settings['total'])
+    if config.get('counter'):
+        progress = '[%s/%s/%s] ' % (config['counter'], config['tasks'],
+                                    config['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
-    if settings.get('instances'):
-        entry = str(settings.get('fork', 0)) + ' ' + entry
+    if config.get('instances'):
+        entry = str(config.get('fork', 0)) + ' ' + entry
 
     if 'ERROR' in entry:
         entry = '\n\n%s\n\n' % entry
@@ -79,7 +79,7 @@ def setup(args):
         sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
         sys.exit(1)
 
-    settings['target'] = os.path.basename(os.path.splitext(args[1])[0])
+    config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     if len(args) == 3:
         arch = args[2]
     else:
@@ -91,50 +91,50 @@ def setup(args):
                 arch = arch + 'b'
             else:
                 arch = arch + 'l'
-    settings['arch'] = arch
+    config['arch'] = arch
 
     warnings.formatwarning = warning_handler
     # Suppress multiple instances of the same warning.
     warnings.simplefilter('once', append=True)
 
-    settings_file = './ybd.conf'
-    if not os.path.exists(settings_file):
-        settings_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
-    with open(settings_file) as f:
+    config_file = './ybd.conf'
+    if not os.path.exists(config_file):
+        config_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
+    with open(config_file) as f:
         text = f.read()
     for key, value in yaml.safe_load(text).items():
-        settings[key] = value
-    settings['total'] = settings['tasks'] = settings['counter'] = 0
-    settings['pid'] = os.getpid()
-    settings['program'] = os.path.basename(args[0])
-    settings['my-version'] = get_version(os.path.dirname(__file__))
-    settings['defdir'] = os.getcwd()
-    settings['extsdir'] = os.path.join(settings['defdir'], 'extensions')
-    settings['def-version'] = get_version('.')
+        config[key] = value
+    config['total'] = config['tasks'] = config['counter'] = 0
+    config['pid'] = os.getpid()
+    config['program'] = os.path.basename(args[0])
+    config['my-version'] = get_version(os.path.dirname(__file__))
+    config['defdir'] = os.getcwd()
+    config['extsdir'] = os.path.join(config['defdir'], 'extensions')
+    config['def-version'] = get_version('.')
 
     dirs = ['artifacts', 'ccache_dir', 'deployment', 'gits', 'tidy', 'tmp']
-    settings['base'] = os.path.join(xdg_cache_home, settings['base'])
+    config['base'] = os.path.join(xdg_cache_home, config['base'])
     for directory in dirs:
         try:
-            settings[directory] = os.path.join(settings['base'], directory)
-            os.makedirs(settings[directory])
+            config[directory] = os.path.join(config['base'], directory)
+            os.makedirs(config[directory])
         except OSError:
-            if not os.path.isdir(settings[directory]):
+            if not os.path.isdir(config[directory]):
                 exit(target, 'ERROR: Can not find or create',
-                     settings[directory])
+                     config[directory])
 
     # git replace means we can't trust that just the sha1 of a branch
     # is enough to say what it contains, so we turn it off by setting
     # the right flag in an environment variable.
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
-    cores = cpu_count() / settings.get('instances', 1)
-    if not settings.get('max-jobs'):
-        settings['max-jobs'] = max(int(cores * 1.5 + 0.5), 1)
+    cores = cpu_count() / config.get('instances', 1)
+    if not config.get('max-jobs'):
+        config['max-jobs'] = max(int(cores * 1.5 + 0.5), 1)
 
-    log('SETUP', '%s version is' % settings['program'], settings['my-version'])
+    log('SETUP', '%s version is' % config['program'], config['my-version'])
     log('SETUP', 'Default configuration is:\n\n%s' % text)
-    log('SETUP', 'Max-jobs is set to', settings['max-jobs'])
+    log('SETUP', 'Max-jobs is set to', config['max-jobs'])
 
 
 @contextlib.contextmanager
@@ -169,8 +169,8 @@ def elapsed(starttime):
 
 
 def spawn():
-    for fork in range(1, settings.get('instances')):
+    for fork in range(1, config.get('instances')):
         if os.fork() == 0:
-            settings['fork'] = fork
-            log('FORKS', 'I am fork', settings.get('fork'))
+            config['fork'] = fork
+            log('FORKS', 'I am fork', config.get('fork'))
             break

@@ -49,7 +49,7 @@ def cache_key(defs, this):
     if definition.get('repo') and not definition.get('tree'):
         definition['tree'] = repos.get_tree(definition)
 
-    hash_factors = {'arch': app.settings['arch']}
+    hash_factors = {'arch': app.config['arch']}
 
     for factor in definition.get('build-depends', []):
         hash_factors[factor] = cache_key(defs, factor)
@@ -75,9 +75,9 @@ def cache_key(defs, this):
 
     safename = definition['name'].replace('/', '-')
     definition['cache'] = safename + "." + hashlib.sha256(result).hexdigest()
-    app.settings['total'] += 1
+    app.config['total'] += 1
     if not get_cache(defs, this):
-        app.settings['tasks'] += 1
+        app.config['tasks'] += 1
     app.log(definition, 'Cache_key is', definition['cache'])
     return definition['cache']
 
@@ -140,7 +140,7 @@ def cache(defs, this, full_root=False):
     if get_cache(defs, this):
         app.log(this, "Bah! I could have cached", cache_key(defs, this))
         return
-    tempfile.tempdir = app.settings['tmp']
+    tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
@@ -154,7 +154,7 @@ def cache(defs, this, full_root=False):
         os.rename('%s.tar.gz' % cachefile, cachefile)
 
     try:
-        target = os.path.join(app.settings['artifacts'], cache_key(defs, this))
+        target = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(tmpdir, target)
         app.log(this, 'Now cached as', cache_key(defs, this))
     except:
@@ -164,7 +164,7 @@ def cache(defs, this, full_root=False):
 
 
 def upload(this, cachefile):
-    url = app.settings['server'] + '/post'
+    url = app.config['server'] + '/post'
     params = {"upfile": os.path.basename(cachefile),
               "folder": os.path.dirname(cachefile), "submit": "Submit"}
     with open(cachefile, 'rb') as local_file:
@@ -193,7 +193,7 @@ def unpack(defs, this):
 def get_cache(defs, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    cachedir = os.path.join(app.settings['artifacts'], cache_key(defs, this))
+    cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
     if os.path.isdir(cachedir):
         return os.path.join(cachedir, cache_key(defs, this))
 

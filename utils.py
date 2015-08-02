@@ -137,7 +137,7 @@ def _find_extensions(paths):
 def find_extensions():
     '''Scan definitions for extensions.'''
 
-    paths = [app.settings['extsdir']]
+    paths = [app.config['extsdir']]
 
     return _find_extensions(paths)
 

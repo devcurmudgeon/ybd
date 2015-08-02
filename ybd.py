@@ -30,22 +30,22 @@ import sandboxlib
 print('')
 with app.timer('TOTAL'):
     app.setup(sys.argv)
-    target = os.path.join(app.settings['defdir'], app.settings['target'])
-    app.log('TARGET', 'Target is %s' % target, app.settings['arch'])
-    with app.timer('DEFINITIONS', 'parsing %s' % app.settings['def-version']):
+    target = os.path.join(app.config['defdir'], app.config['target'])
+    app.log('TARGET', 'Target is %s' % target, app.config['arch'])
+    with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
-        cache.get_cache(defs, app.settings['target'])
+        cache.get_cache(defs, app.config['target'])
     defs.save_trees()
 
     sandbox.executor = sandboxlib.executor_for_platform()
-    app.log(app.settings['target'], 'Sandbox using %s' % sandbox.executor)
+    app.log(app.config['target'], 'Sandbox using %s' % sandbox.executor)
     if sandboxlib.chroot == sandbox.executor:
-        app.log(app.settings['target'], 'WARNING: rogue builds in a chroot ' +
+        app.log(app.config['target'], 'WARNING: rogue builds in a chroot ' +
                 'sandbox may overwrite your system')
 
-    if app.settings.get('instances'):
+    if app.config.get('instances'):
         app.spawn()
 
-    assemble(defs, app.settings['target'])
-    deploy(defs, app.settings['target'])
+    assemble(defs, app.config['target'])
+    deploy(defs, app.config['target'])

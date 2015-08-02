@@ -52,7 +52,7 @@ def deploy_system(defs, system_spec, parent_location=''):
     system = defs.get(system_spec['path'])
     deploy_defaults = system_spec.get('deploy-defaults')
 
-    if system.get('arch') and system['arch'] != app.settings['arch']:
+    if system.get('arch') and system['arch'] != app.config['arch']:
         app.log(system, 'Skipping deployment for', system['arch'])
         return None
 
@@ -96,7 +96,7 @@ def assemble(defs, target):
     random.seed(datetime.datetime.now())
     component = defs.get(target)
 
-    if component.get('arch') and component['arch'] != app.settings['arch']:
+    if component.get('arch') and component['arch'] != app.config['arch']:
         app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
@@ -129,7 +129,7 @@ def assemble(defs, target):
                 assemble(defs, subcomponent)
                 sandbox.install(defs, component, subcomponent)
 
-        app.settings['counter'] += 1
+        app.config['counter'] += 1
         if 'systems' not in component:
             with app.timer(component, 'build'):
                 build(defs, component)
@@ -252,5 +252,5 @@ def do_manifest(this):
         f.write("repo: %s\nref: %s\n" % (this.get('repo'), this.get('ref')))
         f.flush()
         call(['find'], stdout=f, stderr=f)
-    copyfile(metafile, os.path.join(app.settings['artifacts'],
+    copyfile(metafile, os.path.join(app.config['artifacts'],
                                     this['cache'] + '.meta'))
