@@ -93,6 +93,74 @@ def _process_tree(srcpath, destpath, actionfunc):
                       ' type.' % srcpath)
 
 
+def copy_file_list(srcpath, destpath, filelist):
+    '''Copy every file in the source path to the destination.
+
+    If an exception is raised, the staging-area is indeterminate.
+
+    '''
+
+    def _copyfun(inpath, outpath):
+        with open(inpath, "r") as infh:
+            with open(outpath, "w") as outfh:
+                shutil.copyfileobj(infh, outfh, 1024*1024*4)
+        shutil.copystat(inpath, outpath)
+
+    _process_list(srcpath, destpath, filelist, _copyfun)
+
+
+def hardlink_file_list(srcpath, destpath, filelist):
+    '''Hardlink every file in the path to the staging-area
+
+    If an exception is raised, the staging-area is indeterminate.
+
+    '''
+    _process_list(srcpath, destpath, filelist, os.link)
+
+
+def _process_list(srcdir, destdir, filelist, actionfunc):
+
+    for path in sorted(filelist):
+        srcpath = os.path.join(srcdir, path)
+        destpath = os.path.join(destdir, path)
+
+        file_stat = os.lstat(srcpath)
+        mode = file_stat.st_mode
+
+        if stat.S_ISDIR(mode):
+            # Ensure directory exists in destination, then recurse.
+            if not os.path.lexists(destpath):
+                os.makedirs(destpath)
+            dest_stat = os.stat(os.path.realpath(destpath))
+            if not stat.S_ISDIR(dest_stat.st_mode):
+                raise IOError('Destination not a directory. source has %s'
+                              ' destination has %s' % (srcpath, destpath))
+
+        elif stat.S_ISLNK(mode):
+            # Copy the symlink.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+            os.symlink(os.readlink(srcpath), destpath)
+
+        elif stat.S_ISREG(mode):
+            # Process the file.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+            actionfunc(srcpath, destpath)
+
+        elif stat.S_ISCHR(mode) or stat.S_ISBLK(mode):
+            # Block or character device. Put contents of st_dev in a mknod.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+            os.mknod(destpath, file_stat.st_mode, file_stat.st_rdev)
+            os.chmod(destpath, file_stat.st_mode)
+
+        else:
+            # Unsupported type.
+            raise IOError('Cannot extract %s into staging-area. Unsupported'
+                          ' type.' % srcpath)
+
+
 def set_mtime_recursively(root, set_time=default_magic_timestamp):
     '''Set the mtime for every file in a directory tree to the same.
 
