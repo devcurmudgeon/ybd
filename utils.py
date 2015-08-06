@@ -118,11 +118,37 @@ def hardlink_file_list(srcpath, destpath, filelist):
     _process_list(srcpath, destpath, filelist, os.link)
 
 
+def _copy_directories(srcdir, destdir, target):
+    ''' Recursively make directories in target area and copy permissions
+    '''
+    dir = os.path.dirname(target)
+    new_dir = os.path.join(destdir, dir)
+
+    if not os.path.lexists(new_dir):
+        if dir:
+            _copy_directories(srcdir, destdir, dir)
+
+        old_dir = os.path.join(srcdir, dir)
+        if os.path.lexists(old_dir):
+            dir_stat = os.lstat(old_dir)
+            mode = dir_stat.st_mode
+
+            if stat.S_ISDIR(mode):
+                os.makedirs(new_dir)
+                shutil.copystats(old_dir, new_dir)
+            else:
+                raise IOError('Source directory tree has file where '
+                              'directory expected: %s' % dir)
+
+
 def _process_list(srcdir, destdir, filelist, actionfunc):
 
     for path in sorted(filelist):
         srcpath = os.path.join(srcdir, path)
         destpath = os.path.join(destdir, path)
+
+        # The destination directory may not have been created separately
+        _copy_directories(srcdir, destdir, path)
 
         file_stat = os.lstat(srcpath)
         mode = file_stat.st_mode
@@ -135,6 +161,8 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             if not stat.S_ISDIR(dest_stat.st_mode):
                 raise IOError('Destination not a directory. source has %s'
                               ' destination has %s' % (srcpath, destpath))
+            shutil.copystats(srcpath, destpath)
+
 
         elif stat.S_ISLNK(mode):
             # Copy the symlink.
