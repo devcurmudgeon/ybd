@@ -156,7 +156,8 @@ def cache(defs, this, full_root=False):
     try:
         target = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(tmpdir, target)
-        app.log(this, 'Now cached as', cache_key(defs, this))
+        size = os.path.getsize(get_cache(defs, this))
+        app.log(this, 'Now cached %s bytes as' % size, cache_key(defs, this))
     except:
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
 
