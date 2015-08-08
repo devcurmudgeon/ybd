@@ -20,6 +20,7 @@ import app
 import cache
 from subprocess import check_output, PIPE
 import hashlib
+import defaults
 
 
 class Definitions(object):
@@ -51,6 +52,8 @@ class Definitions(object):
                             app.log(filename, 'Validating schema')
                             js.validate(definition_data, definitions_schema)
                         self._tidy_and_insert_recursively(definition_data)
+
+        self.defaults = defaults.Defaults()
 
         if self._check_trees():
             for name in self._definitions:

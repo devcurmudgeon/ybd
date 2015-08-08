@@ -24,160 +24,28 @@ These definitions shall be used if no DEFAULTS file is present.
 
 '''
 
+import os
 import app
 import yaml
 import buildsystem
-
-_OLD_DEFAULTS = '''# Baserock definitions defaults
-build-systems:
-  manual:
-    # The special, default 'no-op' build system.
-    configure-commands: []
-    build-commands: []
-    install-commands: []
-    strip-commands: []
-
-  autotools:
-    # GNU Autoconf and GNU Automake, or anything which follow the same pattern.
-    configure-commands:
-    - |
-      export NOCONFIGURE=1;
-      if [ -e autogen ]; then ./autogen;
-      elif [ -e autogen.sh ]; then ./autogen.sh;
-      elif [ ! -e ./configure ]; then autoreconf -ivf;
-      fi
-      ./configure --prefix="$PREFIX"
-    build-commands:
-    - make
-    install-commands:
-    - make DESTDIR="$DESTDIR" install
-    strip-commands:
-      - &autotools-strip-commands |
-        find "$DESTDIR" -type f
-          '(' -perm -111 -o -name '*.so*' -o -name '*.cmxs' -o -name '*.node' ')'
-          -exec sh -ec
-          read -n4 hdr <"$1"   # check for elf header
-          if [ "$hdr" != "$(printf \x7ELF)" ]; then
-            exit 0
-          fi
-          debugfile="$DESTDIR$PREFIX/lib/debug/$(basename "$1")"
-          mkdir -p "$(dirname "$debugfile")"
-          objcopy --only-keep-debug "$1" "$debugfile"
-          chmod 644 "$debugfile"
-          strip --remove-section=.comment --remove-section=.note --strip-unneeded "$1"
-          objcopy --add-gnu-debuglink "$debugfile" "$1"' - {} ';'
-
-  python-distutils:
-    # The Python distutils build systems.
-    configure-commands: []
-    build-commands:
-    - python setup.py build
-    install-commands:
-    - python setup.py install
-    strip-commands:
-      - *autotools-strip-commands
-
-  cpan:
-    # The Perl ExtUtil::MakeMaker build system.
-    configure-commands:
-      # This is subject to change, see: https://gerrit.baserock.org/#/c/986/
-      - |
-        perl Makefile.PL INSTALLDIRS=perl
-            INSTALLARCHLIB="$PREFIX/lib/perl"
-            INSTALLPRIVLIB="$PREFIX/lib/perl"
-            INSTALLBIN="$PREFIX/bin"
-            INSTALLSCRIPT="$PREFIX/bin"
-            INSTALLMAN1DIR="$PREFIX/share/man/man1"
-            INSTALLMAN3DIR="$PREFIX/share/man/man3"
-    build-commands:
-    - make
-    install-commands:
-    - make DESTDIR="$DESTDIR" install
-    strip-commands:
-      - *autotools-strip-commands
-
-  cmake:
-    # The CMake build system.
-    configure-commands:
-    - cmake -DCMAKE_INSTALL_PREFIX="$PREFIX"'
-    build-commands:
-    - make
-    install-commands:
-    - make DESTDIR="$DESTDIR" install
-    strip-commands:
-      - *autotools-strip-commands
-
-  qmake:
-    # The Qt build system.
-    configure-commands:
-    - qmake -makefile
-    build-commands:
-    - make
-    install-commands:
-    - make INSTALL_ROOT="$DESTDIR" install
-    strip-commands:
-      - *autotools-strip-commands
-
-split-rules:
-  chunk:
-    - artifact: -bins
-      include:
-        - (usr/)?s?bin/.*
-    - artifact: -libs
-      include:
-        - (usr/)?lib(32|64)?/lib[^/]*\.so(\.\d+)*
-        - (usr/)libexec/.*
-    - artifact: -devel
-      include:
-        - (usr/)?include/.*
-        - (usr/)?lib(32|64)?/lib.*\.a
-        - (usr/)?lib(32|64)?/lib.*\.la
-        - (usr/)?(lib(32|64)?|share)/pkgconfig/.*\.pc
-    - artifact: -doc
-      include:
-        - (usr/)?share/doc/.*
-        - (usr/)?share/man/.*
-        - (usr/)?share/info/.*
-    - artifact: -locale
-      include:
-        - (usr/)?share/locale/.*
-        - (usr/)?share/i18n/.*
-        - (usr/)?share/zoneinfo/.*
-    - artifact: -misc
-      include:
-        - .*
-
-  stratum:
-    - artifact: -devel
-      include:
-        - .*-devel
-        - .*-debug
-        - .*-doc
-    - artifact: -runtime
-      include:
-        - .*-bins
-        - .*-libs
-        - .*-locale
-        - .*-misc
-        - .*
-'''
 
 
 class Defaults(object):
 
     def __init__(self):
-        self._build_systems = {}
-        self._split_rules = {}
-        data = self._load_defaults()
+        defaults = self._load_defaults()
+        self.build_steps = defaults.get('build-steps', {})
+        self.build_systems = defaults.get('build-systems', {})
+        self.split_rules = defaults.get('split-rules', {})
 
-        build_system_data = data.get('build-systems', {})
+    def _load_defaults(self, defaults_file='./DEFAULTS'):
+        '''Get defaults, either from a DEFAULTS file, or built-in defaults.'''
 
-        for name, commands in build_system_data.items():
-            build_system = buildsystem.BuildSystem()
-            build_system.from_dict(name, commands)
-            self._build_systems[name] = build_system
-
-        self._split_rules = data.get('split-rules', {})
+        if not os.path.exists(defaults_file):
+            defaults_file = os.path.join(os.path.dirname(__file__),
+                                             app.config['defaults'])
+        defaults = self._load(defaults_file, ignore_errors=True)
+        return defaults
 
     def _load(self, path, ignore_errors=True):
         contents = None
@@ -193,23 +61,11 @@ class Defaults(object):
         contents['path'] = path[2:]
         return contents
 
-    def _load_defaults(self, defaults_filename='./DEFAULTS'):
-        '''Get defaults, either from a DEFAULTS file, or built-in defaults.
-
-        Returns a dict of the defaults tree.
-        '''
-
-        data = self._load(defaults_filename, ignore_errors=True)
-        if data is None:
-            data = yaml.safe_load(_OLD_DEFAULTS)
-
-        return data
-
     def get_chunk_split_rules(self):
-        return self._split_rules.get('chunk', {})
+        return self.split_rules.get('chunk', {})
 
     def get_stratum_split_rules(self):
-        return self._split_rules.get('stratum', {})
+        return self.split_rules.get('stratum', {})
 
     def lookup_build_system(self, name, default=None):
         '''Return build system that corresponds to the name.
@@ -217,9 +73,25 @@ class Defaults(object):
         If the name does not match any build system, raise ``KeyError``.
         '''
 
-        if name in self._build_systems:
-            return self._build_systems[name]
+        if name in self.build_systems:
+            return self.build_systems[name]
         elif default:
             return default
-        else:
-            raise KeyError("Undefined build-system %s" % name)
+
+        raise KeyError("Undefined build-system %s" % name)
+
+    def detect_build_system(self, file_list):
+        '''Automatically detect the build system, if possible.'''
+
+        for build_system in sorted(self.build_systems):
+            indicators = self.build_systems[build_system]['indicators']
+            if any(x in file_list for x in indicators):
+                return build_system
+
+        for build_system in sorted(self.build_systems):
+            indicators = self.build_systems[build_system]['indicators']
+            for indicator in indicators:
+                if any(x.endswith(indicator) for x in file_list):
+                    return build_system
+
+        return 'NOT FOUND'

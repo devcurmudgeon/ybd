@@ -257,7 +257,7 @@ def make_deterministic_tar_archive(base_name, root_dir):
     def stable_listdir(path):
         return sorted(real_listdir(path))
 
-    with utils.monkeypatch(os, 'listdir', stable_listdir):
+    with monkeypatch(os, 'listdir', stable_listdir):
         shutil.make_archive(base_name, 'tar', root_dir)
 
 

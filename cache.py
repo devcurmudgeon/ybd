@@ -25,7 +25,6 @@ import sys
 from subprocess import call
 
 import app
-import buildsystem
 import repos
 import utils
 import tempfile
@@ -55,7 +54,7 @@ def cache_key(defs, this):
     for factor in definition.get('contents', []):
         hash_factors[factor] = cache_key(defs, factor)
 
-    for factor in ['tree'] + buildsystem.build_steps:
+    for factor in ['tree'] + defs.defaults.build_steps:
         if definition.get(factor):
             hash_factors[factor] = definition[factor]
 

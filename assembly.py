@@ -20,7 +20,6 @@ from subprocess import call, check_output
 
 import json
 import app
-import buildsystem
 import cache
 import repos
 import sandbox
@@ -159,7 +158,7 @@ def build(defs, this):
     env_vars = sandbox.env_vars_for_build(defs, this)
 
     app.log(this, 'Logging build commands to %s' % this['log'])
-    for build_step in buildsystem.build_steps:
+    for build_step in defs.defaults.build_steps:
         if this.get(build_step):
             app.log(this, 'Running', build_step)
         for command in this.get(build_step, []):
@@ -202,17 +201,17 @@ def get_build_commands(defs, this):
         return
 
     if this.get('build-system') or os.path.exists(this['path']):
-        build_system = buildsystem.lookup(this.get('build-system', 'manual'))
-        app.log(this, 'Defined build system is', build_system.name)
+        build_system = this.get('build-system', 'manual')
+        app.log(this, 'Defined build system is', build_system)
     else:
         files = os.listdir(this['build'])
-        build_system = buildsystem.detect_build_system(files)
-        app.log(this, 'Autodetected build system is', build_system.name)
+        build_system = defs.defaults.detect_build_system(files)
+        app.log(this, 'Autodetected build system is', build_system)
 
-    for build_step in buildsystem.build_steps:
+    for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:
-            if build_step in build_system.commands:
-                this[build_step] = build_system.commands[build_step]
+            commands = defs.defaults.build_systems[build_system].get(build_step, [])
+            this[build_step] = commands
 
 
 def gather_integration_commands(defs, this):

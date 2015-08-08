@@ -97,10 +97,10 @@ def setup(args):
     # Suppress multiple instances of the same warning.
     warnings.simplefilter('once', append=True)
 
-    config_file = './ybd.conf'
-    if not os.path.exists(config_file):
-        config_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
-    with open(config_file) as f:
+    conf_file = './ybd.conf'
+    if not os.path.exists(conf_file):
+        conf_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
+    with open(conf_file) as f:
         text = f.read()
     for key, value in yaml.safe_load(text).items():
         config[key] = value
