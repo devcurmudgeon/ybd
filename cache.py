@@ -17,13 +17,11 @@
 
 import requests
 
-import gzip
 import hashlib
 import json
 import os
 import shutil
 import sys
-import tarfile
 from subprocess import call
 
 import app
@@ -82,60 +80,6 @@ def cache_key(defs, this):
     return definition['cache']
 
 
-def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
-    '''Make a gzipped tar archive of contents of 'root_dir'.
-
-    This function takes extra steps to ensure the output is deterministic,
-    compared to shutil.make_archive(). First, it sorts the results of
-    os.listdir() to ensure the ordering of the files in the archive is the
-    same. Second, it sets a fixed timestamp and filename in the gzip header.
-
-    As well as fixing https://bugs.python.org/issue24465, to make this function
-    redundant we would need to patch shutil.make_archive() so we could manually
-    set the timestamp and filename set in the gzip file header.
-
-    '''
-    # It's hard to implement this function by monkeypatching
-    # shutil.make_archive() because of the way the tarfile module includes the
-    # filename of the tarfile in the gzip header. So we have to reimplement
-    # shutil.make_archive().
-
-    def add_directory_to_tarfile(f_tar, dir_name, dir_arcname):
-        for filename in sorted(os.listdir(dir_name)):
-            name = os.path.join(dir_name, filename)
-            arcname = os.path.join(dir_arcname, filename)
-
-            f_tar.add(name=name, arcname=arcname, recursive=False)
-
-            if os.path.isdir(name) and not os.path.islink(name):
-                add_directory_to_tarfile(f_tar, name, arcname)
-
-    with open(base_name + '.tar.gz', 'wb') as f:
-        gzip_context = gzip.GzipFile(
-            filename='', mode='wb', fileobj=f, mtime=time)
-        with gzip_context as f_gzip:
-            with tarfile.TarFile(mode='w', fileobj=f_gzip) as f_tar:
-                add_directory_to_tarfile(f_tar, root_dir, '.')
-
-
-def make_deterministic_tar_archive(base_name, root_dir):
-    '''Make a tar archive of contents of 'root_dir'.
-
-    This function uses monkeypatching to make shutil.make_archive() create
-    a deterministic tarfile.
-
-    https://bugs.python.org/issue24465 will make this function redundant.
-
-    '''
-    real_listdir = os.listdir
-
-    def stable_listdir(path):
-        return sorted(real_listdir(path))
-
-    with utils.monkeypatch(os, 'listdir', stable_listdir):
-        shutil.make_archive(base_name, 'tar', root_dir)
-
-
 def cache(defs, this, full_root=False):
     if get_cache(defs, this):
         app.log(this, "Bah! I could have cached", cache_key(defs, this))
@@ -144,13 +88,12 @@ def cache(defs, this, full_root=False):
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
-        # This won't actually be deterministic, because we aren't setting a
-        # uniform mtime. (I'm not sure why not).
-        make_deterministic_tar_archive(cachefile, this['sandbox'])
+        utils.set_mtime_recursively(this['sandbox'])
+        utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
         os.rename('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(this['install'])
-        make_deterministic_gztar_archive(cachefile, this['install'])
+        utils.make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
 
     try:

@@ -14,6 +14,8 @@
 #
 # =*= License: GPL-2 =*=
 
+import gzip
+import tarfile
 import contextlib
 import os
 import shutil
@@ -24,6 +26,23 @@ import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
+
+
+def set_mtime_recursively(root, set_time=default_magic_timestamp):
+    '''Set the mtime for every file in a directory tree to the same.
+
+    The aim is to make builds more predictable.
+
+    '''
+
+    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
+                                               topdown=False):
+        for basename in basenames:
+            pathname = os.path.join(dirname, basename)
+            # we need the following check to ignore broken symlinks
+            if os.path.exists(pathname):
+                os.utime(pathname, (set_time, set_time))
+        os.utime(dirname, (set_time, set_time))
 
 
 def copy_all_files(srcpath, destpath):
@@ -163,7 +182,6 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
                               ' destination has %s' % (srcpath, destpath))
             shutil.copystats(srcpath, destpath)
 
-
         elif stat.S_ISLNK(mode):
             # Copy the symlink.
             if os.path.lexists(destpath):
@@ -189,22 +207,58 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
                           ' type.' % srcpath)
 
 
-def set_mtime_recursively(root, set_time=default_magic_timestamp):
-    '''Set the mtime for every file in a directory tree to the same.
+def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
+    '''Make a gzipped tar archive of contents of 'root_dir'.
 
-    The magic number default is 2011-11-11 11:11:11
-    The aim is to make builds more predictable.
+    This function takes extra steps to ensure the output is deterministic,
+    compared to shutil.make_archive(). First, it sorts the results of
+    os.listdir() to ensure the ordering of the files in the archive is the
+    same. Second, it sets a fixed timestamp and filename in the gzip header.
+
+    As well as fixing https://bugs.python.org/issue24465, to make this function
+    redundant we would need to patch shutil.make_archive() so we could manually
+    set the timestamp and filename set in the gzip file header.
 
     '''
+    # It's hard to implement this function by monkeypatching
+    # shutil.make_archive() because of the way the tarfile module includes the
+    # filename of the tarfile in the gzip header. So we have to reimplement
+    # shutil.make_archive().
 
-    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
-                                               topdown=False):
-        for basename in basenames:
-            pathname = os.path.join(dirname, basename)
-            # we need the following check to ignore broken symlinks
-            if os.path.exists(pathname):
-                os.utime(pathname, (set_time, set_time))
-        os.utime(dirname, (set_time, set_time))
+    def add_directory_to_tarfile(f_tar, dir_name, dir_arcname):
+        for filename in sorted(os.listdir(dir_name)):
+            name = os.path.join(dir_name, filename)
+            arcname = os.path.join(dir_arcname, filename)
+
+            f_tar.add(name=name, arcname=arcname, recursive=False)
+
+            if os.path.isdir(name) and not os.path.islink(name):
+                add_directory_to_tarfile(f_tar, name, arcname)
+
+    with open(base_name + '.tar.gz', 'wb') as f:
+        gzip_context = gzip.GzipFile(
+            filename='', mode='wb', fileobj=f, mtime=time)
+        with gzip_context as f_gzip:
+            with tarfile.TarFile(mode='w', fileobj=f_gzip) as f_tar:
+                add_directory_to_tarfile(f_tar, root_dir, '.')
+
+
+def make_deterministic_tar_archive(base_name, root_dir):
+    '''Make a tar archive of contents of 'root_dir'.
+
+    This function uses monkeypatching to make shutil.make_archive() create
+    a deterministic tarfile.
+
+    https://bugs.python.org/issue24465 will make this function redundant.
+
+    '''
+    real_listdir = os.listdir
+
+    def stable_listdir(path):
+        return sorted(real_listdir(path))
+
+    with utils.monkeypatch(os, 'listdir', stable_listdir):
+        shutil.make_archive(base_name, 'tar', root_dir)
 
 
 def _find_extensions(paths):
