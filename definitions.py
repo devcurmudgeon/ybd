@@ -57,6 +57,12 @@ class Definitions(object):
                 self._definitions[name]['tree'] = self._trees.get(name)
 
     def _load(self, path):
+        '''Load a single definition file as a dict.
+
+        The file is assumed to be yaml, and we insert the provided path into
+        the dict keyed as 'path'.
+
+        '''
         try:
             with open(path) as f:
                 text = f.read()
@@ -121,6 +127,15 @@ class Definitions(object):
         return self._insert(definition)
 
     def _fix_path_name(self, definition, name='ERROR'):
+        '''Standardises the key for a definition
+
+        Some definitions have a 'morph' key which is a relative path. Others
+        only have a 'name' key, which has no directory part.
+
+        This sets our key to be 'path', and fixes 'name' to be the same as
+        'path' but replacing '/' by '-'
+
+        '''
         if definition.get('path', None) is None:
             definition['path'] = definition.pop('morph',
                                                 definition.get('name', name))
@@ -164,8 +179,7 @@ class Definitions(object):
     def get(self, definition):
         '''Return a definition from the dictionary.
 
-        If `definition` is a string, return the definition with that
-        key.
+        If `definition` is a string, return the definition with that key.
 
         If `definition` is a dict, return the definition with key equal
         to the 'path' value in the given dict.
@@ -177,6 +191,14 @@ class Definitions(object):
         return self._definitions.get(definition['path'])
 
     def _check_trees(self):
+        '''True if the .trees file matches the current working subdirectories
+
+        The .trees file lists all git trees for a set of definitions, and a
+        checksum of the checked-out subdirectories when we calculated them.
+
+        If the checksum for the current subdirectories matches, return True
+
+        '''
         try:
             with app.chdir(app.config['defdir']):
                 checksum = check_output('ls -lRA */', shell=True)
@@ -190,9 +212,15 @@ class Definitions(object):
             if os.path.exists('.trees'):
                 os.remove('.trees')
             self._trees = {}
-            return False
+
+        return False
 
     def save_trees(self):
+        '''Creates the .trees file for the current working directory
+
+        .trees contains a list of git trees for all the definitions, and a
+        checksum for the state of the working subdirectories
+        '''
         with app.chdir(app.config['defdir']):
             checksum = check_output('ls -lRA */', shell=True)
         checksum = hashlib.md5(checksum).hexdigest()
