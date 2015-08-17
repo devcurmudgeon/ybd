@@ -27,7 +27,6 @@ These definitions shall be used if no DEFAULTS file is present.
 import os
 import app
 import yaml
-import buildsystem
 
 
 class Defaults(object):
