@@ -87,6 +87,9 @@ def cache(defs, this, full_root=False):
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
+        utils.hardlink_all_files(this['install'], this['sandbox'])
+        shutil.rmtree(this['install'])
+        shutil.rmtree(this['build'])
         utils.set_mtime_recursively(this['sandbox'])
         utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
         os.rename('%s.tar' % cachefile, cachefile)
