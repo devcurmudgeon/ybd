@@ -154,7 +154,7 @@ def _copy_directories(srcdir, destdir, target):
 
             if stat.S_ISDIR(mode):
                 os.makedirs(new_dir)
-                shutil.copystats(old_dir, new_dir)
+                shutil.copystat(old_dir, new_dir)
             else:
                 raise IOError('Source directory tree has file where '
                               'directory expected: %s' % dir)
@@ -180,7 +180,7 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             if not stat.S_ISDIR(dest_stat.st_mode):
                 raise IOError('Destination not a directory. source has %s'
                               ' destination has %s' % (srcpath, destpath))
-            shutil.copystats(srcpath, destpath)
+            shutil.copystat(srcpath, destpath)
 
         elif stat.S_ISLNK(mode):
             # Copy the symlink.
