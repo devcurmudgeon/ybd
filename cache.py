@@ -95,6 +95,11 @@ def cache(defs, this, full_root=False):
         utils.make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
 
+    unpackdir = cachefile + '.unpacked'
+    os.makedirs(unpackdir)
+    if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
+        app.exit(this, 'ERROR: Problem unpacking', cachefile)
+
     try:
         target = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(tmpdir, target)
