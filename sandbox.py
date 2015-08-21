@@ -246,7 +246,7 @@ def run_logged(this, cmd_list):
 def run_extension(this, deployment, step, method):
     app.log(this, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
-    tempfile.tempdir = tmp = app.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
