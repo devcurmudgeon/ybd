@@ -19,7 +19,6 @@ import SocketServer
 import cgi
 import sys
 import os
-import tempfile
 
 
 class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
@@ -45,7 +44,6 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 def start():
-    server = 'http://192.168.56.101:8000/'
     port = 8000
     Handler = ServerHandler
     os.chdir('/src/cache/remote')

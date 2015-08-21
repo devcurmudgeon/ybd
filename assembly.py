@@ -16,7 +16,7 @@
 
 import os
 import random
-from subprocess import call, check_output
+from subprocess import call
 
 import json
 import app
@@ -24,7 +24,6 @@ import cache
 import repos
 import sandbox
 from shutil import copyfile
-import utils
 import datetime
 import splitting
 import yaml

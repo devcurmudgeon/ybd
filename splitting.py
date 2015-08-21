@@ -38,9 +38,9 @@ def do_chunk_splits(defs, this, metafile):
                 used_dirs[path] = True
 
     for rule in split_rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
+        regexp = re.compile('^(?:' +
+                            '|'.join(rule.get('include')) +
+                            ')$')
         artifact = rule.get('artifact')
         if artifact.startswith('-'):
             artifact = this['name'] + artifact
@@ -86,9 +86,9 @@ def do_stratum_splits(defs, this):
     regexps = []
     splits = {}
     for rule in split_rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
+        regexp = re.compile('^(?:' +
+                            '|'.join(rule.get('include')) +
+                            ')$')
         artifact = rule.get('artifact')
         if artifact.startswith('-'):
             artifact = this['name'] + artifact
@@ -100,9 +100,9 @@ def do_stratum_splits(defs, this):
         if artifact.startswith('-'):
             artifact = this['name'] + artifact
         if artifact not in splits:
-            regexp = re.compile('^(?:'
-                                + '|'.join(rule.get('include'))
-                                + ')$')
+            regexp = re.compile('^(?:' +
+                                '|'.join(rule.get('include')) +
+                                ')$')
             regexps.append([artifact, regexp])
             splits[artifact] = []
 

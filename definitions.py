@@ -17,8 +17,7 @@
 import yaml
 import os
 import app
-import cache
-from subprocess import check_output, PIPE
+from subprocess import check_output
 import hashlib
 import defaults
 
