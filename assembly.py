@@ -217,8 +217,8 @@ def get_build_commands(defs, this):
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step) is None:
-            commands = defs.defaults.build_systems[build_system].get(build_step, [])
-            this[build_step] = commands
+            this[build_step] = \
+                defs.defaults.build_systems[build_system].get(build_step, [])
 
 
 def gather_integration_commands(defs, this):
@@ -272,6 +272,7 @@ def do_manifest(defs, this):
 
     copyfile(metafile, os.path.join(app.config['artifacts'],
                                     this['cache'] + '.meta'))
+
 
 def load_manifest(defs, target):
     cachepath, cachedir = os.path.split(cache.get_cache(defs, target))

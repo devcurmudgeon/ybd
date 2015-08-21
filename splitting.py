@@ -51,9 +51,9 @@ def do_chunk_splits(defs, this, metafile):
         mark_used_path(metapath)
 
     for root, dirs, files in os.walk(install_dir, topdown=False):
-	root = os.path.relpath(root, install_dir)
-	if root == '.':
-	    root = ''
+        root = os.path.relpath(root, install_dir)
+        if root == '.':
+            root = ''
 
         for name in files:
             path = os.path.join(root, name)
@@ -65,15 +65,15 @@ def do_chunk_splits(defs, this, metafile):
 
         for name in dirs:
             path = os.path.join(root, name)
-            if not path in used_dirs:
+            if path not in used_dirs:
                 for artifact, rule in regexps:
                     if rule.match(path) or rule.match(path + '/'):
                         splits[artifact].append(path)
                         break
 
-    unique_artifacts = sorted(set( [a for a, r in regexps] ))
-    return [ { 'artifact': a, 'files': sorted(splits[a]) }
-             for a in unique_artifacts ]
+    unique_artifacts = sorted(set([a for a, r in regexps]))
+    return [{'artifact': a, 'files': sorted(splits[a])}
+            for a in unique_artifacts]
 
 
 def do_stratum_splits(defs, this):
@@ -113,11 +113,11 @@ def do_stratum_splits(defs, this):
 
     for chunk in this['contents']:
         chunk_artifacts = defs.get(chunk).get('_artifacts', {})
-        for name in [ a['artifact'] for a in chunk_artifacts]:
+        for name in [a['artifact'] for a in chunk_artifacts]:
             for artifact, rule in regexps:
                 if rule.match(name):
                     splits[artifact].append(name)
                     break
 
-    return [ { 'artifact': a, 'chunks': sorted(set(splits[a])) }
-             for a, r in regexps ]
+    return [{'artifact': a, 'chunks': sorted(set(splits[a]))}
+            for a, r in regexps]

@@ -193,13 +193,11 @@ class Definitions(object):
 
         return self._definitions.get(definition['path'])
 
-
     def set_member(self, definition, member, value):
         '''Set a member in the dictionary.'''
 
         if self._definitions.get(definition, None):
             self._definitions[definition][member] = value
-
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories

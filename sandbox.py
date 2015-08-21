@@ -101,7 +101,7 @@ def _install(defs, this, component, splits=None):
         for it in component.get('build-depends', []):
             dependency = defs.get(it)
             if (dependency.get('build-mode', 'staging') ==
-                component.get('build-mode', 'staging')):
+                    component.get('build-mode', 'staging')):
                 _install(defs, this, dependency)
 
     subchunks = None
@@ -126,8 +126,8 @@ def _install(defs, this, component, splits=None):
 
     unpackdir = cache.unpack(defs, component)
     if building_system:
-        ## if the artifact is a split one, we want to assemble a list
-        ## of "products" to unpack and use utils.copy_file_list() instead
+        # if the artifact is a split one, we want to assemble a list
+        # of "products" to unpack and use utils.copy_file_list() instead
         if splits and (component.get('kind') in ['chunk', None]):
             files = []
             for a in subchunks:
