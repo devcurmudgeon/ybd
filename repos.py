@@ -54,7 +54,8 @@ def get_repo_name(repo):
     '''
     valid_chars = string.digits + string.ascii_letters + '%_'
 
-    def transl(x): return x if x in valid_chars else '_'
+    def transl(x):
+        return x if x in valid_chars else '_'
 
     return ''.join([transl(x) for x in get_repo_url(repo)])
 
