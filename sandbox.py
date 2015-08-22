@@ -82,7 +82,7 @@ def install(defs, this, component, splits=None):
                                    component['name'] + '.meta')):
         return
 
-    app.log(this, 'Installing %s' % component['cache'])
+    app.log(this, 'Installing %s' % component['cache'], splits)
     _install(defs, this, component, splits)
 
 
