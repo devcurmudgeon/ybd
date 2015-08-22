@@ -105,9 +105,10 @@ class Definitions(object):
         # The 'contents' field in the internal data model corresponds to the
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
+        definition['contents'] = definition.get('contents', [])
         for subset in ['chunks', 'strata']:
-            if subset in definition:
-                definition['contents'] = definition.pop(subset)
+            for component in definition.get(subset, []):
+                definition['contents'] += [component]
 
         lookup = {}
         for index, component in enumerate(definition.get('contents', [])):
