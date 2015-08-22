@@ -294,7 +294,6 @@ def load_manifest(defs, target):
         return None
 
     if metadata:
-        app.log(name, 'loaded metadata for', path)
         defs.set_member(path, '_loaded', True)
         if metadata.get('products'):
             defs.set_member(path, '_artifacts', metadata['products'])
