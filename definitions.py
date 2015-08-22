@@ -24,8 +24,8 @@ import defaults
 
 class Definitions(object):
 
-    def __init__(self):
-        '''Load all definitions from `cwd` tree.'''
+    def __init__(self, directory='.'):
+        '''Load all definitions from a directory tree.'''
         self._definitions = {}
         self._trees = {}
 
@@ -37,20 +37,20 @@ class Definitions(object):
             js.validate(definitions_schema, json_schema)
 
         things_have_changed = not self._check_trees()
-        for dirname, dirnames, filenames in os.walk('.'):
-            filenames.sort()
-            dirnames.sort()
-            if '.git' in dirnames:
-                dirnames.remove('.git')
-            for filename in filenames:
-                if filename.endswith(('.def', '.morph')):
-                    definition_data = self._load(
-                        os.path.join(dirname, filename))
-                    if definition_data is not None:
-                        if things_have_changed and definitions_schema:
-                            app.log(filename, 'Validating schema')
-                            js.validate(definition_data, definitions_schema)
-                        self._tidy_and_insert_recursively(definition_data)
+        with app.chdir(directory):
+            for dirname, dirnames, filenames in os.walk('.'):
+                filenames.sort()
+                dirnames.sort()
+                if '.git' in dirnames:
+                    dirnames.remove('.git')
+                for filename in filenames:
+                    if filename.endswith(('.def', '.morph')):
+                        contents = self._load(os.path.join(dirname, filename))
+                        if contents is not None:
+                            if things_have_changed and definitions_schema:
+                                app.log(filename, 'Validating schema')
+                                js.validate(contents, definitions_schema)
+                            self._tidy_and_insert_recursively(contents)
 
         self.defaults = defaults.Defaults()
 
