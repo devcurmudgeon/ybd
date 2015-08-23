@@ -66,11 +66,8 @@ def exit(component, message, data):
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
-    '''Output messages from warnings.warn().
+    '''Output messages from warnings.warn() - default output is a bit ugly.'''
 
-    The default output is a bit ugly.
-
-    '''
     return 'WARNING: %s\n' % (message)
 
 
