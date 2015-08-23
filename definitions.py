@@ -17,15 +17,16 @@
 import yaml
 import os
 import app
-from subprocess import check_output
+import cache
+from subprocess import check_output, PIPE
 import hashlib
 import defaults
 
 
 class Definitions(object):
 
-    def __init__(self, directory='.'):
-        '''Load all definitions from a directory tree.'''
+    def __init__(self):
+        '''Load all definitions from `cwd` tree.'''
         self._definitions = {}
         self._trees = {}
 
@@ -37,35 +38,26 @@ class Definitions(object):
             js.validate(definitions_schema, json_schema)
 
         things_have_changed = not self._check_trees()
-        with app.chdir(directory):
-            for dirname, dirnames, filenames in os.walk('.'):
-                filenames.sort()
-                dirnames.sort()
-                if '.git' in dirnames:
-                    dirnames.remove('.git')
-                for filename in filenames:
-                    if filename.endswith(('.def', '.morph')):
-                        contents = self._load(os.path.join(dirname, filename))
-                        if contents is not None:
-                            if things_have_changed and definitions_schema:
-                                app.log(filename, 'Validating schema')
-                                js.validate(contents, definitions_schema)
-                            self._tidy_and_insert_recursively(contents)
+        for dirname, dirnames, filenames in os.walk('.'):
+            filenames.sort()
+            dirnames.sort()
+            if '.git' in dirnames:
+                dirnames.remove('.git')
+            for filename in filenames:
+                if filename.endswith(('.def', '.morph')):
+                    definition_data = self._load(
+                        os.path.join(dirname, filename))
+                    if definition_data is not None:
+                        if things_have_changed and definitions_schema:
+                            app.log(filename, 'Validating schema')
+                            js.validate(definition_data, definitions_schema)
+                        self._tidy_and_insert_recursively(definition_data)
 
         self.defaults = defaults.Defaults()
 
         if self._check_trees():
-            for path in self._definitions:
-                self._definitions[path]['tree'] = self._trees.get(path)
-
-    def write(self, output):
-        for path in self._definitions:
-            print path
-        for path in self._definitions:
-            filename = self._definitions[path]['name'] + '.cida'
-            with open(os.path.join(output, filename), 'w') as f:
-                f.write(yaml.dump(self._definitions[path],
-                        default_flow_style=False))
+            for name in self._definitions:
+                self._definitions[name]['tree'] = self._trees.get(name)
 
     def _load(self, path):
         '''Load a single definition file as a dict.
@@ -114,10 +106,9 @@ class Definitions(object):
         # The 'contents' field in the internal data model corresponds to the
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
-        definition['contents'] = definition.get('contents', [])
         for subset in ['chunks', 'strata']:
-            for component in definition.get(subset, []):
-                definition['contents'] += [component]
+            if subset in definition:
+                definition['contents'] = definition.pop(subset)
 
         lookup = {}
         for index, component in enumerate(definition.get('contents', [])):
@@ -201,12 +192,6 @@ class Definitions(object):
             return self._definitions.get(definition)
 
         return self._definitions.get(definition['path'])
-
-    def set_member(self, definition, member, value):
-        '''Set a member in the dictionary.'''
-
-        if self._definitions.get(definition, None):
-            self._definitions[definition][member] = value
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories

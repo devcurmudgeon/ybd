@@ -17,10 +17,12 @@
 import contextlib
 import datetime
 import os
+import shutil
 import sys
 import warnings
 import yaml
 from multiprocessing import cpu_count
+from subprocess import call, check_output
 import platform
 from repos import get_version
 
@@ -64,8 +66,11 @@ def exit(component, message, data):
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
-    '''Output messages from warnings.warn() - default output is a bit ugly.'''
+    '''Output messages from warnings.warn().
 
+    The default output is a bit ugly.
+
+    '''
     return 'WARNING: %s\n' % (message)
 
 
@@ -115,7 +120,7 @@ def setup(args):
             os.makedirs(config[directory])
         except OSError:
             if not os.path.isdir(config[directory]):
-                exit(config['target'], 'ERROR: Can not find or create',
+                exit(target, 'ERROR: Can not find or create',
                      config[directory])
 
     # git replace means we can't trust that just the sha1 of a branch

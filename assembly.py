@@ -16,7 +16,7 @@
 
 import os
 import random
-from subprocess import call
+from subprocess import call, check_output
 
 import json
 import app
@@ -24,9 +24,8 @@ import cache
 import repos
 import sandbox
 from shutil import copyfile
+import utils
 import datetime
-import splitting
-import yaml
 
 
 def deploy(defs, target):
@@ -91,8 +90,6 @@ def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
     if cache.get_cache(defs, target):
-        # needed for artifact splitting
-        load_manifest(defs, target)
         return cache.cache_key(defs, target)
 
     random.seed(datetime.datetime.now())
@@ -129,17 +126,14 @@ def assemble(defs, target):
             subcomponent = defs.get(it)
             if subcomponent.get('build-mode') != 'bootstrap':
                 assemble(defs, subcomponent)
-                splits = None
-                if component.get('kind') == 'system':
-                    splits = subcomponent.get('artifacts')
-                sandbox.install(defs, component, subcomponent, splits)
+                sandbox.install(defs, component, subcomponent)
 
         app.config['counter'] += 1
         if 'systems' not in component:
             with app.timer(component, 'build'):
                 build(defs, component)
         with app.timer(component, 'artifact creation'):
-            do_manifest(defs, component)
+            do_manifest(component)
             cache.cache(defs, component,
                         full_root=component.get('kind') == "system")
         sandbox.remove(component)
@@ -201,7 +195,7 @@ def get_build_commands(defs, this):
 
     '''
 
-    if this.get('kind') == "system":
+    if this.get('kind', None) == "system":
         # Systems must run their integration scripts as install commands
         this['install-commands'] = gather_integration_commands(defs, this)
         return
@@ -215,9 +209,9 @@ def get_build_commands(defs, this):
         app.log(this, 'Autodetected build system is', build_system)
 
     for build_step in defs.defaults.build_steps:
-        if this.get(build_step) is None:
-            this[build_step] = \
-                defs.defaults.build_systems[build_system].get(build_step, [])
+        if this.get(build_step, None) is None:
+            commands = defs.defaults.build_systems[build_system].get(build_step, [])
+            this[build_step] = commands
 
 
 def gather_integration_commands(defs, this):
@@ -251,49 +245,11 @@ def do_deployment_manifest(system, configuration):
         f.flush()
 
 
-def do_manifest(defs, this):
+def do_manifest(this):
     metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
-    metadata = {}
-    metadata['repo'] = this.get('repo')
-    metadata['ref'] = this.get('ref')
-    kind = this.get('kind', 'chunk')
-
-    if kind == 'chunk':
-        metadata['products'] = splitting.do_chunk_splits(defs, this, metafile)
-    elif kind == 'stratum':
-        metadata['products'] = splitting.do_stratum_splits(defs, this)
-
-    if metadata.get('products'):
-        defs.set_member(this['path'], '_artifacts', metadata['products'])
-
     with app.chdir(this['install']), open(metafile, "w") as f:
-        yaml.safe_dump(metadata, f, default_flow_style=False)
-
+        f.write("repo: %s\nref: %s\n" % (this.get('repo'), this.get('ref')))
+        f.flush()
+        call(['find'], stdout=f, stderr=f)
     copyfile(metafile, os.path.join(app.config['artifacts'],
                                     this['cache'] + '.meta'))
-
-
-def load_manifest(defs, target):
-    cachepath, cachedir = os.path.split(cache.get_cache(defs, target))
-    metafile = cachepath + ".meta"
-    metadata = None
-    definition = defs.get(target)
-    name = definition['name']
-
-    path = None
-    if type(target) is str:
-        path = target
-    else:
-        path = target['name']
-
-    try:
-        with open(metafile, "r") as f:
-            metadata = yaml.safe_load(f)
-    except:
-        app.log(name, 'WARNING: problem loading metadata', metafile)
-        return None
-
-    if metadata:
-        defs.set_member(path, '_loaded', True)
-        if metadata.get('products'):
-            defs.set_member(path, '_artifacts', metadata['products'])

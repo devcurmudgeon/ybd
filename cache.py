@@ -21,6 +21,7 @@ import hashlib
 import json
 import os
 import shutil
+import sys
 from subprocess import call
 
 import app
@@ -86,9 +87,6 @@ def cache(defs, this, full_root=False):
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
     if full_root:
-        utils.hardlink_all_files(this['install'], this['sandbox'])
-        shutil.rmtree(this['install'])
-        shutil.rmtree(this['build'])
         utils.set_mtime_recursively(this['sandbox'])
         utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
         os.rename('%s.tar' % cachefile, cachefile)
@@ -96,11 +94,6 @@ def cache(defs, this, full_root=False):
         utils.set_mtime_recursively(this['install'])
         utils.make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
-
-    unpackdir = cachefile + '.unpacked'
-    os.makedirs(unpackdir)
-    if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
-        app.exit(this, 'ERROR: Problem unpacking', cachefile)
 
     try:
         target = os.path.join(app.config['artifacts'], cache_key(defs, this))

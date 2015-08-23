@@ -28,7 +28,6 @@ import app
 import cache
 import utils
 from repos import get_repo_url
-import assembly
 
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
@@ -77,65 +76,34 @@ def remove(this):
         app.log(this, 'Cleaned up', this['sandbox'])
 
 
-def install(defs, this, component, splits=None):
+def install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
-    app.log(this, 'Installing %s' % component['cache'], splits)
-    _install(defs, this, component, splits)
+    app.log(this, 'Installing %s' % component['cache'])
+    _install(defs, this, component)
 
 
-def _install(defs, this, component, splits=None):
+def _install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
 
-    if not component.get('_loaded', False):
-        assembly.load_manifest(defs, component.get('path'))
-        component = defs.get(component.get('path'))
-
-    building_system = (this.get('kind') == 'system')
-    if not building_system:
-        # Don't install build-deps when assembling a system
-        for it in component.get('build-depends', []):
-            dependency = defs.get(it)
-            if (dependency.get('build-mode', 'staging') ==
-                    component.get('build-mode', 'staging')):
-                _install(defs, this, dependency)
-
-    subchunks = None
-    if building_system:
-        subchunks = component.get('_artifacts')
+    for it in component.get('build-depends', []):
+        dependency = defs.get(it)
+        if (dependency.get('build-mode', 'staging') ==
+                component.get('build-mode', 'staging')):
+            _install(defs, this, dependency)
 
     for it in component.get('contents', []):
         subcomponent = defs.get(it)
-        artifacts = None
-        if building_system and splits:
-            artifacts = []
-            for c in subchunks:
-                if c['artifact'] in splits:
-                    artifacts.append(c)
-
-        if artifacts:
-            for a in artifacts:
-                _install(defs, this, subcomponent, a.get('chunks'))
-        else:
-            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-                _install(defs, this, subcomponent, splits)
+        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            _install(defs, this, subcomponent)
 
     unpackdir = cache.unpack(defs, component)
-    if building_system:
-        # if the artifact is a split one, we want to assemble a list
-        # of "products" to unpack and use utils.copy_file_list() instead
-        if splits and (component.get('kind') in ['chunk', None]):
-            files = []
-            for a in subchunks:
-                if a['artifact'] in splits:
-                    files.extend(a['files'])
-            utils.copy_file_list(unpackdir, this['sandbox'], files)
-        else:
-            utils.copy_all_files(unpackdir, this['sandbox'])
+    if this.get('kind') is 'system':
+        utils.copy_all_files(unpackdir, this['sandbox'])
     else:
         utils.hardlink_all_files(unpackdir, this['sandbox'])
 
@@ -246,7 +214,7 @@ def run_logged(this, cmd_list):
 def run_extension(this, deployment, step, method):
     app.log(this, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
-    tempfile.tempdir = app.config['tmp']
+    tempfile.tempdir = tmp = app.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
