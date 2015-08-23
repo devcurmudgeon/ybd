@@ -59,6 +59,15 @@ class Definitions(object):
             for path in self._definitions:
                 self._definitions[path]['tree'] = self._trees.get(path)
 
+    def write(self, output):
+        for path in self._definitions:
+            print path
+        for path in self._definitions:
+            filename = self._definitions[path]['name'] + '.cida'
+            with open(os.path.join(output, filename), 'w') as f:
+                f.write(yaml.dump(self._definitions[path],
+                        default_flow_style=False))
+
     def _load(self, path):
         '''Load a single definition file as a dict.
 
