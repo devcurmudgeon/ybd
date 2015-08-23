@@ -55,8 +55,8 @@ class Definitions(object):
         self.defaults = defaults.Defaults()
 
         if self._check_trees():
-            for name in self._definitions:
-                self._definitions[name]['tree'] = self._trees.get(name)
+            for path in self._definitions:
+                self._definitions[path]['tree'] = self._trees.get(path)
 
     def _load(self, path):
         '''Load a single definition file as a dict.
