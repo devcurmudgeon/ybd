@@ -49,7 +49,7 @@ def log(component, message='', data=''):
     if 'ERROR' in entry:
         entry = '\n\n%s\n\n' % entry
     print(entry),
-
+    sys.stdout.flush()
 
 def log_env(log, env, message=''):
     with open(log, "a") as logfile:
