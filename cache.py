@@ -108,21 +108,28 @@ def cache(defs, this, full_root=False):
     except:
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
 
-#    upload(this, os.path.join(target, cache_key(defs, this)))
+    if app.config.get('as-password'):
+        upload(defs, this)
 
 
-def upload(this, cachefile):
-    url = app.config['server'] + '/post'
-    params = {"upfile": os.path.basename(cachefile),
-              "folder": os.path.dirname(cachefile), "submit": "Submit"}
-    with open(cachefile, 'rb') as local_file:
+def upload(defs, this):
+    cachefile = get_cache(defs, this)
+    url = app.config['artifact-server'] + 'upload'
+    app.log(this, 'Uploading %s to' % this['cache'], url)
+    params = {"filename": this['cache'], "password": app.config['as-password']}
+    with open(cachefile, 'rb') as f:
         try:
-            response = requests.post(url=url, data=params,
-                                     files={"file": local_file})
-            app.log(this, 'Uploaded artifact', cachefile)
+            response = requests.post(url=url, data=params, files={"file": f})
+            if response.status_code == 201:
+                app.log(this, 'Uploaded artifact', cachefile)
+                return
+            if response.status_code == 405:
+                app.log(this, 'Artifact server already has', this['cache'])
+                return
+            app.log(this, 'Artifact server problem:', response.status_code)
         except:
-            app.log(this, 'Failed to upload', cachefile)
             pass
+        app.log(this, 'Failed to upload', cachefile)
 
 
 def unpack(defs, this):
