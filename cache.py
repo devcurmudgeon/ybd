@@ -101,8 +101,8 @@ def cache(defs, this, full_root=False):
         app.exit(this, 'ERROR: Problem unpacking', cachefile)
 
     try:
-        target = os.path.join(app.config['artifacts'], cache_key(defs, this))
-        os.rename(tmpdir, target)
+        path = os.path.join(app.config['artifacts'], cache_key(defs, this))
+        os.rename(tmpdir, path)
         size = os.path.getsize(get_cache(defs, this))
         app.log(this, 'Now cached %s bytes as' % size, cache_key(defs, this))
     except:
@@ -151,5 +151,39 @@ def get_cache(defs, this):
     cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
     if os.path.isdir(cachedir):
         return os.path.join(cachedir, cache_key(defs, this))
+
+    return get_remote_artifact(defs, this)
+
+
+def get_remote_artifact(defs, this):
+    ''' If a remote cached artifact exists for this, retrieve it '''
+
+    url = app.config['artifact-server'] + 'get/' + cache_key(defs, this)
+    try:
+        response = requests.get(url=url, stream=True)
+    except:
+        return False
+
+    if response.status_code == 200:
+        try:
+            tempfile.tempdir = app.config['tmp']
+            tmpdir = tempfile.mkdtemp()
+            cachefile = os.path.join(tmpdir, cache_key(defs, this))
+            with open(cachefile, 'wb') as f:
+                shutil.copyfileobj(response.raw, f)
+
+            unpackdir = cachefile + '.unpacked'
+            os.makedirs(unpackdir)
+            if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
+                app.exit(this, 'ERROR: Problem unpacking', cachefile)
+
+            path = os.path.join(app.config['artifacts'], cache_key(defs, this))
+            os.rename(tmpdir, path)
+            size = os.path.getsize(get_cache(defs, this))
+            app.log(this, 'Downloaded %s bytes' % size, cache_key(defs, this))
+            return os.path.join(path, cache_key(defs, this))
+        except:
+            app.log(this, 'WARNING: failed downloading', cache_key(defs, this))
+            pass
 
     return False
