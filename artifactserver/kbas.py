@@ -52,12 +52,12 @@ class KeyedBinaryArtifactServer(object):
     @app.get('/<name>')
     @app.get('/artifacts/<name>')
     def list(name=""):
-       current_dir = os.getcwd()
-       os.chdir(config['artifact-dir'])
-       names = glob.glob('*' + name + '*')
-       content = [[x, time.ctime(os.path.getmtime(x))] for x in names]
-       os.chdir(current_dir)
-       return template('kbas', rows=sorted(content))
+        current_dir = os.getcwd()
+        os.chdir(config['artifact-dir'])
+        names = glob.glob('*' + name + '*')
+        content = [[x, time.ctime(os.path.getmtime(x))] for x in names]
+        os.chdir(current_dir)
+        return template('kbas', rows=sorted(content))
 
     @app.get('/get/<cache_id>')
     def get_artifact(cache_id):
@@ -68,11 +68,11 @@ class KeyedBinaryArtifactServer(object):
     def post_artifact():
         if request.forms.get('password') != config['password']:
             print 'Upload attempt: password fail'
-            response.status = 401 # unauthorized
+            response.status = 401  # unauthorized
             return
         cache_id = request.forms.get('filename')
         if os.path.isdir(os.path.join(config['artifact-dir'], cache_id)):
-            response.status = 405 # method not allowed, this artifact exists
+            response.status = 405  # method not allowed, this artifact exists
             return
 
         tempfile.tempdir = config['artifact-dir']
@@ -81,12 +81,12 @@ class KeyedBinaryArtifactServer(object):
             upload = request.files.get('file')
             upload.save(os.path.join(tmpdir, cache_id))
             os.rename(tmpdir, os.path.join(config['artifact-dir'], cache_id))
-            response.status = 201 # success!
+            response.status = 201  # success!
             return
         except:
             # this was a race, remove the tmpdir
             shutil.rmtree(tmpdir)
-            response.status = 999 # method not allowed, this artifact exists
+            response.status = 999  # method not allowed, this artifact exists
 
         return
 

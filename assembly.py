@@ -203,16 +203,16 @@ def get_build_commands(defs, this):
         return
 
     if this.get('build-system') or os.path.exists(this['path']):
-        build_system = this.get('build-system', 'manual')
-        app.log(this, 'Defined build system is', build_system)
+        bs = this.get('build-system', 'manual')
+        app.log(this, 'Defined build system is', bs)
     else:
         files = os.listdir(this['build'])
-        build_system = defs.defaults.detect_build_system(files)
-        app.log(this, 'Autodetected build system is', build_system)
+        bs = defs.defaults.detect_build_system(files)
+        app.log(this, 'Autodetected build system is', bs)
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:
-            commands = defs.defaults.build_systems[build_system].get(build_step, [])
+            commands = defs.defaults.build_systems[bs].get(build_step, [])
             this[build_step] = commands
 
 

@@ -42,7 +42,7 @@ class Defaults(object):
 
         if not os.path.exists(defaults_file):
             defaults_file = os.path.join(os.path.dirname(__file__),
-                                             app.config['defaults'])
+                                         app.config['defaults'])
         defaults = self._load(defaults_file, ignore_errors=True)
         return defaults
 

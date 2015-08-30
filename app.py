@@ -51,6 +51,7 @@ def log(component, message='', data=''):
     print(entry),
     sys.stdout.flush()
 
+
 def log_env(log, env, message=''):
     with open(log, "a") as logfile:
         for key in sorted(env):
