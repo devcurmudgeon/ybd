@@ -101,7 +101,7 @@ def _install(defs, this, component):
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
             _install(defs, this, subcomponent)
 
-    unpackdir = cache.unpack(defs, component)
+    unpackdir = cache.get_cache(defs, component) + '.unpacked'
     if this.get('kind') is 'system':
         utils.copy_all_files(unpackdir, this['sandbox'])
     else:

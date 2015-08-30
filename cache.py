@@ -95,24 +95,30 @@ def cache(defs, this, full_root=False):
         utils.make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
 
-    unpackdir = cachefile + '.unpacked'
+    unpack(defs, this, cachefile)
+
+    if app.config.get('as-password') and app.config.get('artifact-server'):
+        if this.get('kind') is not 'cluster':
+            with app.timer(this, 'upload'):
+                upload(defs, this)
+
+
+def unpack(defs, this, tmpfile):
+    unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
-    if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
-        app.exit(this, 'ERROR: Problem unpacking', cachefile)
+    if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
+        app.exit(this, 'ERROR: Problem unpacking', tmpfile)
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
-        os.rename(tmpdir, path)
+        os.rename(os.path.dirname(tmpfile), path)
         size = os.path.getsize(get_cache(defs, this))
         app.log(this, 'Now cached %s bytes as' % size, cache_key(defs, this))
+        return path
     except:
-        app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
-        return
-
-    if app.config.get('as-password') and app.config.get('artifact-server'):
-        if this['kind'] is not 'cluster':
-            with app.timer(this, 'upload'):
-                upload(defs, this)
+        app.log(this, 'Bah! I raced on', cache_key(defs, this))
+        shutil.rmtree(os.path.dirname(tmpfile))
+        return False
 
 
 def upload(defs, this):
@@ -132,23 +138,7 @@ def upload(defs, this):
             app.log(this, 'Artifact server problem:', response.status_code)
         except:
             pass
-        app.log(this, 'Failed to upload', cachefile)
-
-
-def unpack(defs, this):
-    cachefile = get_cache(defs, this)
-    if not cachefile:
-        get_remote_artifact(defs, this)
-    cachefile = get_cache(defs, this)
-    if cachefile:
-        unpackdir = cachefile + '.unpacked'
-        if not os.path.exists(unpackdir):
-            os.makedirs(unpackdir)
-            if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
-                app.exit(this, 'ERROR: Problem unpacking', cachefile)
-        return unpackdir
-
-    app.exit(this, 'ERROR: Cached artifact not found', cache_key(defs, this))
+        app.log(this, 'Failed to upload', this['cache'])
 
 
 def get_cache(defs, this):
@@ -184,16 +174,7 @@ def get_remote_artifact(defs, this):
             with open(cachefile, 'wb') as f:
                 shutil.copyfileobj(response.raw, f)
 
-            unpackdir = cachefile + '.unpacked'
-            os.makedirs(unpackdir)
-            if call(['tar', 'xf', cachefile, '--directory', unpackdir]):
-                app.exit(this, 'ERROR: Problem unpacking', cachefile)
-
-            path = os.path.join(app.config['artifacts'], cache_key(defs, this))
-            os.rename(tmpdir, path)
-            size = os.path.getsize(get_cache(defs, this))
-            app.log(this, 'Downloaded %s bytes' % size, cache_key(defs, this))
-            return os.path.join(path, cache_key(defs, this))
+            return unpack(defs, this, cachefile)
 
         except:
             app.log(this, 'WARNING: failed downloading', cache_key(defs, this))
