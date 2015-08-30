@@ -107,9 +107,11 @@ def cache(defs, this, full_root=False):
         app.log(this, 'Now cached %s bytes as' % size, cache_key(defs, this))
     except:
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
+        return
 
     if app.config.get('as-password'):
-        upload(defs, this)
+        with app.timer(this, 'upload'):
+            upload(defs, this)
 
 
 def upload(defs, this):
