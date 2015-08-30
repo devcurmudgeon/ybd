@@ -138,7 +138,8 @@ def upload(defs, this):
 def unpack(defs, this):
     cachefile = get_cache(defs, this)
     if not cachefile:
-         cachefile = get_remote_artifact(defs, this)
+        get_remote_artifact(defs, this)
+    cachefile = get_cache(defs, this)
     if cachefile:
         unpackdir = cachefile + '.unpacked'
         if not os.path.exists(unpackdir):
