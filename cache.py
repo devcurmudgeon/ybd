@@ -160,8 +160,8 @@ def get_cache(defs, this):
 def get_remote_artifact(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
 
-    url = app.config['artifact-server'] + 'get/' + cache_key(defs, this)
     try:
+        url = app.config['artifact-server'] + 'get/' + cache_key(defs, this)
         response = requests.get(url=url, stream=True)
     except:
         return False
@@ -184,8 +184,8 @@ def get_remote_artifact(defs, this):
             size = os.path.getsize(get_cache(defs, this))
             app.log(this, 'Downloaded %s bytes' % size, cache_key(defs, this))
             return os.path.join(path, cache_key(defs, this))
+
         except:
             app.log(this, 'WARNING: failed downloading', cache_key(defs, this))
-            pass
 
     return False
