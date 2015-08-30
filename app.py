@@ -94,13 +94,10 @@ def setup(args):
     # Suppress multiple instances of the same warning.
     warnings.simplefilter('once', append=True)
 
-    conf_file = './ybd.conf'
-    if not os.path.exists(conf_file):
-        conf_file = os.path.join(os.path.dirname(__file__), 'ybd.conf')
-    with open(conf_file) as f:
-        text = f.read()
-    for key, value in yaml.safe_load(text).items():
-        config[key] = value
+    # load config files in reverse order of precedence
+    load_configs(['./ybd.conf',
+                  os.path.join(os.path.dirname(__file__), 'ybd.conf'),
+                  os.path.join(os.path.dirname(__file__), 'config/ybd.conf')])
     config['total'] = config['tasks'] = config['counter'] = 0
     config['pid'] = os.getpid()
     config['program'] = os.path.basename(args[0])
@@ -130,8 +127,17 @@ def setup(args):
         config['max-jobs'] = max(int(cores * 1.5 + 0.5), 1)
 
     log('SETUP', '%s version is' % config['program'], config['my-version'])
-    log('SETUP', 'Default configuration is:\n\n%s' % text)
     log('SETUP', 'Max-jobs is set to', config['max-jobs'])
+
+
+def load_configs(config_files):
+    for config_file in reversed(config_files):
+        if os.path.exists(config_file):
+            with open(config_file) as f:
+                text = f.read()
+            for key, value in yaml.safe_load(text).items():
+                config[key] = value
+            log('SETUP', 'Configuration from %s:\n\n' % config_file, text)
 
 
 @contextlib.contextmanager
