@@ -35,7 +35,7 @@ with app.timer('TOTAL'):
     with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
-        cache.get_cache(defs, app.config['target'])
+        cache.cache_key(defs, app.config['target'])
     defs.save_trees()
 
     sandbox.executor = sandboxlib.executor_for_platform()
