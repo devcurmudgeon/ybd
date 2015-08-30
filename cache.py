@@ -109,9 +109,10 @@ def cache(defs, this, full_root=False):
         app.log(this, 'Bah! I raced and rebuilt', cache_key(defs, this))
         return
 
-    if app.config.get('as-password'):
-        with app.timer(this, 'upload'):
-            upload(defs, this)
+    if app.config.get('as-password') and app.config.get('artifact-server'):
+        if this['kind'] is not 'cluster':
+            with app.timer(this, 'upload'):
+                upload(defs, this)
 
 
 def upload(defs, this):
@@ -135,7 +136,7 @@ def upload(defs, this):
 
 
 def unpack(defs, this):
-    cachefile = get_cache(defs, this)
+    cachefile = get_cache(defs, this) or get_remote_artifact(defs, this)
     if cachefile:
         unpackdir = cachefile + '.unpacked'
         if not os.path.exists(unpackdir):
@@ -154,16 +155,22 @@ def get_cache(defs, this):
     if os.path.isdir(cachedir):
         return os.path.join(cachedir, cache_key(defs, this))
 
-    return get_remote_artifact(defs, this)
+    return False
 
 
 def get_remote_artifact(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
 
+    if app.config.get('artifact-server', None) is None:
+        return False
+
     try:
         url = app.config['artifact-server'] + 'get/' + cache_key(defs, this)
+        app.log(this, 'Try downloading', cache_key(defs, this))
         response = requests.get(url=url, stream=True)
     except:
+        app.config.pop('artifact-server')
+        app.log(this, 'WARNING: artifact server is not working')
         return False
 
     if response.status_code == 200:
