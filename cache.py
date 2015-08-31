@@ -97,8 +97,9 @@ def cache(defs, this, full_root=False):
 
     unpack(defs, this, cachefile)
 
-    if app.config.get('as-password') and app.config.get('artifact-server'):
-        if this.get('kind') is not 'cluster':
+    if app.config.get('kbas-password') and app.config.get('kbas-url') and \
+            app.config['kbas-password'] != 'insecure':
+        if this.get('kind') is not 'cluster' and app.config['kbas-password']:
             with app.timer(this, 'upload'):
                 upload(defs, this)
 
@@ -123,7 +124,7 @@ def unpack(defs, this, tmpfile):
 
 def upload(defs, this):
     cachefile = get_cache(defs, this)
-    url = app.config['artifact-server'] + 'upload'
+    url = app.config['kbas-url'] + 'upload'
     app.log(this, 'Uploading %s to' % this['cache'], url)
     params = {"filename": this['cache'], "password": app.config['as-password']}
     with open(cachefile, 'rb') as f:
@@ -154,16 +155,16 @@ def get_cache(defs, this):
 def get_remote_artifact(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
 
-    if app.config.get('artifact-server', None) is None:
+    if app.config.get('kbas-url', None) is None:
         return False
 
     try:
-        url = app.config['artifact-server'] + 'get/' + cache_key(defs, this)
+        url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
         app.log(this, 'Try downloading', cache_key(defs, this))
         response = requests.get(url=url, stream=True)
     except:
-        app.config.pop('artifact-server')
-        app.log(this, 'WARNING: artifact server is not working')
+        app.config.pop('kbas-url')
+        app.log(this, 'WARNING: remote artifact server is not working')
         return False
 
     if response.status_code == 200:
