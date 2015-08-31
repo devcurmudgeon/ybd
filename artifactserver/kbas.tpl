@@ -4,7 +4,7 @@
   <meta http-equiv="content-type"
  content="text/html; charset=ISO-8859-1">
   <title>index</title>
-  <link type="text/css" href="cssfiles/mainpagecss.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="{{css}}"/>
 </head>
 <body>
 %#template to generate a HTML table from a list 

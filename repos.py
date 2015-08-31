@@ -23,6 +23,8 @@ import string
 from subprocess import call, check_output
 import sys
 
+import requests
+
 import app
 import utils
 
@@ -82,9 +84,9 @@ def get_tree(this):
         try:
             url = (app.config['cache-server'] + 'repo=' +
                    get_repo_url(this['repo']) + '&ref=' + ref)
-            with urlopen(url) as response:
-                tree = json.loads(response.read().decode())['tree']
-                return tree
+            response = requests.get(url=url)
+            tree = response.json()['tree']
+            return tree
         except:
             app.log(this, 'WARNING: no tree from cache-server', ref)
             mirror(this['name'], this['repo'])
