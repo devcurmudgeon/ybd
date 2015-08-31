@@ -24,8 +24,10 @@ import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
 
+import app
+
 config = {}
-app = Bottle()
+bottle = Bottle()
 
 
 class KeyedBinaryArtifactServer(object):
@@ -35,48 +37,43 @@ class KeyedBinaryArtifactServer(object):
         Configuration can be found in the associated kbas.conf file.'''
 
     def __init__(self):
-        conf = './kbas.conf'
-        if not os.path.exists(conf):
-            conf = os.path.join(os.path.dirname(__file__), 'kbas.conf')
-        with open(conf) as f:
-            text = f.read()
-        for key, value in yaml.safe_load(text).items():
-            config[key] = value
-        # for development:
-        if config['mode'] == 'development':
-            app.run(host=config['host'], port=config['port'],
-                    debug=True, reloader=True)
-        else:
-            app.run(host=config['host'], port=config['port'])
+        app.load_configs(['./kbas.conf', './config/kbas.conf'])
 
-    @app.get('/<name>')
-    @app.get('/artifacts/<name>')
+        # for development:
+        if app.config.get('mode') == 'development':
+            bottle.run(host=app.config['host'], port=app.config['port'],
+                       debug=True, reloader=True)
+        else:
+            bottle.run(host=app.config['host'], port=app.config['port'])
+
+    @bottle.get('/<name>')
+    @bottle.get('/artifacts/<name>')
     def list(name=""):
         current_dir = os.getcwd()
-        os.chdir(config['artifact-dir'])
+        os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
         content = [[x, time.ctime(os.path.getmtime(x))] for x in names]
         os.chdir(current_dir)
         return template('kbas', rows=sorted(content), css='css')
 
-    @app.get('/get/<cache_id>')
+    @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         path = os.path.join(cache_id, cache_id)
-        return static_file(path, root=config['artifact-dir'], download=True)
+        return static_file(path, root=app.config['artifact-dir'], download=True)
 
-    @app.get('/status')
+    @bottle.get('/status')
     def status():
         return ('ybd kbas status coming soon...')
 
-    @app.post('/upload')
+    @bottle.post('/upload')
     def post_artifact():
-        if config['password'] is 'insecure' or \
-                request.forms.get('password') != config['password']:
+        if app.config['password'] is 'insecure' or \
+                request.forms.get('password') != app.config['password']:
             print 'Upload attempt: password fail'
             response.status = 401  # unauthorized
             return
         cache_id = request.forms.get('filename')
-        if os.path.isdir(os.path.join(config['artifact-dir'], cache_id)):
+        if os.path.isdir(os.path.join(app.config['artifact-dir'], cache_id)):
             response.status = 405  # method not allowed, this artifact exists
             return
 
@@ -85,7 +82,7 @@ class KeyedBinaryArtifactServer(object):
         try:
             upload = request.files.get('file')
             upload.save(os.path.join(tmpdir, cache_id))
-            os.rename(tmpdir, os.path.join(config['artifact-dir'], cache_id))
+            os.rename(tmpdir, os.path.join(app.config['artifact-dir'], cache_id))
             response.status = 201  # success!
             return
         except:
