@@ -57,12 +57,16 @@ class KeyedBinaryArtifactServer(object):
         names = glob.glob('*' + name + '*')
         content = [[x, time.ctime(os.path.getmtime(x))] for x in names]
         os.chdir(current_dir)
-        return template('kbas', rows=sorted(content))
+        return template('kbas', rows=sorted(content), css='css')
 
     @app.get('/get/<cache_id>')
     def get_artifact(cache_id):
         path = os.path.join(cache_id, cache_id)
         return static_file(path, root=config['artifact-dir'], download=True)
+
+    @app.get('/status')
+    def status():
+        return ('Status coming soon...')
 
     @app.post('/upload')
     def post_artifact():
