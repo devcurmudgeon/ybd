@@ -66,11 +66,12 @@ class KeyedBinaryArtifactServer(object):
 
     @app.get('/status')
     def status():
-        return ('Status coming soon...')
+        return ('ybd kbas status coming soon...')
 
     @app.post('/upload')
     def post_artifact():
-        if request.forms.get('password') != config['password']:
+        if config['password'] is 'insecure' or \
+                request.forms.get('password') != config['password']:
             print 'Upload attempt: password fail'
             response.status = 401  # unauthorized
             return
