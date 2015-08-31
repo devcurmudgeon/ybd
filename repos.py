@@ -79,13 +79,13 @@ def get_tree(this):
 
     if not os.path.exists(gitdir):
         try:
-            url = (app.config['cache-server'] + 'repo=' +
+            url = (app.config['git-server'] + 'repo=' +
                    get_repo_url(this['repo']) + '&ref=' + ref)
             response = requests.get(url=url)
             tree = response.json()['tree']
             return tree
         except:
-            app.log(this, 'WARNING: no tree from cache-server', ref)
+            app.log(this, 'WARNING: no tree from git-server', ref)
             mirror(this['name'], this['repo'])
 
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
