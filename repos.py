@@ -14,7 +14,6 @@
 #
 # =*= License: GPL-2 =*=
 
-
 import os
 import json
 import re
@@ -33,11 +32,9 @@ if sys.version_info.major == 2:
     # For compatibility with Python 2.
     from ConfigParser import RawConfigParser
     from StringIO import StringIO
-    from urllib2 import urlopen
 else:
     from configparser import RawConfigParser
     from io import StringIO
-    from urllib.request import urlopen
 
 
 def get_repo_url(repo):
