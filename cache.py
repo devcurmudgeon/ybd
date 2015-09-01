@@ -100,9 +100,9 @@ def cache(defs, this, full_root=False):
 
     unpack(defs, this, cachefile)
 
-    if app.config.get('kbas-password') and app.config.get('kbas-url') and \
-            app.config['kbas-password'] != 'insecure':
-        if this.get('kind') is not 'cluster' and app.config['kbas-password']:
+    if app.config.get('kbas-password', 'insecure') != 'insecure' and \
+            app.config.get('kbas-url', 'http://foo.bar/') != 'http://foo.bar/':
+        if this.get('kind') is not 'cluster':
             with app.timer(this, 'upload'):
                 upload(defs, this)
 
@@ -158,7 +158,7 @@ def get_cache(defs, this):
 def get_remote_artifact(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
 
-    if app.config.get('kbas-url', None) is None:
+    if app.config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
         return False
 
     try:
