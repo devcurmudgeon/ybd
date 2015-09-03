@@ -42,7 +42,7 @@ def assemble(defs, target):
     if cache.get_remote_artifact(defs, target):
         return cache.cache_key(defs, target)
 
-    with app.timer(component, 'assembly'):
+    with app.timer(component, 'assembly of %s' % component['cache']):
         sandbox.setup(component)
 
         systems = component.get('systems', [])
@@ -67,7 +67,7 @@ def assemble(defs, target):
 
         app.config['counter'] += 1
         if 'systems' not in component:
-            with app.timer(component, 'build'):
+            with app.timer(component, 'build of %s' % component['cache']):
                 build(defs, component)
         with app.timer(component, 'artifact creation'):
             do_manifest(component)
