@@ -49,23 +49,19 @@ def assemble(defs, target):
         random.shuffle(systems)
         for system in systems:
             assemble(defs, system['path'])
-
             for subsystem in system.get('subsystems', []):
                 assemble(defs, subsystem)
-
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
         for it in dependencies:
-            dependency = defs.get(it)
-            assemble(defs, dependency)
-            sandbox.install(defs, component, dependency)
+            preinstall(defs, component, it)
 
         contents = component.get('contents', [])
         random.shuffle(contents)
         for it in contents:
             subcomponent = defs.get(it)
-            if subcomponent.get('build-mode') != 'bootstrap':
+            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
                 assemble(defs, subcomponent)
                 sandbox.install(defs, component, subcomponent)
 
@@ -80,6 +76,32 @@ def assemble(defs, target):
         sandbox.remove(component)
 
     return cache.cache_key(defs, component)
+
+
+def preinstall(defs, component, it):
+    '''Install it and all its recursed dependencies into component sandbox.'''
+    dependency = defs.get(it)
+    if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+                                   dependency['name'] + '.meta')):
+        return
+
+    dependencies = dependency.get('build-depends', [])
+    random.shuffle(dependencies)
+    for dep in dependencies:
+        it = defs.get(dep)
+        if (it.get('build-mode', 'staging') ==
+                dependency.get('build-mode', 'staging')):
+         preinstall(defs, component, it)
+
+    contents = dependency.get('contents', [])
+    random.shuffle(contents)
+    for sub in contents:
+        it = defs.get(sub)
+        if it.get('build-mode', 'staging') != 'bootstrap':
+            preinstall(defs, component, it)
+
+    assemble(defs, dependency)
+    sandbox.install(defs, component, dependency)
 
 
 def build(defs, this):
