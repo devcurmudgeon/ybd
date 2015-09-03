@@ -20,7 +20,8 @@
 import os
 import sys
 import app
-from assembly import assemble, deploy
+from assembly import assemble
+from deployment import deploy
 from definitions import Definitions
 import cache
 import sandbox
