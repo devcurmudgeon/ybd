@@ -42,19 +42,17 @@ def assemble(defs, target):
     if cache.get_remote_artifact(defs, target):
         return cache.cache_key(defs, target)
 
-    def assemble_system_recursively(system):
-        assemble(defs, system['path'])
-
-        for subsystem in system.get('subsystems', []):
-            assemble_system_recursively(subsystem)
-
     with app.timer(component, 'assembly'):
         sandbox.setup(component)
 
         systems = component.get('systems', [])
         random.shuffle(systems)
         for system in systems:
-            assemble_system_recursively(system)
+            assemble(defs, system['path'])
+
+            for subsystem in system.get('subsystems', []):
+                assemble(defs, subsystem)
+
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
