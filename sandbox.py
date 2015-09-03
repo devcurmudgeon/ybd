@@ -81,7 +81,25 @@ def install(defs, this, component):
                                    component['name'] + '.meta')):
         return
 
+    _install(defs, this, component)
+
+
+def _install(defs, this, component):
+    if os.path.exists(os.path.join(this['sandbox'], 'baserock',
+                                   component['name'] + '.meta')):
+        return
+
     app.log(this, 'Installing %s' % component['cache'])
+    for it in component.get('build-depends', []):
+        dependency = defs.get(it)
+        if (dependency.get('build-mode', 'staging') ==
+                component.get('build-mode', 'staging')):
+            _install(defs, this, dependency)
+
+    for it in component.get('contents', []):
+        subcomponent = defs.get(it)
+        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            _install(defs, this, subcomponent)
 
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
     if this.get('kind') is 'system':

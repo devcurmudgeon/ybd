@@ -53,34 +53,19 @@ def assemble(defs, target):
             for subsystem in system.get('subsystems', []):
                 assemble(defs, subsystem)
 
-        def descend_deps(defs, component, it):
-            dependency = defs.get(it)
-
-            for dep in dependency.get('build-depends', []):
-                it = defs.get(dep)
-                if (it.get('build-mode', 'staging') ==
-                        dependency.get('build-mode', 'staging')):
-	                descend_deps(defs, component, it)
-
-            for sub in dependency.get('contents', []):
-                it = defs.get(sub)
-                if it.get('build-mode', 'staging') != 'bootstrap':
-                    descend_deps(defs, component, it)
-
-            assemble(defs, dependency)
-            sandbox.install(defs, component, dependency)
-
 
         dependencies = component.get('build-depends', [])
         random.shuffle(dependencies)
         for it in dependencies:
-            descend_deps(defs, component, it)
+            dependency = defs.get(it)
+            assemble(defs, dependency)
+            sandbox.install(defs, component, dependency)
 
         contents = component.get('contents', [])
         random.shuffle(contents)
         for it in contents:
             subcomponent = defs.get(it)
-            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            if subcomponent.get('build-mode') != 'bootstrap':
                 assemble(defs, subcomponent)
                 sandbox.install(defs, component, subcomponent)
 
