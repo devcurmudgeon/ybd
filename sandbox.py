@@ -81,7 +81,6 @@ def install(defs, this, component):
                                    component['name'] + '.meta')):
         return
 
-    app.log(this, 'Installing %s' % component['cache'])
     _install(defs, this, component)
 
 
@@ -90,6 +89,7 @@ def _install(defs, this, component):
                                    component['name'] + '.meta')):
         return
 
+    app.log(this, 'Installing %s' % component['cache'])
     for it in component.get('build-depends', []):
         dependency = defs.get(it)
         if (dependency.get('build-mode', 'staging') ==
