@@ -71,7 +71,8 @@ def install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
-
+    if app.config.get('verbose-logs'):
+        app.log(this, 'Installing %s' % component['cache'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
     if this.get('kind') is 'system':
         utils.copy_all_files(unpackdir, this['sandbox'])
