@@ -131,7 +131,8 @@ def upload(defs, this):
     cachefile = get_cache(defs, this)
     url = app.config['kbas-url'] + 'upload'
     app.log(this, 'Uploading %s to' % this['cache'], url)
-    params = {"filename": this['cache'], "password": app.config['as-password']}
+    params = {"filename": this['cache'],
+              "password": app.config['kbas-password']}
     with open(cachefile, 'rb') as f:
         try:
             response = requests.post(url=url, data=params, files={"file": f})
