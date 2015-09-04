@@ -116,13 +116,32 @@ explain what is happening. if you need a permanent log then try
 
     ../ybd/ybd.py clusters/upgrade-devel.morph | tee some-memorable-name.log
 
+
+### experimental features
+
+#### run ybd in parallel
+ybd can fork several instances of itself to parallelise its work. there is no
+intelligence in the scheduling at this point - all of the forks just randomise
+their build-order and try to build everything. the result is lots of races, but
+for building a set of overlapping systems in parallel on a many core machine it
+proves to be quite effective if not 100% efficient. For example on a 40-core
+AWS m4.10xlarge machine, 5 racing instances of ybd take only 90 minutes to
+build the x86_64 systems in definitions/clusters/ci.morph
+
+#### cache server
+there's a basic server which can be used to allow other users to access
+pre-built artifacts from previous or current runs of ybd. See kbas.py for the
+code. with minimal configuration it can serve artifacts to instances of ybd on
+other machines, and also receive uploaded artifacts too.
+
+
 ### comparison with morph
 
 - morph does lots of things ybd can't do, and has lots of config options
 - ybd has core functionality only - parse definitions, build, cache artifacts
 - no branch|checkout|edit|merge (use git and be done)
 - no need for workspaces
-- no need to be in a Baserock vm or a Baserock chroot - ybd should run on
+- no need to be in a Baserock vm or a Baserock chroot - ybd runs on
 other Linux operating systems (eg Ubuntu, Fedora, Debian) and maybe even
 non-Linux operating systems (eg BSD, MacOS). However it may be have differently
 and current Baserock definitions are Linux-specific.
@@ -160,7 +179,6 @@ doing to/with ybd:
   - can't select which subsystems to deploy (need to iron out the definitions)
   - alter the deployment parameters (templating, or commandline?)
   - deploy other-architecture stuff
-- remote cache appliance
 - run without root privileges on non-Linux environments (eg Mac OS - needs a
   different isolation method instead of linux-user-chroot)
 - test assumptions by creating definitions for other OS software sets, eg
@@ -170,7 +188,6 @@ doing to/with ybd:
 - command line syntax and args
 - add some or all of ybd to definitions, as reference code to parse and build
   definitions.
-- handle arch properly
 
 ### and if possible
 
