@@ -126,6 +126,8 @@ def unpack(defs, this, tmpfile):
 
 
 def upload(defs, this):
+    if this.get('kind', 'chunk') != 'chunk':
+        return
     cachefile = get_cache(defs, this)
     url = app.config['kbas-url'] + 'upload'
     app.log(this, 'Uploading %s to' % this['cache'], url)
