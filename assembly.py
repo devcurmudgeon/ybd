@@ -63,8 +63,7 @@ def assemble(defs, target):
         for it in contents:
             subcomponent = defs.get(it)
             if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-                assemble(defs, subcomponent)
-                sandbox.install(defs, component, subcomponent)
+                preinstall(defs, component, subcomponent)
 
         app.config['counter'] += 1
         if 'systems' not in component:
