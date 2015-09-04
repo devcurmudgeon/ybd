@@ -51,6 +51,7 @@ class Definitions(object):
                             if things_have_changed and definitions_schema:
                                 app.log(filename, 'Validating schema')
                                 js.validate(contents, definitions_schema)
+                            self._fix_keys(contents)
                             self._tidy_and_insert_recursively(contents)
 
         self.defaults = defaults.Defaults()
@@ -91,25 +92,14 @@ class Definitions(object):
         Takes a dict containing the content of a definition file.
 
         Inserts the definitions referenced or defined in the
-        'build-dependencies' and 'contents' keys of `definition` into the
+        'build-depends' and 'contents' keys of `definition` into the
         dictionary, and then inserts `definition` itself into the
         dictionary.
 
         '''
-        self._fix_path_name(definition)
-
         # handle morph syntax oddities...
-        def fix_path_names(system):
-            self._fix_path_name(system)
-            for subsystem in system.get('subsystems', []):
-                fix_path_names(subsystem)
-
-        for system in definition.get('systems', []):
-            fix_path_names(system)
-
-        for index, component in enumerate(
-                definition.get('build-depends', [])):
-            self._fix_path_name(component)
+        for index, component in enumerate(definition.get('build-depends', [])):
+            self._fix_keys(component)
             definition['build-depends'][index] = self._insert(component)
 
         # The 'contents' field in the internal data model corresponds to the
@@ -122,11 +112,11 @@ class Definitions(object):
 
         lookup = {}
         for index, component in enumerate(definition.get('contents', [])):
-            self._fix_path_name(component)
+            self._fix_keys(component)
             lookup[component['name']] = component['path']
             if component['name'] == definition['name']:
                 app.log(definition,
-                        'WARNING: %s contains' % definition['name'],
+                        'WARNING: %s contains' % definition['path'],
                         component['name'])
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
@@ -139,14 +129,15 @@ class Definitions(object):
 
         return self._insert(definition)
 
-    def _fix_path_name(self, definition, name='ERROR'):
-        '''Standardises the key for a definition
+    def _fix_keys(self, definition, name='ERROR'):
+        '''Normalizes keys for a definition dict and its contents
 
-        Some definitions have a 'morph' key which is a relative path. Others
-        only have a 'name' key, which has no directory part.
+        Some definitions have a 'morph' field which is a relative path. Others
+        only have a 'name' field, which has no directory part. A few do not
+        have a 'name'
 
-        This sets our key to be 'path', and fixes 'name' to be the same as
-        'path' but replacing '/' by '-'
+        This sets our key to be 'path', and fixes any missed 'name' to be
+        the same as 'path' but replacing '/' by '-'
 
         '''
         if definition.get('path', None) is None:
@@ -159,18 +150,22 @@ class Definitions(object):
         if definition['name'] == app.config['target']:
             app.config['target'] = definition['path']
 
+        for system in (definition.get('systems', []) +
+                       definition.get('subsystems', [])):
+            self._fix_keys(system)
+
     def _insert(self, new_def):
         '''Insert a new definition into the dictionary, return the key.
 
         Takes a dict representing a single definition.
 
-        If a definition with the same 'path' already exists, extend the
-        existing definition with the contents of `new_def` unless it
-        and the new definition contain a 'ref'. If any keys are
-        duplicated in the existing definition, output a warning.
-
         If a definition with the same 'path' doesn't exist, just add
         `new_def` to the dictionary.
+
+        If a definition with the same 'path' already exists, extend the
+        existing definition with the contents of `new_def` unless it
+        and the new definition both contain a 'ref'. If any keys are
+        duplicated in the existing definition, output a warning.
 
         '''
         definition = self._definitions.get(new_def['path'])
