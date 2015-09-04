@@ -77,7 +77,7 @@ class KeyedBinaryArtifactServer(object):
             response.status = 405  # method not allowed, this artifact exists
             return
 
-        tempfile.tempdir = config['artifact-dir']
+        tempfile.tempdir = app.config['artifact-dir']
         tmpdir = tempfile.mkdtemp()
         try:
             upload = request.files.get('file')
