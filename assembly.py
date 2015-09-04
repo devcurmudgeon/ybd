@@ -39,8 +39,9 @@ def assemble(defs, target):
         app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
-    if cache.get_remote_artifact(defs, target):
-        return cache.cache_key(defs, target)
+    if cache.get_remote_artifact(defs, component):
+        app.config['counter'] += 1
+        return cache.cache_key(defs, component)
 
     with app.timer(component, 'assembly of %s' % component['cache']):
         sandbox.setup(component)
