@@ -35,23 +35,14 @@ from repos import get_repo_url
 executor = None
 
 
-def builddir_for_component(this):
-    return this['name'] + '.build'
-
-
-def installdir_for_component(this):
-    return this['name'] + '.inst'
-
-
 def setup(this):
     currentdir = os.getcwd()
-
     tempfile.tempdir = app.config['tmp']
     this['sandbox'] = tempfile.mkdtemp()
     this['build'] = os.path.join(
-        this['sandbox'], builddir_for_component(this))
+        this['sandbox'], this['name'] + '.build')
     this['install'] = os.path.join(
-        this['sandbox'], installdir_for_component(this))
+        this['sandbox'], this['name'] + '.inst')
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
     this['tmp'] = os.path.join(this['sandbox'], 'tmp')
     for directory in ['build', 'install', 'tmp', 'baserockdir']:
@@ -138,13 +129,13 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
             writable_paths = 'all'
         else:
             writable_paths = [
-                builddir_for_component(this),
-                installdir_for_component(this),
+                this['name'] + '.build',
+                this['name'] + '.inst',
                 '/dev', '/proc', '/tmp',
             ]
 
         config = dict(
-            cwd=builddir_for_component(this),
+            cwd=this['name'] + '.build',
             filesystem_root=this['sandbox'],
             filesystem_writable_paths=writable_paths,
             mounts='isolated',
