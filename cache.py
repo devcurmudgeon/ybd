@@ -134,7 +134,7 @@ def upload(defs, this):
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                app.log(this, 'Uploaded artifact', cachefile)
+                app.log(this, 'Uploaded artifact', this['cache'])
                 return
             if response.status_code == 405:
                 app.log(this, 'Artifact server already has', this['cache'])
