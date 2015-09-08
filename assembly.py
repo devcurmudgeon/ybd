@@ -35,13 +35,13 @@ def assemble(defs, target):
 
     random.seed(datetime.datetime.now())
     component = defs.get(target)
-    if component.get('arch') and component['arch'] != app.config['arch']:
-        app.log(target, 'Skipping assembly for', component.get('arch'))
-        return None
-
     if cache.get_remote_artifact(defs, component):
         app.config['counter'] += 1
         return cache.cache_key(defs, component)
+
+    if component.get('arch') and component['arch'] != app.config['arch']:
+        app.log(target, 'Skipping assembly for', component.get('arch'))
+        return None
 
     with app.timer(component, 'assembly of %s' % component['cache']):
         sandbox.setup(component)
