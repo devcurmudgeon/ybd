@@ -19,6 +19,7 @@
 
 import os
 import sys
+import fcntl
 import app
 from assembly import assemble
 from deployment import deploy
@@ -31,6 +32,12 @@ import sandboxlib
 print('')
 with app.timer('TOTAL'):
     app.setup(sys.argv)
+
+    app.cleanup(app.config['tmp'])
+
+    lockfile = open(os.path.join(app.config['base'], 'lock'), 'r')
+    fcntl.flock(lockfile, fcntl.LOCK_SH | fcntl.LOCK_NB)
+
     target = os.path.join(app.config['defdir'], app.config['target'])
     app.log('TARGET', 'Target is %s' % target, app.config['arch'])
     with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
