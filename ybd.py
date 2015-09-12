@@ -34,7 +34,7 @@ app.setup(sys.argv)
 app.cleanup(app.config['tmp'])
 
 with app.timer('TOTAL'):
-    lockfile = open(os.path.join(app.config['base'], 'lock'), 'r')
+    lockfile = open(os.path.join(app.config['tmp'], 'lock'), 'r')
     fcntl.flock(lockfile, fcntl.LOCK_SH | fcntl.LOCK_NB)
 
     target = os.path.join(app.config['defdir'], app.config['target'])
