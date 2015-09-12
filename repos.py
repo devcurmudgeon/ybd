@@ -26,6 +26,7 @@ import requests
 
 import app
 import utils
+import tempfile
 
 
 if sys.version_info.major == 2:
@@ -107,10 +108,8 @@ def get_tree(this):
 
 
 def mirror(name, repo):
-    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
-    tmpdir = gitdir + '.tmp'
-    if os.path.isdir(tmpdir):
-        shutil.rmtree(tmpdir)
+    tempfile.tempdir = app.config['tmp']
+    tmpdir = tempfile.mkdtemp()
     repo_url = get_repo_url(repo)
     try:
         os.makedirs(tmpdir)
@@ -137,9 +136,12 @@ def mirror(name, repo):
         if call(['git', 'rev-parse']):
             app.exit(name, 'ERROR: problem mirroring git repo at', tmpdir)
 
-    os.rename(tmpdir, gitdir)
-    app.log(name, 'Git repo is mirrored at', gitdir)
-
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
+    try:
+        os.rename(tmpdir, gitdir)
+        app.log(name, 'Git repo is mirrored at', gitdir)
+    except:
+        pass
 
 def fetch(repo):
     with app.chdir(repo), open(os.devnull, "w") as fnull:
