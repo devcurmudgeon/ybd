@@ -144,7 +144,7 @@ def load_configs(config_files):
 
 def cleanup(tmpdir):
     try:
-        with open(os.path.join(config['base'], 'lock'), 'w') as lockfile:
+        with open(os.path.join(tmpdir, 'lock'), 'w') as lockfile:
             fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
             to_delete = os.listdir(tmpdir)
             fcntl.flock(lockfile, fcntl.LOCK_SH | fcntl.LOCK_NB)

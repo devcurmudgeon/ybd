@@ -30,11 +30,10 @@ import sandboxlib
 
 
 print('')
+app.setup(sys.argv)
+app.cleanup(app.config['tmp'])
+
 with app.timer('TOTAL'):
-    app.setup(sys.argv)
-
-    app.cleanup(app.config['tmp'])
-
     lockfile = open(os.path.join(app.config['base'], 'lock'), 'r')
     fcntl.flock(lockfile, fcntl.LOCK_SH | fcntl.LOCK_NB)
 
