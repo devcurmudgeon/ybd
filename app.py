@@ -39,6 +39,9 @@ def log(component, message='', data=''):
     name = component['name'] if type(component) is dict else component
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    if config.get('log-elapsed'):
+        timestamp = datetime.datetime.now().strftime('%y-%m-%d') + ' ' + \
+                    elapsed(config['start-time'])
     progress = ''
     if config.get('counter'):
         progress = '[%s/%s/%s] ' % (config['counter'], config['tasks'],
@@ -78,6 +81,7 @@ def setup(args):
         sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
         sys.exit(1)
 
+    config['start-time'] = datetime.datetime.now()
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     if len(args) == 3:
         arch = args[2]
