@@ -167,7 +167,8 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(argv))
             call(['tail', '-n', '200', this['log']])
-            app.exit(this, 'ERROR: log file is at', this['log'])
+            app.log(this, 'ERROR: log file is at', this['log'])
+            app.exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
     finally:
         if cur_makeflags is not None:
             env['MAKEFLAGS'] = cur_makeflags

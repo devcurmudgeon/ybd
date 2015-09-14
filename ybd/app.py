@@ -49,8 +49,6 @@ def log(component, message='', data=''):
     if config.get('instances'):
         entry = str(config.get('fork', 0)) + ' ' + entry
 
-    if 'ERROR' in entry:
-        entry = '\n\n%s\n\n' % entry
     print(entry),
     sys.stdout.flush()
 
@@ -65,7 +63,9 @@ def log_env(log, env, message=''):
 
 
 def exit(component, message, data):
+    print('\n\n')
     log(component, message, data)
+    print('\n\n')
     sys.exit(1)
 
 
