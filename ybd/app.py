@@ -127,9 +127,8 @@ def setup(args):
     # the right flag in an environment variable.
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
-    cores = cpu_count() / config.get('instances', 1)
     if not config.get('max-jobs'):
-        config['max-jobs'] = max(int(cores * 1.5 + 0.5), 1)
+        config['max-jobs'] = cpu_count() / config.get('instances', 1)
 
     log('SETUP', '%s version is' % config['program'], config['my-version'])
     log('SETUP', 'Max-jobs is set to', config['max-jobs'])
