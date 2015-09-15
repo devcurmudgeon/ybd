@@ -40,8 +40,7 @@ def log(component, message='', data=''):
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     if config.get('log-elapsed'):
-        timestamp = datetime.datetime.now().strftime('%y-%m-%d') + ' ' + \
-                    elapsed(config['start-time'])
+        timestamp = timestamp[:9] + elapsed(config['start-time'])
     progress = ''
     if config.get('counter'):
         progress = '[%s/%s/%s] ' % (config['counter'], config['tasks'],
