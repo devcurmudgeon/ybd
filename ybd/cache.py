@@ -153,6 +153,20 @@ def get_cache(defs, this):
 
     cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
     if os.path.isdir(cachedir):
+        artifact = os.path.join(cachedir, cache_key(defs, this))
+        unpackdir = artifact + '.unpacked'
+        if not os.path.isdir(unpackdir):
+            tempfile.tempdir = app.config['tmp']
+            tmpdir = tempfile.mkdtemp()
+            if call(['tar', 'xf', artifact, '--directory', tmpdir]):
+                app.exit(this, 'ERROR: Problem unpacking', artifact)
+            try:
+                os.rename(tmpdir, unpackdir)
+            except:
+                # corner case... if we are here ybd is multi-instance, this
+                # artifact was uploaded from somewhere, and more than one
+                # instance is attempting to unpack. another got there first
+                pass
         return os.path.join(cachedir, cache_key(defs, this))
 
     return False
