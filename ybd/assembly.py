@@ -54,7 +54,6 @@ def assemble(defs, target):
                 assemble(defs, subsystem)
 
         dependencies = component.get('build-depends', [])
-        random.shuffle(dependencies)
         for it in dependencies:
             preinstall(defs, component, it)
 
