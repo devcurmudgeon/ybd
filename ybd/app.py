@@ -101,9 +101,9 @@ def setup(args):
     warnings.simplefilter('once', append=True)
 
     # load config files in reverse order of precedence
-    load_configs(['./ybd.conf',
-                  os.path.join(os.path.dirname(__file__), 'ybd.conf'),
-                  os.path.join(os.path.dirname(__file__), 'config/ybd.conf')])
+    load_configs([
+        './ybd.conf',
+        os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
     config['total'] = config['tasks'] = config['counter'] = 0
     config['pid'] = os.getpid()
     config['program'] = os.path.basename(args[0])
