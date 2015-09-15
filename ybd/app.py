@@ -101,7 +101,8 @@ def setup(args):
 
     # load config files in reverse order of precedence
     load_configs([
-        './ybd.conf',
+        os.path.join(os.getcwd(), 'ybd.conf'),
+        os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
     config['total'] = config['tasks'] = config['counter'] = 0
     config['pid'] = os.getpid()
@@ -139,9 +140,9 @@ def load_configs(config_files):
         if os.path.exists(config_file):
             with open(config_file) as f:
                 text = f.read()
+            log('SETUP', 'Setting config from %s:\n\n' % config_file, text)
             for key, value in yaml.safe_load(text).items():
                 config[key] = value
-            log('SETUP', 'Configuration from %s:\n\n' % config_file, text)
 
 
 def cleanup(tmpdir):

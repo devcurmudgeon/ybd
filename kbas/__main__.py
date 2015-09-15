@@ -38,7 +38,7 @@ class KeyedBinaryArtifactServer(object):
 
     def __init__(self):
         app.load_configs([
-            './kbas.conf',
+            os.path.join(os.getcwd(), 'kbas.conf'),
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
 
         # for development:
