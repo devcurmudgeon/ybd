@@ -37,7 +37,9 @@ class KeyedBinaryArtifactServer(object):
         Configuration can be found in the associated kbas.conf file.'''
 
     def __init__(self):
-        app.load_configs(['./kbas.conf', './config/kbas.conf'])
+        app.load_configs([
+            './kbas.conf',
+            os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
 
         # for development:
         if app.config.get('mode') == 'development':
