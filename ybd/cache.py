@@ -79,14 +79,14 @@ def cache_key(defs, this):
     return definition['cache']
 
 
-def cache(defs, this, full_root=False):
+def cache(defs, this):
     if get_cache(defs, this):
         app.log(this, "Bah! I could have cached", cache_key(defs, this))
         return
     tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(defs, this))
-    if full_root:
+    if this.get('kind') == "system":
         utils.hardlink_all_files(this['install'], this['sandbox'])
         shutil.rmtree(this['install'])
         shutil.rmtree(this['build'])

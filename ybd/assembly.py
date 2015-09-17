@@ -20,7 +20,7 @@ from subprocess import call, check_output
 
 import json
 import app
-import cache
+from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
 from shutil import copyfile
@@ -31,8 +31,8 @@ def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
     component = defs.get(target)
-    if cache.get_cache(defs, component) or cache.get_remote(defs, component):
-        return cache.cache_key(defs, component)
+    if get_cache(defs, component) or get_remote(defs, component):
+        return cache_key(defs, component)
 
     random.seed(datetime.datetime.now())
 
@@ -67,11 +67,10 @@ def assemble(defs, target):
                 build(defs, component)
         with app.timer(component, 'artifact creation'):
             do_manifest(component)
-            cache.cache(defs, component,
-                        full_root=component.get('kind') == "system")
+            cache(defs, component)
         sandbox.remove(component)
 
-    return cache.cache_key(defs, component)
+    return cache_key(defs, component)
 
 
 def preinstall(defs, component, it):

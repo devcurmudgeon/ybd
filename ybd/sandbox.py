@@ -39,10 +39,8 @@ def setup(this):
     currentdir = os.getcwd()
     tempfile.tempdir = app.config['tmp']
     this['sandbox'] = tempfile.mkdtemp()
-    this['build'] = os.path.join(
-        this['sandbox'], this['name'] + '.build')
-    this['install'] = os.path.join(
-        this['sandbox'], this['name'] + '.inst')
+    this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
+    this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
     this['tmp'] = os.path.join(this['sandbox'], 'tmp')
     for directory in ['build', 'install', 'tmp', 'baserockdir']:
