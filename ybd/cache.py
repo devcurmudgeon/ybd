@@ -172,7 +172,7 @@ def get_cache(defs, this):
     return False
 
 
-def get_remote_artifact(defs, this):
+def get_remote(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
     if app.config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
         return False
