@@ -17,6 +17,8 @@
 import os
 import random
 from subprocess import call, check_output
+import contextlib
+import fcntl
 
 import json
 import app
@@ -61,16 +63,48 @@ def assemble(defs, target):
             if subcomponent.get('build-mode', 'staging') != 'bootstrap':
                 preinstall(defs, component, subcomponent)
 
-        app.config['counter'] += 1
         if 'systems' not in component:
-            with app.timer(component, 'build of %s' % component['cache']):
-                build(defs, component)
+            if is_building(defs, component) and not component.get('visited'):
+                app.log(component, 'This is already building - restart')
+                component['visited'] = True
+                raise Exception
+
+            app.config['counter'] += 1
+            if not get_cache(defs, component):
+                with app.timer(component, 'build of %s' % component['cache']):
+                    with claim(defs, component):
+                        build(defs, component)
+
         with app.timer(component, 'artifact creation'):
             do_manifest(component)
             cache(defs, component)
         sandbox.remove(component)
 
     return cache_key(defs, component)
+
+
+def lockfile(defs, this):
+    return os.path.join(app.config['tmp'], cache_key(defs, this) + '.lock')
+
+
+def is_building(defs, this):
+    try:
+        with open(lockfile(defs, this), 'w') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return False
+    except:
+        return True
+
+
+@contextlib.contextmanager
+def claim(defs, this):
+    with open(lockfile(defs, this), 'a') as l:
+
+        fcntl.flock(l, fcntl.LOCK_SH | fcntl.LOCK_NB)
+        try:
+            yield
+        finally:
+            return
 
 
 def preinstall(defs, component, it):

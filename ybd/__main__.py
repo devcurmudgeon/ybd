@@ -54,5 +54,10 @@ with app.timer('TOTAL'):
     if app.config.get('instances'):
         app.spawn()
 
-    assemble(defs, app.config['target'])
+    done = False
+    while not done:
+       try:
+           done = assemble(defs, app.config['target'])
+       except:
+           pass
     deploy(defs, app.config['target'])
