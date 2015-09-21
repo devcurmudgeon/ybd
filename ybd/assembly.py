@@ -82,7 +82,6 @@ def preinstall(defs, component, it):
         return
 
     dependencies = dependency.get('build-depends', [])
-    random.shuffle(dependencies)
     for dep in dependencies:
         it = defs.get(dep)
         if (it.get('build-mode', 'staging') ==
