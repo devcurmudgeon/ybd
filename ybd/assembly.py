@@ -64,9 +64,9 @@ def assemble(defs, target):
                 preinstall(defs, component, subcomponent)
 
         if 'systems' not in component:
-            if is_building(defs, component) and not component.get('visited'):
-                app.log(component, 'This is already building - restart')
-                component['visited'] = True
+            if is_building(defs, component):
+                import time
+                time.sleep(10)
                 raise Exception
 
             app.config['counter'] += 1

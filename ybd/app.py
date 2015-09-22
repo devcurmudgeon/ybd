@@ -178,11 +178,15 @@ def timer(this, message=''):
     log(this, 'Starting ' + message)
     if type(this) is dict:
         this['start-time'] = starttime
+    do_log = True
     try:
         yield
+    except:
+        do_log = False
     finally:
-        text = '' if message == '' else ' for ' + message
-        log(this, 'Elapsed time' + text, elapsed(starttime))
+        if do_log is True:
+            text = '' if message == '' else ' for ' + message
+            log(this, 'Elapsed time' + text, elapsed(starttime))
 
 
 def elapsed(starttime):
