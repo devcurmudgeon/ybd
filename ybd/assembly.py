@@ -42,43 +42,42 @@ def assemble(defs, target):
         app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
-    with app.timer(component, 'assembly of %s' % component['cache']):
-        sandbox.setup(component)
+    sandbox.setup(component)
 
-        systems = component.get('systems', [])
-        random.shuffle(systems)
-        for system in systems:
-            assemble(defs, system['path'])
-            for subsystem in system.get('subsystems', []):
-                assemble(defs, subsystem)
+    systems = component.get('systems', [])
+    random.shuffle(systems)
+    for system in systems:
+        assemble(defs, system['path'])
+        for subsystem in system.get('subsystems', []):
+            assemble(defs, subsystem)
 
-        dependencies = component.get('build-depends', [])
-        for it in dependencies:
-            preinstall(defs, component, it)
+    dependencies = component.get('build-depends', [])
+    for it in dependencies:
+        preinstall(defs, component, it)
 
-        contents = component.get('contents', [])
-        random.shuffle(contents)
-        for it in contents:
-            subcomponent = defs.get(it)
-            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-                preinstall(defs, component, subcomponent)
+    contents = component.get('contents', [])
+    random.shuffle(contents)
+    for it in contents:
+        subcomponent = defs.get(it)
+        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            preinstall(defs, component, subcomponent)
 
-        if 'systems' not in component:
-            if is_building(defs, component):
-                import time
-                time.sleep(10)
-                raise Exception
+    if 'systems' not in component:
+        if is_building(defs, component):
+            import time
+            time.sleep(10)
+            raise Exception
 
-            app.config['counter'] += 1
-            if not get_cache(defs, component):
-                with app.timer(component, 'build of %s' % component['cache']):
-                    with claim(defs, component):
-                        build(defs, component)
+        app.config['counter'] += 1
+        if not get_cache(defs, component):
+            with app.timer(component, 'build of %s' % component['cache']):
+                with claim(defs, component):
+                    build(defs, component)
 
-        with app.timer(component, 'artifact creation'):
-            do_manifest(component)
-            cache(defs, component)
-        sandbox.remove(component)
+    with app.timer(component, 'artifact creation'):
+        do_manifest(component)
+        cache(defs, component)
+    sandbox.remove(component)
 
     return cache_key(defs, component)
 
