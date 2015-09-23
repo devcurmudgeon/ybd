@@ -14,7 +14,6 @@
 #
 # =*= License: GPL-2 =*=
 
-
 import requests
 
 import hashlib
@@ -29,6 +28,7 @@ import repos
 import utils
 import tempfile
 
+cache_list={}
 
 def cache_key(defs, this):
     definition = defs.get(this)
@@ -76,6 +76,15 @@ def cache_key(defs, this):
     if not get_cache(defs, this):
         app.config['tasks'] += 1
     app.log(definition, 'Cache_key is', definition['cache'])
+
+    # If you want to catalog the artifacts for a system, do so
+    if app.config.get('cache-log'):
+        cache_list[definition.get('name')] = definition.get('cache')
+        if definition.get('kind') == 'system':
+            with open(app.config.get('cache-log'),'w') as f:
+                f.write(json.dumps(cache_list,indent=4))
+            app.log('cache-log', 'cache logged to',app.config.get('cache-log'))
+
     return definition['cache']
 
 
