@@ -48,8 +48,8 @@ with app.timer('TOTAL'):
     sandbox.executor = sandboxlib.executor_for_platform()
     app.log(app.config['target'], 'Sandbox using %s' % sandbox.executor)
     if sandboxlib.chroot == sandbox.executor:
-        app.log(app.config['target'], 'WARNING: rogue builds in a chroot ' +
-                'sandbox may overwrite your system')
+        app.log(app.config['target'], 'WARNING: using chroot is less safe ' +
+                'than using linux-user-chroot')
 
     if app.config.get('instances'):
         app.spawn()
