@@ -25,10 +25,8 @@ import sandbox
 def deploy(defs, target):
     '''Deploy a cluster definition.'''
 
-    deployment = target if type(target) is dict else defs.get(target)
-
-    with app.timer(deployment, 'deployment'):
-        for system in deployment.get('systems', []):
+    with app.timer(target, 'deployment'):
+        for system in target.get('systems', []):
             deploy_system(defs, system)
 
 

@@ -55,9 +55,14 @@ with app.timer('TOTAL'):
         app.spawn()
 
     done = False
+    target = defs.get(app.config['target'])
     while not done:
        try:
-           done = assemble(defs, app.config['target'])
+           done = assemble(defs, target)
+       except KeyboardInterrupt:
+           app.log(target, 'Keyboard interrupt')
+           done = True
        except:
            pass
-    deploy(defs, app.config['target'])
+    if target.get('kind') is 'cluster':
+        deploy(defs, target)
