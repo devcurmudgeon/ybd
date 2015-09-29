@@ -29,12 +29,13 @@ including, for example
 
 it can also deploy some systems in some ways.
 
-ybd is under development. things will change :)
+ybd is under development. things will change :) If you're trying ybd for the
+first time please start with the latest tag, not master.
 
 ### dependencies
 
 currently ybd is for Linux only, and requires git, gcc, make, autotools,
-linux-user-chroot, python, tar, wget. note that the Baserock definitions also
+python, tar, wget. note that the Baserock definitions also
 require gawk.
 
 so for a Debian-based system:
@@ -111,8 +112,8 @@ Some examples to try:
    ../ybd/ybd.py clusters/upgrade-devel.morph
 ```
 
-currently ybd generates a lot of log output to stdout, which hopefully helps to
-explain what is happening. if you need a permanent log then try
+currently ybd generates a lot of log output to stdout, which hopefully helps
+to explain what is happening. if you need a permanent log then try
 
     ../ybd/ybd.py clusters/upgrade-devel.morph | tee some-memorable-name.log
 
