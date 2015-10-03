@@ -74,9 +74,6 @@ def assemble(defs, target):
                 with claim(defs, component):
                     build(defs, component)
 
-    if os.listdir(component['install']) == ['baserock']:
-        app.exit(component, 'Install directory is empty')
-
     with app.timer(component, 'artifact creation'):
         do_manifest(component)
         cache(defs, component)
