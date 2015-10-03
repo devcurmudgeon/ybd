@@ -182,12 +182,10 @@ def timer(this, message=''):
     try:
         yield
     except:
-        do_log = False
-    finally:
-        if do_log is True:
-            text = '' if message == '' else ' for ' + message
-            log(this, 'Elapsed time' + text, elapsed(starttime))
-
+        raise
+    else:
+        text = '' if message == '' else ' for ' + message
+        log(this, 'Elapsed time' + text, elapsed(starttime))
 
 def elapsed(starttime):
     td = datetime.datetime.now() - starttime
