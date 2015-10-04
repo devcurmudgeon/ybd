@@ -39,7 +39,6 @@ def assemble(defs, target):
     random.seed(datetime.datetime.now())
 
     if component.get('arch') and component['arch'] != app.config['arch']:
-        app.log(target, 'Skipping assembly for', component.get('arch'))
         return None
 
     sandbox.setup(component)
@@ -70,13 +69,13 @@ def assemble(defs, target):
 
         app.config['counter'] += 1
         if not get_cache(defs, component):
-            with app.timer(component, 'build of %s' % component['cache']):
-                with claim(defs, component):
+            with claim(defs, component):
+                with app.timer(component, 'build of %s' % component['cache']):
                     build(defs, component)
+                with app.timer(component, 'artifact creation'):
+                    do_manifest(component)
+                    cache(defs, component)
 
-    with app.timer(component, 'artifact creation'):
-        do_manifest(component)
-        cache(defs, component)
     sandbox.remove(component)
 
     return cache_key(defs, component)
