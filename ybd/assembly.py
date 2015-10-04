@@ -68,30 +68,11 @@ def assemble(defs, target):
             time.sleep(10)
             raise Exception
 
+        app.config['counter'] += 1
         if not get_cache(defs, component):
-            try:
-                with claim(defs, component), \
-                    app.timer(component,
-                              'build of %s' % component['cache']):
-                    app.config['counter'] += 1
+            with app.timer(component, 'build of %s' % component['cache']):
+                with claim(defs, component):
                     build(defs, component)
-            except IOError as e:
-                if e.errno == errno.EWOULDBLOCK:
-                    # Assume this is because lock failed - wait before retry
-					with open(lockfile(defs, component), 'r') as l:
-					    # --conflict-exit-code says that if we timed out
-					    # return the specified code. Since we skip the extra
-					    # wait on both timeout & success, we can set it to 0.
-					    ret = subprocess.call(['flock', '--shared',
-					                           '--timeout', str(60 * 5),
-					                           '--conflict-exit-code', '0',
-					                           str(l.fileno())])
-					    if ret != 0:
-					        # Failed for some unknown reason, wait for 10 so
-					        # if waiting is broken we fall back to a busy-wait
-					        time.sleep(10)
-					    raise Exception() # retry
-                raise
 
     with app.timer(component, 'artifact creation'):
         do_manifest(component)
