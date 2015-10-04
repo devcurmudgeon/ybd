@@ -62,7 +62,6 @@ def setup(this):
 def remove(this):
     if this['sandbox'] != '/' and os.path.isdir(this['sandbox']):
         shutil.rmtree(this['sandbox'])
-        app.log(this, 'Cleaned up', this['sandbox'])
 
 
 def install(defs, this, component):

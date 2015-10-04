@@ -61,21 +61,29 @@ def assemble(defs, target):
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
             preinstall(defs, component, subcomponent)
 
-    if 'systems' not in component:
-        if not get_cache(defs, component):
-            try:
-                with claim(defs, component):
-                    app.config['counter'] += 1
-                    with app.timer(component, 'build of %s' % component['cache']):
-                        build(defs, component)
-                    with app.timer(component, 'artifact creation'):
-                        do_manifest(component)
-                        cache(defs, component)
-            except IOError as e:
-                if e.errno == errno.EWOULDBLOCK:
-                    # Assume this is because lock failed, so wait to retry
+    if 'systems' not in component and not get_cache(defs, component):
+        try:
+            with claim(defs, component):
+                app.config['counter'] += 1
+                with app.timer(component, 'build of %s' % component['cache']):
+                    build(defs, component)
+                with app.timer(component, 'artifact creation'):
+                    do_manifest(component)
+                    cache(defs, component)
+        except IOError as e:
+            sandbox.remove(component)
+            # Assume this is because lock failed, so wait to retry
+            with open(lockfile(defs, component), 'r') as l:
+                # --conflict-exit-code says that if we timed out,
+                # return the specified code. We skip the extra wait
+                # on both timeout and success, so set it to 0.
+                ret = call(['flock', '--shared', '--timeout', str(300), \
+                            '--conflict-exit-code', '0', str(l.fileno())])
+                if ret != 0:
+                    # Failed for some reason - fall back to busy-wait
+                    import time
                     time.sleep(10)
-                raise
+            raise
 
     sandbox.remove(component)
 
@@ -89,7 +97,6 @@ def lockfile(defs, this):
 @contextlib.contextmanager
 def claim(defs, this):
     with open(lockfile(defs, this), 'a') as l:
-
         fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
         try:
             yield
