@@ -26,11 +26,19 @@ from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
 from shutil import copyfile
-import datetime
+import time, datetime
 
 
 class RetryException(Exception):
-    pass
+    def __init__(self, defs, component):
+        if app.config.get('last-retry'):
+            wait = datetime.datetime.now() - app.config.get('last-retry')
+            if wait.seconds < 1:
+                with open(lockfile(defs, component), 'r') as l:
+                    call(['flock', '--shared', '--timeout', str(30), \
+                          str(l.fileno())])
+        app.config['last-retry'] = datetime.datetime.now()
+        pass
 
 
 def assemble(defs, target):
@@ -76,18 +84,7 @@ def assemble(defs, target):
                     cache(defs, component)
         except IOError as e:
             sandbox.remove(component)
-            # Assume this is because lock failed, so wait to retry
-            with open(lockfile(defs, component), 'r') as l:
-                # --conflict-exit-code says that if we timed out,
-                # return the specified code. We skip the extra wait
-                # on both timeout and success, so set it to 0.
-                ret = call(['flock', '--shared', '--timeout', str(300), \
-                            '--conflict-exit-code', '0', str(l.fileno())])
-                if ret != 0:
-                    # Failed for some reason - fall back to busy-wait
-                    import time
-                    time.sleep(10)
-            raise RetryException
+            raise RetryException(defs, component)
 
     sandbox.remove(component)
 
