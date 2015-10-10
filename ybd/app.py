@@ -28,8 +28,6 @@ import platform
 from repos import get_version
 
 
-xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
-    os.path.join(os.path.expanduser('~'), '.cache')
 config = {}
 
 
@@ -108,15 +106,18 @@ def setup(args):
     config['pid'] = os.getpid()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))
-    config['defdir'] = os.getcwd()
-    config['extsdir'] = os.path.join(config['defdir'], 'extensions')
     config['def-version'] = get_version('.')
 
-    dirs = ['artifacts', 'ccache_dir', 'deployment', 'gits', 'tidy', 'tmp']
-    config['base'] = os.path.join(xdg_cache_home, config['base'])
-    for directory in dirs:
+    config['defdir'] = os.getcwd()
+    config['extsdir'] = os.path.join(config['defdir'], 'extensions')
+    base_dir = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~')
+    config['base'] = os.path.join(base_dir, config['base'])
+    for directory, path in config.get('directories', {}).items():
         try:
-            config[directory] = os.path.join(config['base'], directory)
+            if config.get(directory) is None:
+                if path is None:
+                    path = os.path.join(config.get('base', '/'), directory)
+                config[directory] = path
             os.makedirs(config[directory])
         except OSError:
             if not os.path.isdir(config[directory]):
