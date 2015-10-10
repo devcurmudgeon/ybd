@@ -148,10 +148,10 @@ def load_configs(config_files):
 
 def cleanup(tmpdir):
     try:
-        with open(os.path.join(tmpdir, 'lock'), 'w') as lockfile:
-            fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with open(os.path.join(tmpdir, 'lock'), 'w') as tmp_lock:
+            fcntl.flock(tmp_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             to_delete = os.listdir(tmpdir)
-            fcntl.flock(lockfile, fcntl.LOCK_SH | fcntl.LOCK_NB)
+            fcntl.flock(tmp_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
             if os.fork() == 0:
                 for dirname in to_delete:
                     if os.path.isdir(os.path.join(tmpdir, dirname)):
