@@ -29,6 +29,10 @@ from shutil import copyfile
 import datetime
 
 
+class RetryException(Exception):
+    pass
+
+
 def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
@@ -83,7 +87,7 @@ def assemble(defs, target):
                     # Failed for some reason - fall back to busy-wait
                     import time
                     time.sleep(10)
-            raise
+            raise RetryException
 
     sandbox.remove(component)
 

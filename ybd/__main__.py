@@ -21,7 +21,7 @@ import os
 import sys
 import fcntl
 import app
-from assembly import assemble
+from assembly import assemble, RetryException
 from deployment import deploy
 from definitions import Definitions
 import cache
@@ -60,10 +60,12 @@ with app.timer('TOTAL'):
             assemble(defs, target)
             break
         except KeyboardInterrupt:
-            app.log(target, 'Keyboard interrupt')
+            app.log(target, 'Interrupted by user')
             break
-        except:
+        except RetryException:
             pass
+        except:
+            raise
 
     if target.get('kind') is 'cluster':
         deploy(defs, target)
