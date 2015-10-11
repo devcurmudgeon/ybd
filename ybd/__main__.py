@@ -61,7 +61,7 @@ with app.timer('TOTAL'):
             break
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
-            break
+            sys.exit(1)
         except RetryException:
             pass
         except:
