@@ -117,7 +117,7 @@ def mirror(name, repo):
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(app.config['tar-url'], tar_file)])
-            call(['tar', 'xf', tar_file])
+            call(['tar', 'xf', tar_file], stderr=fnull)
             os.remove(tar_file)
             call(['git', 'config', 'remote.origin.url', repo_url])
             call(['git', 'config', 'remote.origin.mirror', 'true'])
