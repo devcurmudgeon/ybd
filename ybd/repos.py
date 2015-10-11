@@ -112,7 +112,6 @@ def mirror(name, repo):
     tmpdir = tempfile.mkdtemp()
     repo_url = get_repo_url(repo)
     try:
-        os.makedirs(tmpdir)
         tar_file = get_repo_name(repo_url) + '.tar'
         app.log(name, 'Try fetching tarball %s' % tar_file)
         # try tarball first
