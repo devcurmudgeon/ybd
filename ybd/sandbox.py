@@ -53,11 +53,6 @@ def setup(this):
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
-    devnull = os.path.join(assembly_dir, 'dev/null')
-    if not os.path.exists(devnull):
-        call(['sudo', 'mknod', devnull, 'c', '1', '3'])
-        call(['sudo', 'chmod', '666', devnull])
-
 
 def remove(this):
     if this['sandbox'] != '/' and os.path.isdir(this['sandbox']):
