@@ -38,6 +38,7 @@ class RetryException(Exception):
                     call(['flock', '--shared', '--timeout', str(30), \
                           str(l.fileno())])
         app.config['last-retry'] = datetime.datetime.now()
+        app.config['last-retry-component'] = component
         pass
 
 

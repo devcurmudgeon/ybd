@@ -186,6 +186,9 @@ def get_remote(defs, this):
     if app.config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
         return False
 
+    if app.config.get('last-retry-component') == this:
+        return False
+
     if this.get('kind', 'chunk') != 'chunk':
         return False
 
