@@ -19,7 +19,7 @@ import json
 import re
 import shutil
 import string
-from subprocess import call, check_output
+from subprocess import call, check_output, check_call
 import sys
 
 import requests
@@ -190,6 +190,34 @@ def checkout(name, repo, ref, checkout):
                 checkout_submodules(name, ref)
 
     utils.set_mtime_recursively(checkout)
+
+
+def extract_commit(name, repo, ref, target_dir):
+    '''Check out a single commit (or tree) from a Git repo.
+    The checkout() function actually clones the entire repo, so this
+    function is much quicker when you don't need to copy the whole repo into
+    target_dir.
+    '''
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
+    if not os.path.exists(gitdir):
+        mirror(name, repo)
+    elif not mirror_has_ref(gitdir, ref):
+        update_mirror(name, repo, gitdir)
+
+    with tempfile.NamedTemporaryFile() as git_index_file:
+        git_env = os.environ.copy()
+        git_env['GIT_INDEX_FILE'] = git_index_file.name
+        git_env['GIT_WORK_TREE'] = target_dir
+
+        app.log(name, 'Extracting commit', ref)
+        if call(['git', 'read-tree', ref], env=git_env, cwd=gitdir):
+            app.exit(name, 'ERROR: git read-tree failed for', ref)
+        app.log(name, 'Then checkout index', ref)
+        if call(['git', 'checkout-index', '--all'], env=git_env, cwd=gitdir):
+            app.exit(name, 'ERROR: git checkout-index failed for', ref)
+        app.log(name, 'Done', ref)
+
+    utils.set_mtime_recursively(target_dir)
 
 
 def checkout_submodules(name, ref):
