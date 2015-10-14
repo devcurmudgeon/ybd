@@ -76,18 +76,20 @@ def get_version(gitdir, ref='HEAD'):
 
 def get_tree(this):
     ref = this['ref']
-    gitdir = os.path.join(app.config['gits'], get_repo_name(this['repo']))
 
-    if not os.path.exists(gitdir):
-        try:
-            url = (app.config['tree-server'] + 'repo=' +
-                   get_repo_url(this['repo']) + '&ref=' + ref)
-            response = requests.get(url=url)
-            tree = response.json()['tree']
-            return tree
-        except:
+    try:
+        url = (app.config['tree-server'] + 'repo=' +
+               get_repo_url(this['repo']) + '&ref=' + ref)
+        response = requests.get(url=url)
+        tree = response.json()['tree']
+        return tree
+    except:
+        if app.config.get('tree-server'):
             app.log(this, 'WARNING: no tree from tree-server', ref)
-            mirror(this['name'], this['repo'])
+
+    gitdir = os.path.join(app.config['gits'], get_repo_name(this['repo']))
+    if not os.path.exists(gitdir):
+        mirror(this['name'], this['repo'])
 
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
