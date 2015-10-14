@@ -67,5 +67,5 @@ with app.timer('TOTAL'):
         except:
             raise
 
-    if target.get('kind') is 'cluster':
+    if target.get('kind') == 'cluster':
         deploy(defs, target)
