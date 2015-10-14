@@ -58,6 +58,11 @@ class KeyedBinaryArtifactServer(object):
         os.chdir(current_dir)
         return template('kbas', rows=sorted(content), css='css')
 
+    @bottle.get('/1.0/artifacts')
+    def get_morph_artifact():
+        path = request.query.filename
+        return static_file(path, root=app.config['artifact-dir'], download=True)
+
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         path = os.path.join(cache_id, cache_id)
