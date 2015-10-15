@@ -39,11 +39,14 @@ class Defaults(object):
 
     def _load_defaults(self, defaults_file='./DEFAULTS'):
         '''Get defaults, either from a DEFAULTS file, or built-in defaults.'''
-
-        if not os.path.exists(defaults_file):
-            defaults_file = os.path.join(os.path.dirname(__file__),
-                                         app.config['defaults'])
         defaults = self._load(defaults_file, ignore_errors=True)
+        ybd_defaults_file = os.path.join(os.path.dirname(__file__),
+                                         app.config['defaults'])
+        ybd_defaults = self._load(ybd_defaults_file, ignore_errors=True)
+        for index in ybd_defaults:
+            if defaults.get(index) == None or defaults.get(index) == {}:
+               defaults[index] = ybd_defaults[index]
+
         return defaults
 
     def _load(self, path, ignore_errors=True):
