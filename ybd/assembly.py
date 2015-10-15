@@ -58,7 +58,6 @@ def assemble(defs, target):
         return None
 
     sandbox.setup(component)
-    app.log(component, 'assemble', component['sandbox'])
 
     systems = component.get('systems', [])
     random.shuffle(systems)
