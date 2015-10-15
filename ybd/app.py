@@ -111,7 +111,8 @@ def setup(args):
     config['defdir'] = os.getcwd()
     config['extsdir'] = os.path.join(config['defdir'], 'extensions')
     base_dir = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~')
-    config['base'] = os.path.join(base_dir, config['base'])
+    if config.get('base', None) is None:
+        config['base'] = os.path.join(base_dir, config['directories']['base'])
     for directory, path in config.get('directories', {}).items():
         try:
             if config.get(directory) is None:
