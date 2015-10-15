@@ -74,24 +74,13 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
 
 
 def setup(args):
-    if len(args) not in [2, 3]:
-        sys.stderr.write("Usage: %s DEFINITION_FILE [ARCH]\n\n" % sys.argv[0])
+    if len(args) != 3:
+        sys.stderr.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
         sys.exit(1)
 
     config['start-time'] = datetime.datetime.now()
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
-    if len(args) == 3:
-        arch = args[2]
-    else:
-        arch = platform.machine()
-        if arch in ('mips', 'mips64'):
-            if arch == 'mips':
-                arch = 'mips32'
-            if sys.byteorder == 'big':
-                arch = arch + 'b'
-            else:
-                arch = arch + 'l'
-    config['arch'] = arch
+    config['arch'] = args[2]
 
     warnings.formatwarning = warning_handler
     # Suppress multiple instances of the same warning.

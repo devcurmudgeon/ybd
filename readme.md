@@ -83,12 +83,11 @@ once there you can run (as root)
 where
 
 - $1 is relative path to a chunk, stratum, system or cluster definition file
-- $2 is optional and specifies the architecture you're building/deploying for.
+- $2 specifies the architecture you're building/deploying for.
 
-if you omit $2, ybd tries to use the architecture of your current machine
-(x86_64 for most folks). note that all of the current baserock definitions
-are for native builds, no cross-compile. so if you're on a typical laptop
-it may be that your only option for $2 is `x86_64`
+note that all of the current baserock definitions are for native builds, no
+cross-compile. so if you're on a typical laptop it may be that your only
+option for $2 is `x86_64`
 
 Some examples to try:
 
