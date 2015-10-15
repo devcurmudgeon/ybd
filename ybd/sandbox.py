@@ -39,6 +39,7 @@ def setup(this):
     currentdir = os.getcwd()
     tempfile.tempdir = app.config['tmp']
     this['sandbox'] = tempfile.mkdtemp()
+    app.config['sandboxes'] += [this['sandbox']]
     this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
     this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
     this['baserockdir'] = os.path.join(this['install'], 'baserock')
@@ -52,11 +53,6 @@ def setup(this):
     assembly_dir = this['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
-
-
-def remove(this):
-    if this['sandbox'] != '/' and os.path.isdir(this['sandbox']):
-        shutil.rmtree(this['sandbox'])
 
 
 def install(defs, this, component):

@@ -39,6 +39,9 @@ class RetryException(Exception):
                           str(l.fileno())])
         app.config['last-retry'] = datetime.datetime.now()
         app.config['last-retry-component'] = component
+        for dirname in app.config['sandboxes']:
+            app.remove_dir(dirname)
+        app.config['sandboxes'] = []
         pass
 
 
@@ -55,6 +58,7 @@ def assemble(defs, target):
         return None
 
     sandbox.setup(component)
+    app.log(component, 'assemble', component['sandbox'])
 
     systems = component.get('systems', [])
     random.shuffle(systems)
@@ -84,10 +88,9 @@ def assemble(defs, target):
                     do_manifest(component)
                     cache(defs, component)
         except IOError as e:
-            sandbox.remove(component)
             raise RetryException(defs, component)
 
-    sandbox.remove(component)
+    app.remove_dir(component['sandbox'])
 
     return cache_key(defs, component)
 

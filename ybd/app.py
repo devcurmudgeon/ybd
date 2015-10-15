@@ -81,6 +81,7 @@ def setup(args):
     config['start-time'] = datetime.datetime.now()
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
+    config['sandboxes'] = []
 
     warnings.formatwarning = warning_handler
     # Suppress multiple instances of the same warning.
@@ -152,6 +153,11 @@ def cleanup(tmpdir):
                 sys.exit(0)
     except IOError:
         log('SETUP', 'No cleanup for', tmpdir)
+
+
+def remove_dir(tmpdir):
+    if (os.path.dirname(tmpdir) == config['tmp']) and os.path.isdir(tmpdir):
+        shutil.rmtree(tmpdir)
 
 
 @contextlib.contextmanager

@@ -75,7 +75,7 @@ def deploy_system(defs, system_spec, parent_location=''):
                                   os.path.basename(ext))
         os.chmod(system['sandbox'], 0o755)
         sandbox.run_extension(system, deployment, 'write', method)
-    sandbox.remove(system)
+    app.remove_dir(system['sandbox'])
 
 
 def do_deployment_manifest(system, configuration):
