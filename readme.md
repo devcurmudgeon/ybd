@@ -93,28 +93,28 @@ Some examples to try:
 
 ```
    # on an x86_64 laptop running linux, to build a build-system...
-   ../ybd/ybd.py systems/build-system-x86_64.morph
+   ../ybd/ybd.py systems/build-system-x86_64.morph x86_64
 
    # on the same laptop, to build gcc (and its dependencies)
-   ../ybd/ybd.py gcc
+   ../ybd/ybd.py gcc x86_64
 
    # on the same laptop, to build the genivi stratum (and its dependencies)
    ../ybd/ybd.py strata/genivi.morph x86_64
 
    # on a jetson, to build a GENIVI baseline system...
-   ../ybd/ybd.py systems/genivi-baseline-system-armv7lhf-jetson.morph
+   ../ybd/ybd.py systems/genivi-baseline-system-armv7lhf-jetson.morph armv7lhf
 
    # on anything, to build (and deploy?) parts of baserock release...
-   ../ybd/ybd.py clusters/release.morph
+   ../ybd/ybd.py clusters/release.morph x86_64
 
    # in a baserock devel vm (x86_64), to build and deploy a self-upgrade...
-   ../ybd/ybd.py clusters/upgrade-devel.morph
+   ../ybd/ybd.py clusters/upgrade-devel.morph x86_64
 ```
 
 currently ybd generates a lot of log output to stdout, which hopefully helps
 to explain what is happening. if you need a permanent log then try
 
-    ../ybd/ybd.py clusters/upgrade-devel.morph | tee some-memorable-name.log
+    ../ybd/ybd.py clusters/upgrade-devel.morph x86_64 | tee some-memorable-name.log
 
 
 ### experimental features
