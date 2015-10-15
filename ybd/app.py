@@ -131,9 +131,11 @@ def load_configs(config_files):
         if os.path.exists(config_file):
             with open(config_file) as f:
                 text = f.read()
-            log('SETUP', 'Setting config from %s:\n\n' % config_file, text)
+            log('SETUP', 'Setting config from %s:' % config_file)
             for key, value in yaml.safe_load(text).items():
                 config[key] = value
+                msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
+                log('SETUP', '  %s=%s' % (key, msg))
 
 
 def cleanup(tmpdir):
