@@ -76,8 +76,12 @@ def get_version(gitdir, ref='HEAD'):
 
 def get_tree(this):
     ref = this['ref']
-
     gitdir = os.path.join(app.config['gits'], get_repo_name(this['repo']))
+    if this['repo'].startswith('file://') or this['repo'].startswith('/'):
+        gitdir = this['repo'].replace('file://', '')
+        if not os.path.isdir(gitdir):
+            app.exit(this, 'ERROR: git repo not found:', this['repo'] )
+
     if not os.path.exists(gitdir):
         try:
             url = (app.config['tree-server'] + 'repo=' +
