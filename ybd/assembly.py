@@ -49,7 +49,10 @@ def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
     component = defs.get(target)
-    if get_cache(defs, component) or get_remote(defs, component):
+    if get_cache(defs, component):
+        return cache_key(defs, component)
+    if get_remote(defs, component):
+        app.config['counter'] += 1
         return cache_key(defs, component)
 
     random.seed(datetime.datetime.now())
