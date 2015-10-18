@@ -43,10 +43,6 @@ def deploy_system(defs, system_spec, parent_location=''):
     system = defs.get(system_spec['path'])
     deploy_defaults = system_spec.get('deploy-defaults')
 
-    if system.get('arch') and system['arch'] != app.config['arch']:
-        app.log(system, 'Skipping deployment for', system['arch'])
-        return None
-
     sandbox.setup(system)
     app.log(system, 'Extracting system artifact into', system['sandbox'])
     with open(cache.get_cache(defs, system), 'r') as artifact:
