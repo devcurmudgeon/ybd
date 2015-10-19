@@ -12,7 +12,7 @@
 <table border="0">
 %for row in rows:
   <tr>
-  %for col in row:
+  %for col in reversed(row):
     <td>{{col}}</td>
   %end
   </tr>

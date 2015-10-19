@@ -19,7 +19,7 @@ import logging
 import os
 import glob
 import shutil
-import time
+import time, datetime
 import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
@@ -48,15 +48,22 @@ class KeyedBinaryArtifactServer(object):
         else:
             bottle.run(host=app.config['host'], port=app.config['port'])
 
+    @bottle.get('/static/<filename>')
+    def send_static(filename):
+        current_dir = os.getcwd()
+        static_dir = os.path.join(current_dir, 'kbas/public')
+        return static_file(filename, root=static_dir)
+
     @bottle.get('/<name>')
     @bottle.get('/artifacts/<name>')
     def list(name=""):
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[x, time.ctime(os.path.getmtime(x))] for x in names]
+        content = [[x, datetime.datetime.fromtimestamp(os.path.getmtime(x))]
+                   for x in names]
         os.chdir(current_dir)
-        return template('kbas', rows=sorted(content), css='css')
+        return template('kbas', rows=sorted(content), css='/static/style.css')
 
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
