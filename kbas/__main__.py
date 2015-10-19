@@ -75,9 +75,10 @@ class KeyedBinaryArtifactServer(object):
         path = os.path.join(cache_id, cache_id)
         return static_file(path, root=app.config['artifact-dir'], download=True)
 
+    @bottle.get('/')
     @bottle.get('/status')
     def status():
-        return ('ybd kbas status coming soon...')
+        return ('kbas ok')
 
     @bottle.post('/upload')
     def post_artifact():
