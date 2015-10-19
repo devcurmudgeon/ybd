@@ -19,7 +19,7 @@ import logging
 import os
 import glob
 import shutil
-import time, datetime
+from time import strftime, gmtime	
 import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
@@ -60,7 +60,7 @@ class KeyedBinaryArtifactServer(object):
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[x, datetime.datetime.fromtimestamp(os.path.getmtime(x))]
+        content = [[x, strftime('%y-%m-%d', gmtime(os.path.getmtime(x)))]
                    for x in names]
         os.chdir(current_dir)
         return template('kbas', rows=sorted(content), css='/static/style.css')
