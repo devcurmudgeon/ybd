@@ -1,6 +1,6 @@
 # ybd
 
-ybd is a tool for integrating software stacks. it does four things:
+ybd is a tool for building integrated software stacks. it does four things:
 
 - parse yaml files which describe integrated collections of software components
 - gather source code (from git repos) for a user-specified target collection
@@ -9,25 +9,20 @@ ybd is a tool for integrating software stacks. it does four things:
 
 currently ybd understands the semantics of yaml
 [definitions](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/definitions.git/tree/)
-from the [Baserock](http://wiki.baserock.org) project. ybd provides some of the
-functionality of Baserock morph, without most of the complexity that morph has
-accrued since development started in 2011.
+from the [Baserock](http://wiki.baserock.org) project.
 
-ybd can be a simple start-point for building, deploying, learning and
-experimenting with definitions, algorithms and functionality on Baserock
-projects. with a little work it can be used to build other software stacks too.
-
-the ybd codebase is currently only ~ 2000 lines of Python in 12 source files.
-even so ybd can reproducibly build all systems in Baserock's definitions.git,
-i.e. all of the FOSS components required for Linux appliances up to and
-including, for example
+the total codebase for ybd is only ~ 1700 lines of Python. even so ybd can
+reproducibly build all systems in Baserock's definitions.git, i.e. all of the
+FOSS components required for Linux appliances up to and including, for example
 
 - self-hosting Linux development systems
 - GENIVI baseline systems
 - OpenStack appliances
 - OpenWRT appliances
 
-it can also deploy some systems in some ways.
+ybd is a simple start-point for building, deploying, learning and
+experimenting with definitions, algorithms and functionality on Baserock
+projects. with a little work it can be used to build other software stacks too.
 
 ybd is under development. things will change :) If you're trying ybd for the
 first time please start with the latest tag, not master.
@@ -117,34 +112,31 @@ to explain what is happening. if you need a permanent log then try
     ../ybd/ybd.py clusters/upgrade-devel.morph x86_64 | tee some-memorable-name.log
 
 
-### experimental features
+### interesting features
 
 #### run ybd in parallel
 ybd can fork several instances of itself to parallelise its work. there is no
 intelligence in the scheduling at this point - all of the forks just randomise
-their build-order and try to build everything. the result is lots of races, but
-for building a set of overlapping systems in parallel on a many core machine it
-proves to be quite effective if not 100% efficient. For example on a 40-core
-AWS m4.10xlarge machine, 5 racing instances of ybd take only 90 minutes to
-build the x86_64 systems in definitions/clusters/ci.morph
+their build-order and try to build everything. for building a set of overlapping systems in parallel on a many core machine this proves to be quite
+effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
+of ybd take only 84 minutes to build all of the x86_64 systems in definitions/clusters/ci.morph
 
-#### cache server
+#### kbas cache server
 there's a basic server which can be used to allow other users to access
 pre-built artifacts from previous or current runs of ybd. See kbas.py for the
 code. with minimal configuration it can serve artifacts to instances of ybd on
-other machines, and also receive uploaded artifacts too.
+other machines, and also receive uploaded artifacts.
 
 
 ### comparison with morph
 
-- morph does lots of things ybd can't do, and has lots of config options
+- morph does lots of things ybd can't do, and has more config options
 - ybd has core functionality only - parse definitions, build, cache artifacts
 - no branch|checkout|edit|merge (use git and be done)
 - no need for workspaces
 - no need to be in a Baserock vm or a Baserock chroot - ybd runs on
 other Linux operating systems (eg Ubuntu, Fedora, Debian) and maybe even
-non-Linux operating systems (eg BSD, MacOS). However it may be have differently
-and current Baserock definitions are Linux-specific.
+non-Linux operating systems (eg BSD, MacOS). However it may be have differently and current Baserock definitions are Linux-specific.
 - ybd has an order of magnitude less code, so
   - easier to try things, easier to change things, easier to debug things
   - less to break, less to maintain, less to audit
