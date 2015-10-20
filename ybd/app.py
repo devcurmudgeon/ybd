@@ -168,9 +168,9 @@ def cull(artifact_dir):
     artifacts = sorted_ls(artifact_dir)
     for artifact in artifacts:
         stat = os.statvfs(artifact_dir)
-        free = stat.f_frsize * stat.f_bavail
-        if free / 1000000000 > config.get('min-gigabytes', 10):
-            log('SETUP', '%s bytes is enough free space' % free)
+        free = stat.f_frsize * stat.f_bavail / 1000000000
+        if free > config.get('min-gigabytes', 10):
+            log('SETUP', '%sGB is enough free space' % free)
             if deleted > 0:
                 log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
             return
