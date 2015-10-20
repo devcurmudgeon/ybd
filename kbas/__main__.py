@@ -19,7 +19,8 @@ import logging
 import os
 import glob
 import shutil
-from time import strftime, gmtime	
+from time import strftime, gmtime
+import datetime
 import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
@@ -27,7 +28,6 @@ from subprocess import call
 
 from ybd import app
 
-config = {}
 bottle = Bottle()
 
 
@@ -41,6 +41,7 @@ class KeyedBinaryArtifactServer(object):
         app.load_configs([
             os.path.join(os.getcwd(), 'kbas.conf'),
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
+        app.config['start-time'] = datetime.datetime.now()
 
         # for development:
         if app.config.get('mode') == 'development':
@@ -61,11 +62,13 @@ class KeyedBinaryArtifactServer(object):
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[x, strftime('%y-%m-%d %H:%M:%S',
-                                gmtime(os.path.getctime(x)))]
+        content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))), x]
                    for x in names]
         os.chdir(current_dir)
-        return template('kbas', rows=sorted(content), css='/static/style.css')
+        return template('kbas',
+                        title='Available Artifacts:',
+                        content=reversed(sorted(content)),
+                        css='/static/style.css')
 
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
@@ -86,7 +89,17 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/')
     @bottle.get('/status')
     def status():
-        return ('kbas ok')
+        stat = os.statvfs(app.config['artifact-dir'])
+        free = stat.f_frsize * stat.f_bavail / 1000000000
+        artifacts = len(os.listdir(app.config['artifact-dir']))
+        started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
+        content = [['Started:', started]]
+        content += [['Space:', str(free) + 'GB']]
+        content += [['Files:', str(artifacts)]]
+        return template('kbas',
+                        title='KBAS status',
+                        content=content,
+                        css='/static/style.css')
 
     @bottle.post('/upload')
     def post_artifact():

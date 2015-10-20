@@ -8,12 +8,12 @@
 </head>
 <body>
 %#template to generate a HTML table from a list 
-<p>Available Artifacts:</p>
+<p>{{title}}</p>
 <table border="0">
-%for row in rows:
+%for row in content:
   <tr>
-  %for col in reversed(row):
-    <td>{{col}}</td>
+  %for column in row:
+    <td>{{column}}</td>
   %end
   </tr>
 %end
