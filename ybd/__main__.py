@@ -32,6 +32,7 @@ import sandboxlib
 print('')
 app.setup(sys.argv)
 app.cleanup(app.config['tmp'])
+app.cull(app.config['artifacts'])
 
 with app.timer('TOTAL'):
     tmp_lock = open(os.path.join(app.config['tmp'], 'lock'), 'r')

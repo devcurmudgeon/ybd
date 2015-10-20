@@ -162,6 +162,7 @@ def get_cache(defs, this):
 
     cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
     if os.path.isdir(cachedir):
+        call(['touch', cachedir])
         artifact = os.path.join(cachedir, cache_key(defs, this))
         unpackdir = artifact + '.unpacked'
         if not os.path.isdir(unpackdir):

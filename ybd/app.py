@@ -151,12 +151,36 @@ def cleanup(tmpdir):
             fcntl.flock(tmp_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
             if os.fork() == 0:
                 for dirname in to_delete:
-                    if os.path.isdir(os.path.join(tmpdir, dirname)):
-                        shutil.rmtree(os.path.join(tmpdir, dirname))
+                    remove_dir(os.path.join(tmpdir, dirname))
                 log('SETUP', 'Cleanup successful for', tmpdir)
                 sys.exit(0)
     except IOError:
         log('SETUP', 'No cleanup for', tmpdir)
+
+
+def sorted_ls(path):
+    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+    return list(sorted(os.listdir(path), key=mtime))
+
+
+def cull(artifact_dir):
+    deleted = 0
+    artifacts = sorted_ls(artifact_dir)
+    for artifact in artifacts:
+        stat = os.statvfs(artifact_dir)
+        free = stat.f_frsize * stat.f_bavail
+        if free / 1000000000 > config.get('min-gigabytes', 10):
+            if deleted > 0:
+                log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
+            return
+        path = os.path.join(artifact_dir, artifact)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+        deleted += 1
+    log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
+    log('SETUP', 'ERROR: %s is less than min-gigabytes' % free)
 
 
 def remove_dir(tmpdir):
