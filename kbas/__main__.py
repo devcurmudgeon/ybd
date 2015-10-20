@@ -23,6 +23,7 @@ from time import strftime, gmtime
 import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
+from subprocess import call
 
 from ybd import app
 
@@ -60,20 +61,29 @@ class KeyedBinaryArtifactServer(object):
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[x, strftime('%y-%m-%d', gmtime(os.path.getmtime(x)))]
+        content = [[x, strftime('%y-%m-%d %H:%M:%S',
+                    gmtime(os.path.getmtime(x))),
+                           strftime('%y-%m-%d %H:%M:%S',
+                           gmtime(os.path.getctime(x)))]
                    for x in names]
         os.chdir(current_dir)
         return template('kbas', rows=sorted(content), css='/static/style.css')
 
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
-        path = request.query.filename
-        return static_file(path, root=app.config['artifact-dir'], download=True)
+        f = request.query.filename
+        path = os.path.join(app.config['artifact-dir'], f)
+        if os.path.exists(path):
+            call(['touch', path])
+        return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
-        path = os.path.join(cache_id, cache_id)
-        return static_file(path, root=app.config['artifact-dir'], download=True)
+        f = os.path.join(cache_id, cache_id)
+        path = os.path.join(app.config['artifact-dir'], f)
+        if os.path.exists(path):
+            call(['touch', os.path.dirname(path)])
+        return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/')
     @bottle.get('/status')
