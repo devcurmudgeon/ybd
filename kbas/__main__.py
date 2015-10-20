@@ -62,9 +62,7 @@ class KeyedBinaryArtifactServer(object):
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
         content = [[x, strftime('%y-%m-%d %H:%M:%S',
-                    gmtime(os.path.getmtime(x))),
-                           strftime('%y-%m-%d %H:%M:%S',
-                           gmtime(os.path.getctime(x)))]
+                                gmtime(os.path.getctime(x)))]
                    for x in names]
         os.chdir(current_dir)
         return template('kbas', rows=sorted(content), css='/static/style.css')
