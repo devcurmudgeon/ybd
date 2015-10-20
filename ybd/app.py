@@ -170,6 +170,7 @@ def cull(artifact_dir):
         stat = os.statvfs(artifact_dir)
         free = stat.f_frsize * stat.f_bavail
         if free / 1000000000 > config.get('min-gigabytes', 10):
+            log('SETUP', '%s bytes is enough free space' % free)
             if deleted > 0:
                 log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
             return
