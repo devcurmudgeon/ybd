@@ -56,9 +56,16 @@ class Definitions(object):
 
         self.defaults = defaults.Defaults()
 
-        if self._check_trees():
-            for path in self._definitions:
-                self._definitions[path]['tree'] = self._trees.get(path)
+        caches_are_valid = self._check_trees()
+        for path in self._definitions:
+            try:
+                this = self._definitions[path]
+                if this.get('ref') and self._trees.get(path):
+                    if this['ref']  == self._trees.get(path)[0]:
+                        this['tree'] = self._trees.get(path)[1]
+            except:
+                app.log('DEFINITIONS', 'WARNING: problem with .trees file')
+                pass
 
     def write(self, output):
         for path in self._definitions:
@@ -217,8 +224,6 @@ class Definitions(object):
             if self._trees.get('.checksum') == checksum:
                 return True
         except:
-            if os.path.exists('.trees'):
-                os.remove('.trees')
             self._trees = {}
 
         return False
@@ -235,7 +240,9 @@ class Definitions(object):
         self._trees = {'.checksum': checksum}
         for name in self._definitions:
             if self._definitions[name].get('tree') is not None:
-                self._trees[name] = self._definitions[name]['tree']
+                self._trees[name] = [self._definitions[name]['ref'],
+                                     self._definitions[name]['tree'],
+                                     self._definitions[name]['cache']]
 
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
