@@ -166,6 +166,8 @@ def sorted_ls(path):
 def cull(artifact_dir):
     deleted = 0
     artifacts = sorted_ls(artifact_dir)
+    stat = os.statvfs(artifact_dir)
+    free = stat.f_frsize * stat.f_bavail / 1000000000
     for artifact in artifacts:
         stat = os.statvfs(artifact_dir)
         free = stat.f_frsize * stat.f_bavail / 1000000000
@@ -180,8 +182,8 @@ def cull(artifact_dir):
         else:
             os.remove(path)
         deleted += 1
-    log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
-    log('SETUP', 'ERROR: %s is less than min-gigabytes' % free)
+    if free <  config.get('min-gigabytes', 10):
+        log('SETUP', 'ERROR: %s is less than min-gigabytes' % free)
 
 
 def remove_dir(tmpdir):
