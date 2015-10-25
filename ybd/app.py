@@ -64,7 +64,7 @@ def exit(component, message, data):
     print('\n\n')
     log(component, message, data)
     print('\n\n')
-    sys.exit(1)
+    os._exit(1)
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):

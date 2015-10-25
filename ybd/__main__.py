@@ -62,11 +62,11 @@ with app.timer('TOTAL'):
             break
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
-            sys.exit(1)
+            os._exit(1)
         except RetryException:
             pass
         except:
-            raise
+            os._exit(1)
 
     if target.get('kind') == 'cluster':
         deploy(defs, target)
