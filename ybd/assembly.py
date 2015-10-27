@@ -34,9 +34,11 @@ class RetryException(Exception):
         if app.config.get('last-retry'):
             wait = datetime.datetime.now() - app.config.get('last-retry')
             if wait.seconds < 1:
+                if app.config.get('log-verbose', False) != False:
+                    app.log(component, 'Retrying - may be a bottleneck')
                 with open(lockfile(defs, component), 'r') as l:
-                    call(['flock', '--shared', '--timeout', str(30), \
-                          str(l.fileno())])
+                    call(['flock', '--shared', '--timeout',
+                          app.config.get('timeout', '60'), str(l.fileno())])
         app.config['last-retry'] = datetime.datetime.now()
         app.config['last-retry-component'] = component
         for dirname in app.config['sandboxes']:
