@@ -31,11 +31,11 @@ import time, datetime
 
 class RetryException(Exception):
     def __init__(self, defs, component):
+        if app.config.get('last-retry-component') != component:
+            app.log(component, 'This is already building, so wait and retry')
         if app.config.get('last-retry'):
             wait = datetime.datetime.now() - app.config.get('last-retry')
             if wait.seconds < 1:
-                if app.config.get('log-verbose', False) != False:
-                    app.log(component, 'Retrying - may be a bottleneck')
                 with open(lockfile(defs, component), 'r') as l:
                     call(['flock', '--shared', '--timeout',
                           app.config.get('timeout', '60'), str(l.fileno())])
