@@ -54,7 +54,7 @@ def assemble(defs, target):
     if get_cache(defs, component):
         return cache_key(defs, component)
     if get_remote(defs, component):
-        app.config['counter'] += 1
+        app.config['counter'].increment()
         return cache_key(defs, component)
 
     random.seed(datetime.datetime.now())
@@ -85,7 +85,7 @@ def assemble(defs, target):
     if 'systems' not in component and not get_cache(defs, component):
         try:
             with claim(defs, component):
-                app.config['counter'] += 1
+                app.config['counter'].increment()
                 with app.timer(component, 'build of %s' % component['cache']):
                     build(defs, component)
                 with app.timer(component, 'artifact creation'):

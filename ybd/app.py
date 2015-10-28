@@ -31,6 +31,24 @@ from repos import get_version
 config = {}
 
 
+class Counter(object):
+    def __init__(self, pid):
+        self._counter_file = os.path.join(config['tmp'], str(pid))
+        with open(self._counter_file, 'a') as f:
+            f.write(str(0))
+
+    def increment(self):
+        with open(self._counter_file, 'r') as f:
+            count = f.read()
+        with open(self._counter_file, 'w') as f:
+            f.write(str(int(count) + 1))
+
+    def get(self):
+        with open(self._counter_file, 'r') as f:
+            count = f.read()
+        return count
+
+
 def log(component, message='', data=''):
     ''' Print a timestamped log. '''
 
@@ -41,8 +59,8 @@ def log(component, message='', data=''):
         timestamp = timestamp[:9] + elapsed(config['start-time'])
     progress = ''
     if config.get('counter'):
-        progress = '[%s/%s/%s] ' % (config['counter'], config['tasks'],
-                                    config['total'])
+        count = config['counter'].get()
+        progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
     entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
     if config.get('instances'):
         entry = str(config.get('fork', 0)) + ' ' + entry
@@ -127,6 +145,8 @@ def setup(args):
     if not config.get('max-jobs'):
         config['max-jobs'] = cpu_count() / config.get('instances', 1)
 
+    config['pid'] = os.getpid()
+    config['counter'] = Counter(config['pid'])
     log('SETUP', '%s version is' % config['program'], config['my-version'])
     log('SETUP', 'Max-jobs is set to', config['max-jobs'])
 
