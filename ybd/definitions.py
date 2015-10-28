@@ -241,8 +241,7 @@ class Definitions(object):
         for name in self._definitions:
             if self._definitions[name].get('tree') is not None:
                 self._trees[name] = [self._definitions[name]['ref'],
-                                     self._definitions[name]['tree'],
-                                     self._definitions[name]['cache']]
+                                     self._definitions[name]['tree']]
 
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
