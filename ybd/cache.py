@@ -120,7 +120,9 @@ def unpack(defs, this, tmpfile):
     unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
     if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-        app.exit(this, 'ERROR: Problem unpacking', tmpfile)
+        app.log(this, 'Problem unpacking', tmpfile)
+        shutil.rmtree(os.path.dirname(tmpfile))
+        return False
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
@@ -169,7 +171,8 @@ def get_cache(defs, this):
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             if call(['tar', 'xf', artifact, '--directory', tmpdir]):
-                app.exit(this, 'ERROR: Problem unpacking', artifact)
+                app.log(this, 'Problem unpacking', artifact)
+                return False
             try:
                 os.rename(tmpdir, unpackdir)
             except:
