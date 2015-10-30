@@ -117,14 +117,20 @@ class KeyedBinaryArtifactServer(object):
         tmpdir = tempfile.mkdtemp()
         try:
             upload = request.files.get('file')
-            upload.save(os.path.join(tmpdir, cache_id))
+            artifact = os.path.join(tmpdir, cache_id)
+            upload.save(artifact)
+            unpackdir = artifact + '.unpacked'
+            if call(['tar', 'xf', artifact, '--directory', unpackdir]):
+                app.log(this, 'ERROR: Problem unpacking', artifact)
+                raise
+            shutil.rmtree(unpackdir)
             os.rename(tmpdir, os.path.join(app.config['artifact-dir'], cache_id))
             response.status = 201  # success!
             return
         except:
-            # this was a race, remove the tmpdir
+            # something went wrong, clean up
             shutil.rmtree(tmpdir)
-            response.status = 999  # method not allowed, this artifact exists
+            response.status = 999
 
         return
 
