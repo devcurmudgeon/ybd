@@ -43,12 +43,19 @@ class KeyedBinaryArtifactServer(object):
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
         app.config['start-time'] = datetime.datetime.now()
 
+        try:
+            import cherrypy
+            server = 'cherrypy'
+        except:
+            server = 'wsgiref'
+
         # for development:
         if app.config.get('mode') == 'development':
-            bottle.run(host=app.config['host'], port=app.config['port'],
-                       debug=True, reloader=True)
+            bottle.run(server=server, host=app.config['host'],
+                       port=app.config['port'], debug=True, reloader=True)
         else:
-            bottle.run(host=app.config['host'], port=app.config['port'])
+            bottle.run(server=server, host=app.config['host'],
+                       port=app.config['port'], reloader=True)
 
     @bottle.get('/static/<filename>')
     def send_static(filename):

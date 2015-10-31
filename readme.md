@@ -43,14 +43,17 @@ so for a Debian-based system:
 
 ybd also depends on [pyyaml](http://pyyaml.org/wiki/PyYAML),
 [sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
-and optionally [jsonschema](https://github.com/Julian/jsonschema) and
-[bottle](https://github.com/bottlepy/bottle)
+and optionally [jsonschema](https://github.com/Julian/jsonschema).
+
+If you want to serve artifacts using kbas, it requires
+[bottle](https://github.com/bottlepy/bottle) and optionally
+[cherrypy](https://github.com/cherrypy/cherrypy.git)
 
 if you trust the Python Package Index (PyPI) and pip is available on your
-machine, you can install them with:
+machine, you can install these dependencies with:
 
 ```
-    pip install pyyaml sandboxlib jsonschema bottle
+    pip install pyyaml sandboxlib jsonschema bottle cherrypy
 ```
 
 if you need to install pip itself:
