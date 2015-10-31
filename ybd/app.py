@@ -110,6 +110,9 @@ def setup(args):
         os.path.join(os.getcwd(), 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
+
+    if config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
+        config.pop('kbas-url')
     if config.get('kbas-url'):
         if not config['kbas-url'].endswith('/'):
             config['kbas-url'] += '/'
