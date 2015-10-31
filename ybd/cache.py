@@ -111,7 +111,7 @@ def cache(defs, this):
 
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url', 'http://foo.bar/') != 'http://foo.bar/':
-        if this.get('kind') is not 'cluster':
+        if this.get('kind', 'chunk') == 'chunk':
             with app.timer(this, 'upload'):
                 upload(defs, this)
 
@@ -137,8 +137,6 @@ def unpack(defs, this, tmpfile):
 
 
 def upload(defs, this):
-    if this.get('kind', 'chunk') != 'chunk':
-        return
     cachefile = get_cache(defs, this)
     url = app.config['kbas-url'] + 'upload'
     app.log(this, 'Uploading %s to' % this['cache'], url)
