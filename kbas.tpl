@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="content-type"
  content="text/html; charset=ISO-8859-1">
-  <title>index</title>
+  <title>{{title}}</title>
   <link rel="stylesheet" type="text/css" href="{{css}}"/>
 </head>
 <body>
