@@ -187,9 +187,6 @@ def get_cache(defs, this):
 
 def get_remote(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
-    if app.config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
-        return False
-
     if app.config.get('last-retry-component') == this:
         return False
 
@@ -197,8 +194,8 @@ def get_remote(defs, this):
         return False
 
     try:
-        url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
         app.log(this, 'Try downloading', cache_key(defs, this))
+        url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
         response = requests.get(url=url, stream=True)
     except:
         app.config.pop('kbas-url')

@@ -31,8 +31,9 @@ import time, datetime
 
 class RetryException(Exception):
     def __init__(self, defs, component):
-        if app.config.get('last-retry-component') != component:
-            app.log(component, 'This is already building, so wait and retry')
+        if app.config['log-verbose'] and \
+                app.config.get('last-retry-component') != component:
+            app.log(component, 'Already downloading/building, so wait/retry')
         if app.config.get('last-retry'):
             wait = datetime.datetime.now() - app.config.get('last-retry')
             if wait.seconds < 1:
@@ -53,9 +54,12 @@ def assemble(defs, target):
     component = defs.get(target)
     if get_cache(defs, component):
         return cache_key(defs, component)
-    if get_remote(defs, component):
-        app.config['counter'].increment()
-        return cache_key(defs, component)
+
+    if app.config.get('kbas-url'):
+        with claim(defs, component):
+            if get_remote(defs, component):
+                app.config['counter'].increment()
+                return cache_key(defs, component)
 
     random.seed(datetime.datetime.now())
 
@@ -83,16 +87,13 @@ def assemble(defs, target):
             preinstall(defs, component, subcomponent)
 
     if 'systems' not in component and not get_cache(defs, component):
-        try:
-            with claim(defs, component):
-                app.config['counter'].increment()
-                with app.timer(component, 'build of %s' % component['cache']):
-                    build(defs, component)
-                with app.timer(component, 'artifact creation'):
-                    do_manifest(component)
-                    cache(defs, component)
-        except IOError as e:
-            raise RetryException(defs, component)
+        with claim(defs, component):
+            app.config['counter'].increment()
+            with app.timer(component, 'build of %s' % component['cache']):
+                build(defs, component)
+            with app.timer(component, 'artifact creation'):
+                do_manifest(component)
+                cache(defs, component)
 
     app.remove_dir(component['sandbox'])
 
@@ -105,12 +106,15 @@ def lockfile(defs, this):
 
 @contextlib.contextmanager
 def claim(defs, this):
-    with open(lockfile(defs, this), 'a') as l:
-        fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        try:
-            yield
-        finally:
-            return
+    try:
+        with open(lockfile(defs, this), 'a') as l:
+            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                yield
+            finally:
+                return
+    except IOError as e:
+        raise RetryException(defs, this)
 
 
 def preinstall(defs, component, it):
