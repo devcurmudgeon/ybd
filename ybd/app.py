@@ -211,7 +211,10 @@ def cull(artifact_dir):
 
 def remove_dir(tmpdir):
     if (os.path.dirname(tmpdir) == config['tmp']) and os.path.isdir(tmpdir):
-        shutil.rmtree(tmpdir)
+        try:
+            shutil.rmtree(tmpdir)
+        except:
+            log('SETUP', 'WARNING: unable to remove', tmpdir)
 
 
 @contextlib.contextmanager
