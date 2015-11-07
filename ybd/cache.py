@@ -163,6 +163,9 @@ def upload(defs, this):
 def get_cache(defs, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
+    if not cache_key(defs, this):
+        return False
+
     cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
     if os.path.isdir(cachedir):
         call(['touch', cachedir])
