@@ -142,14 +142,13 @@ def unpack(defs, this, tmpfile):
 def upload(defs, this):
     cachefile = get_cache(defs, this)
     url = app.config['kbas-url'] + 'upload'
-    app.log(this, 'Uploading %s to' % this['cache'], url)
     params = {"filename": this['cache'],
               "password": app.config['kbas-password']}
     with open(cachefile, 'rb') as f:
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                app.log(this, 'Uploaded artifact', this['cache'])
+                app.log(this, 'Uploaded %s to' % this['cache'], url)
                 return
             if response.status_code == 405:
                 app.log(this, 'Artifact server already has', this['cache'])
@@ -163,7 +162,7 @@ def upload(defs, this):
 def get_cache(defs, this):
     ''' Check if a cached artifact exists for the hashed version of this. '''
 
-    if not cache_key(defs, this):
+    if cache_key(defs, this) is False:
         return False
 
     cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
