@@ -68,6 +68,7 @@ with app.timer('TOTAL'):
         except:
             import traceback
             traceback.print_exc()
+            app.log(target, 'Exiting: uncaught exception')
             os._exit(1)
 
     if target.get('kind') == 'cluster' and app.config.get('fork') == None:
