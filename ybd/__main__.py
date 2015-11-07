@@ -66,6 +66,8 @@ with app.timer('TOTAL'):
         except RetryException:
             pass
         except:
+            import traceback
+            traceback.print_exc()
             os._exit(1)
 
     if target.get('kind') == 'cluster' and app.config.get('fork') == None:
