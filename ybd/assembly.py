@@ -52,6 +52,10 @@ def assemble(defs, target):
     '''Assemble dependencies and contents recursively until target exists.'''
 
     component = defs.get(target)
+
+    if cache_key(defs, component) is False:
+        return False
+
     if get_cache(defs, component):
         return cache_key(defs, component)
 
