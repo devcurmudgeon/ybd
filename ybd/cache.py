@@ -41,6 +41,9 @@ def cache_key(defs, this):
     if definition.get('cache'):
         return definition['cache']
 
+    if definition.get('arch', app.config['arch']) != app.config['arch']:
+       return False
+
     definition['cache'] = 'calculating'
 
     if definition.get('repo') and not definition.get('tree'):
