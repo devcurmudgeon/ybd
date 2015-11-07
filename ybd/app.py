@@ -137,7 +137,7 @@ def setup(args):
             os.makedirs(config[directory])
         except OSError:
             if not os.path.isdir(config[directory]):
-                exit(target, 'ERROR: Can not find or create',
+                exit('SETUP', 'ERROR: Can not find or create',
                      config[directory])
 
     # git replace means we can't trust that just the sha1 of a branch
