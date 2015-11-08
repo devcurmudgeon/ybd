@@ -24,12 +24,11 @@ import sandbox
 
 def deploy(defs, target):
     '''Deploy a cluster definition.'''
-    with app.timer(target, 'deployment'):
-        for system in target.get('systems', []):
-            arch = defs.get(system).get('arch', app.config['arch'])
-            if arch == app.config['arch']:
-                with app.timer(system, 'deployment'):
-                    deploy_system(defs, system)
+    arch = app.config['arch']
+    for system in target.get('systems', []):
+        if defs.get(system).get('arch', arch) == arch:
+            with app.timer(system, 'deployment'):
+                deploy_system(defs, system)
 
 
 def deploy_system(defs, system_spec, parent_location=''):

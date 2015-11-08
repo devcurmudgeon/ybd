@@ -72,4 +72,5 @@ with app.timer('TOTAL'):
             os._exit(1)
 
     if target.get('kind') == 'cluster' and app.config.get('fork') == None:
-        deploy(defs, target)
+        with app.timer(target, 'cluster deployment')
+            deploy(defs, target)
