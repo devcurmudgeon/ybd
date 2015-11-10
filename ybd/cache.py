@@ -76,7 +76,7 @@ def cache_key(defs, this):
     safename = definition['name'].replace('/', '-')
     definition['cache'] = safename + "." + hashlib.sha256(result).hexdigest()
     app.config['total'] += 1
-    if not get_cache(defs, this) and this.get('kind') != 'cluster':
+    if not get_cache(defs, this) and definition.get('kind') != 'cluster':
         app.config['tasks'] += 1
     app.log(definition, 'Cache_key is', definition['cache'])
 
