@@ -5,13 +5,16 @@ jobs:
     - get: ybd
     - get: definitions
   - task: run-ybd
+    privileged: true
     config:
+      platform: linux
+      image: "docker:///devcurmudgeon/foo"
       inputs:
-      - {name: ybd}
-      - {name: definitions}
+      - name: ybd
+      - name: definitions
       run:
-        path: ls
-        args: []          
+        path: python
+        args: ['ybd/ybd.py', 'build-essential', 'x86_64']
 
 resources:
 - name: ybd
