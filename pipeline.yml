@@ -1,0 +1,26 @@
+jobs:
+- name: build
+  plan:
+  - aggregate:
+    - get: ybd
+    - get: definitions
+  - task: run-ybd
+    config:
+      inputs:
+      - {name: ybd}
+      - {name: definitions}
+      run:
+        path: ls
+        args: []          
+
+resources:
+- name: ybd
+  type: git
+  source:
+    uri: https://github.com/devcurmudgeon/ybd.git
+    branch: master
+- name: definitions
+  type: git
+  source:
+    uri: git://git.baserock.org/baserock/baserock/definitions.git
+    branch: master
