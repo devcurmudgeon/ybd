@@ -132,6 +132,9 @@ def unpack(defs, this, tmpfile):
     try:
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(os.path.dirname(tmpfile), path)
+        if not os.path.isdir(path):
+            app.exit(this, 'ERROR: problem creating cache artifact', path)
+
         size = os.path.getsize(get_cache(defs, this))
         app.log(this, 'Now cached %s bytes as' % size, cache_key(defs, this))
         return path
