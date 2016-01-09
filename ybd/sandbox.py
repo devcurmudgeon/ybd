@@ -56,11 +56,14 @@ def setup(this):
 
 
 def install(defs, this, component):
+    # populate this['sandbox'] with the artifact files from component
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
     if app.config.get('log-verbose'):
         app.log(this, 'Installing %s' % component['cache'])
+    if cache.get_cache(defs, component) is False:
+        app.exit(this, 'ERROR: unable to get cache for', component['name'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
     if this.get('kind') is 'system':
         utils.copy_all_files(unpackdir, this['sandbox'])
