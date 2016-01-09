@@ -26,7 +26,8 @@ from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
 from shutil import copyfile
-import time, datetime
+import time
+import datetime
 
 
 class RetryException(Exception):
@@ -133,7 +134,7 @@ def preinstall(defs, component, it):
         it = defs.get(dep)
         if (it.get('build-mode', 'staging') ==
                 dependency.get('build-mode', 'staging')):
-         preinstall(defs, component, it)
+            preinstall(defs, component, it)
 
     contents = dependency.get('contents', [])
     random.shuffle(contents)

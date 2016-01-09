@@ -44,12 +44,12 @@ class Defaults(object):
         ybd_defaults = self._load(ybd_defaults_file, ignore_errors=True)
 
         defaults = self._load(defaults_file, ignore_errors=True)
-        if defaults == None:
+        if defaults is None:
             return ybd_defaults
 
         for index in ybd_defaults:
-            if defaults.get(index) == None or defaults.get(index) == {}:
-               defaults[index] = ybd_defaults[index]
+            if defaults.get(index) is None or defaults.get(index) == {}:
+                defaults[index] = ybd_defaults[index]
 
         return defaults
 

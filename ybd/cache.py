@@ -28,7 +28,8 @@ import repos
 import utils
 import tempfile
 
-cache_list={}
+cache_list = {}
+
 
 def cache_key(defs, this):
     definition = defs.get(this)
@@ -42,7 +43,7 @@ def cache_key(defs, this):
         return definition['cache']
 
     if definition.get('arch', app.config['arch']) != app.config['arch']:
-       return False
+        return False
 
     definition['cache'] = 'calculating'
 
@@ -84,9 +85,10 @@ def cache_key(defs, this):
     if app.config.get('cache-log'):
         cache_list[definition.get('name')] = definition.get('cache')
         if definition.get('kind') == 'system':
-            with open(app.config.get('cache-log'),'w') as f:
-                f.write(json.dumps(cache_list,indent=4))
-            app.log('cache-log', 'cache logged to',app.config.get('cache-log'))
+            with open(app.config.get('cache-log'), 'w') as f:
+                f.write(json.dumps(cache_list, indent=4))
+            app.log('cache-log', 'cache logged to',
+                    app.config.get('cache-log'))
 
     return definition['cache']
 

@@ -131,7 +131,8 @@ class KeyedBinaryArtifactServer(object):
                 app.log(this, 'ERROR: Problem unpacking', artifact)
                 raise
             shutil.rmtree(unpackdir)
-            os.rename(tmpdir, os.path.join(app.config['artifact-dir'], cache_id))
+            os.rename(tmpdir, os.path.join(app.config['artifact-dir'],
+                                           cache_id))
             response.status = 201  # success!
             return
         except:

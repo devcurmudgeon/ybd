@@ -205,7 +205,7 @@ def cull(artifact_dir):
         else:
             os.remove(path)
         deleted += 1
-    if free <  config.get('min-gigabytes', 10):
+    if free < config.get('min-gigabytes', 10):
         log('SETUP', 'ERROR: %s is less than min-gigabytes' % free)
 
 
@@ -242,6 +242,7 @@ def timer(this, message=''):
     else:
         text = '' if message == '' else ' for ' + message
         log(this, 'Elapsed time' + text, elapsed(starttime))
+
 
 def elapsed(starttime):
     td = datetime.datetime.now() - starttime

@@ -71,6 +71,6 @@ with app.timer('TOTAL'):
             app.log(target, 'Exiting: uncaught exception')
             os._exit(1)
 
-    if target.get('kind') == 'cluster' and app.config.get('fork') == None:
+    if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):
             deploy(defs, target)

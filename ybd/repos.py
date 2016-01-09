@@ -80,7 +80,7 @@ def get_tree(this):
     if this['repo'].startswith('file://') or this['repo'].startswith('/'):
         gitdir = this['repo'].replace('file://', '')
         if not os.path.isdir(gitdir):
-            app.exit(this, 'ERROR: git repo not found:', this['repo'] )
+            app.exit(this, 'ERROR: git repo not found:', this['repo'])
 
     if not os.path.exists(gitdir):
         try:
@@ -147,6 +147,7 @@ def mirror(name, repo):
         app.log(name, 'Git repo is mirrored at', gitdir)
     except:
         pass
+
 
 def fetch(repo):
     with app.chdir(repo), open(os.devnull, "w") as fnull:

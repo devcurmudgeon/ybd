@@ -61,7 +61,7 @@ class Definitions(object):
             try:
                 this = self._definitions[path]
                 if this.get('ref') and self._trees.get(path):
-                    if this['ref']  == self._trees.get(path)[0]:
+                    if this['ref'] == self._trees.get(path)[0]:
                         this['tree'] = self._trees.get(path)[1]
             except:
                 app.log('DEFINITIONS', 'WARNING: problem with .trees file')
