@@ -140,6 +140,8 @@ def setup(args):
                 exit('SETUP', 'ERROR: Can not find or create',
                      config[directory])
 
+        log('SETUP', '%s is directory for' % config[directory], directory)
+
     # git replace means we can't trust that just the sha1 of a branch
     # is enough to say what it contains, so we turn it off by setting
     # the right flag in an environment variable.
