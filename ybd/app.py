@@ -74,7 +74,7 @@ def log_env(log, env, message=''):
         for key in sorted(env):
             msg = env[key] if 'PASSWORD' not in key else '(hidden)'
             logfile.write('%s=%s\n' % (key, msg))
-        logfile.write(message + '\n')
+        logfile.write(message + '\n\n')
         logfile.flush()
 
 
@@ -96,6 +96,7 @@ def setup(args):
         sys.stderr.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
         sys.exit(1)
 
+    log('SETUP', 'Running %s in' % args[0], os.getcwd())
     config['start-time'] = datetime.datetime.now()
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
