@@ -90,6 +90,10 @@ class Definitions(object):
         except:
             app.log('DEFINITIONS', 'WARNING: problem loading', path)
             return None
+        if type(contents) is not dict:
+            app.log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,
+                    str(contents)[0:50])
+            return None
         contents['path'] = path[2:]
         return contents
 
