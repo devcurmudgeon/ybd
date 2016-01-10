@@ -30,6 +30,10 @@ import sandboxlib
 
 
 print('')
+if not os.path.exists('./VERSION'):
+    if os.path.basename(os.getcwd()) != 'definitions':
+        if os.path.isdir(os.path.join(os.getcwd(), 'definitions')):
+            os.chdir(os.path.join(os.getcwd(), 'definitions'))
 app.setup(sys.argv)
 app.cleanup(app.config['tmp'])
 app.cull(app.config['artifacts'])
