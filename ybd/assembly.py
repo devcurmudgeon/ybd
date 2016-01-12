@@ -92,17 +92,27 @@ def assemble(defs, target):
             preinstall(defs, component, subcomponent)
 
     if 'systems' not in component and not get_cache(defs, component):
-        with claim(defs, component):
-            app.config['counter'].increment()
-            with app.timer(component, 'build of %s' % component['cache']):
-                build(defs, component)
-            with app.timer(component, 'artifact creation'):
-                do_manifest(component)
-                cache(defs, component)
+        if app.config.get('instances', 1) > 1:
+            with claim(defs, component):
+                # in here, exceptions get eaten
+                do_build(defs, component)
+        else:
+            # in here, exceptions do not get eaten
+            do_build(defs, component)
 
     app.remove_dir(component['sandbox'])
 
     return cache_key(defs, component)
+
+
+def do_build(defs, component):
+    app.config['counter'].increment()
+    with app.timer(component, 'build of %s' % component['cache']):
+        build(defs, component)
+
+    with app.timer(component, 'artifact creation'):
+        do_manifest(component)
+        cache(defs, component)
 
 
 def lockfile(defs, this):
