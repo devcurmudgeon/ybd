@@ -115,6 +115,49 @@ to explain what is happening. if you need a permanent log then try
 
     ../ybd/ybd.py clusters/upgrade-devel.morph x86_64 | tee some-memorable-name.log
 
+### configuration
+
+ybd is designed to be run from the command line and/or as part of an
+automated pipeline. all configuration is taken from conf files, in the
+following order of precedence:
+
+    
+    ./ybd.conf                          # if found
+    $path/to/ybd.py/ybd.conf            # if found
+    $path/to/ybd.py/ybd/config/ybd.conf # default, as provided in the ybd repo
+
+this means that it's possible to have custom config in either the definitions top-level directory, or the ybd top-level directory, without having to modify
+the supplied default ybd.conf file. creating your own ybd.conf file means
+you can merge new/latest ybd using git with no possibility of a conflict,
+and your custom settings will continue to take precedence.
+
+for various reasons so far ybd does not support unix-style commandline --flags. if enough people complain about this, it can be fixed.
+
+config values you may want to override include:
+
+    aliases: # shortnames for commonly used online git resources
+      'baserock:': 'git://git.baserock.org/baserock/'
+      'freedesktop:': 'git://anongit.freedesktop.org/'
+      'github:': 'git://github.com/'
+      'gnome:': 'git://git.gnome.org/'
+      'upstream:': 'git://git.baserock.org/delta/'
+    base-path: ['/usr/bin', '/bin', '/usr/sbin', '/sbin'] # default build path
+    defaults: 'config/defaults.conf' # definitions defaults if not found elsewhere
+    directories:
+      'artifacts': # where ybd saves/finds built artifacts
+      'base': ybd # where ybd works by default if directories are not specified
+      'ccache_dir': # where ccache results are saved
+      'deployment': # working directory for deployments
+      'gits': # where local copies of git repos are saved
+      'tmp': # where sandboxes and other tmp directories are created
+    kbas-url: 'http://foo.bar/' # kbas location to find pre-built artifacts
+    kbas-password: 'insecure' # password if you want to push artifacts to kbas
+    log-elapsed: True # log elapsed times since start, or actual time
+    log-verbose: False # log extra info including all sandbox installation steps
+    min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
+
+    tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
+    tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
 
 ### interesting features
 
