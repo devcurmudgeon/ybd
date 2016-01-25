@@ -127,6 +127,7 @@ class KeyedBinaryArtifactServer(object):
             artifact = os.path.join(tmpdir, cache_id)
             upload.save(artifact)
             unpackdir = artifact + '.unpacked'
+            os.makedirs(unpackdir)
             if call(['tar', 'xf', artifact, '--directory', unpackdir]):
                 app.log(this, 'ERROR: Problem unpacking', artifact)
                 raise
