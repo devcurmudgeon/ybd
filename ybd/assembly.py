@@ -80,14 +80,7 @@ def traverse(defs, target):
             dependencies = component.get('build-depends', [])
             for it in dependencies:
                 preinstall(defs, component, it)
-
-            if app.config.get('instances', 1) > 1:
-                with claim(defs, component):
-                    # in here, exceptions get eaten
-                    build(defs, component)
-            else:
-                # in here, exceptions do not get eaten
-                build(defs, component)
+            build(defs, component)
 
     return cache_key(defs, component)
 
@@ -112,12 +105,13 @@ def build(defs, component):
     '''Create an artifact for a single item and add it to the cache'''
 
     app.config['counter'].increment()
-    with app.timer(component, 'build of %s' % component['cache']):
-        run_build(defs, component)
+    with claim(defs, component):
+        with app.timer(component, 'build of %s' % component['cache']):
+            run_build(defs, component)
 
-    with app.timer(component, 'artifact creation'):
-        do_manifest(component)
-        cache(defs, component)
+        with app.timer(component, 'artifact creation'):
+            do_manifest(component)
+            cache(defs, component)
 
 
 def run_build(defs, this):
@@ -167,15 +161,25 @@ def lockfile(defs, this):
 
 @contextlib.contextmanager
 def claim(defs, this):
-    try:
-        with open(lockfile(defs, this), 'a') as l:
-            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            try:
-                yield
-            finally:
-                return
-    except IOError as e:
-        raise RetryException(defs, this)
+    # take a lock so we don't race building 'this'
+    # FIXME: we should claim always, but the claim code is eating exceptions
+    # so currently we only claim on multi-instance so it's easier to debug
+    # on single instance runs
+    if app.config.get('instances', 1) > 1:
+        try:
+            with open(lockfile(defs, this), 'a') as l:
+                fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                try:
+                    yield
+                finally:
+                    return
+        except IOError as e:
+            raise RetryException(defs, this)
+    else:
+        try:
+            yield
+        finally:
+            return
 
 
 def preinstall(defs, component, it):
