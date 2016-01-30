@@ -58,7 +58,7 @@ def traverse(defs, target):
     if cache_key(defs, component) is False:
         return False
 
-    # if this is already cached, we're done
+    # if this component is already cached, we're done
     if get_cache(defs, component):
         return cache_key(defs, component)
 
@@ -84,10 +84,10 @@ def traverse(defs, target):
             if app.config.get('instances', 1) > 1:
                 with claim(defs, component):
                     # in here, exceptions get eaten
-                    do_build(defs, component)
+                    build(defs, component)
             else:
                 # in here, exceptions do not get eaten
-                do_build(defs, component)
+                build(defs, component)
 
     return cache_key(defs, component)
 
@@ -108,20 +108,57 @@ def assemble(defs, component):
             preinstall(defs, component, subcomponent)
 
 
-def shuffle(contents):
-    if app.config.get('instances', 1) > 1:
-        random.seed(datetime.datetime.now())
-        random.shuffle(contents)
+def build(defs, component):
+    '''Create an artifact for a single item and add it to the cache'''
 
-
-def do_build(defs, component):
     app.config['counter'].increment()
     with app.timer(component, 'build of %s' % component['cache']):
-        build(defs, component)
+        run_build(defs, component)
 
     with app.timer(component, 'artifact creation'):
         do_manifest(component)
         cache(defs, component)
+
+
+def run_build(defs, this):
+    ''' This is where we run ./configure, make, make install (for example).
+    By the time we get here, all dependencies for component have already
+    been assembled.
+    '''
+
+    if this.get('build-mode') != 'bootstrap':
+        sandbox.ldconfig(this)
+
+    if this.get('repo'):
+        repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
+
+    get_build_commands(defs, this)
+    env_vars = sandbox.env_vars_for_build(defs, this)
+
+    app.log(this, 'Logging build commands to %s' % this['log'])
+    for build_step in defs.defaults.build_steps:
+        if this.get(build_step):
+            app.log(this, 'Running', build_step)
+        for command in this.get(build_step, []):
+            if command is False:
+                command = "false"
+            elif command is True:
+                command = "true"
+            sandbox.run_sandboxed(
+                this, command, env=env_vars,
+                allow_parallel=('build' in build_step))
+
+    if this.get('devices'):
+        sandbox.create_devices(this)
+
+    with open(this['log'], "a") as logfile:
+        logfile.write('Elapsed_time: %s\n' % app.elapsed(this['start-time']))
+
+
+def shuffle(contents):
+    if app.config.get('instances', 1) > 1:
+        random.seed(datetime.datetime.now())
+        random.shuffle(contents)
 
 
 def lockfile(defs, this):
@@ -165,42 +202,6 @@ def preinstall(defs, component, it):
 
     traverse(defs, dependency)
     sandbox.install(defs, component, dependency)
-
-
-def build(defs, this):
-    '''Actually create an artifact and add it to the cache
-
-    This is what actually runs ./configure, make, make install (for example)
-    By the time we get here, all dependencies for 'this' have been assembled.
-    '''
-
-    if this.get('build-mode') != 'bootstrap':
-        sandbox.ldconfig(this)
-
-    if this.get('repo'):
-        repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
-
-    get_build_commands(defs, this)
-    env_vars = sandbox.env_vars_for_build(defs, this)
-
-    app.log(this, 'Logging build commands to %s' % this['log'])
-    for build_step in defs.defaults.build_steps:
-        if this.get(build_step):
-            app.log(this, 'Running', build_step)
-        for command in this.get(build_step, []):
-            if command is False:
-                command = "false"
-            elif command is True:
-                command = "true"
-            sandbox.run_sandboxed(
-                this, command, env=env_vars,
-                allow_parallel=('build' in build_step))
-
-    if this.get('devices'):
-        sandbox.create_devices(this)
-
-    with open(this['log'], "a") as logfile:
-        logfile.write('Elapsed_time: %s\n' % app.elapsed(this['start-time']))
 
 
 def get_build_commands(defs, this):
