@@ -71,36 +71,33 @@ def assemble(defs, target):
     if component.get('arch') and component['arch'] != app.config['arch']:
         return None
 
-    sandbox.setup(component)
+    with sandbox.setup(component):
+        systems = component.get('systems', [])
+        shuffle(systems)
+        for system in systems:
+            assemble(defs, system['path'])
+            for subsystem in system.get('subsystems', []):
+                assemble(defs, subsystem)
 
-    systems = component.get('systems', [])
-    shuffle(systems)
-    for system in systems:
-        assemble(defs, system['path'])
-        for subsystem in system.get('subsystems', []):
-            assemble(defs, subsystem)
+        dependencies = component.get('build-depends', [])
+        for it in dependencies:
+            preinstall(defs, component, it)
 
-    dependencies = component.get('build-depends', [])
-    for it in dependencies:
-        preinstall(defs, component, it)
+        contents = component.get('contents', [])
+        shuffle(contents)
+        for it in contents:
+            subcomponent = defs.get(it)
+            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+                preinstall(defs, component, subcomponent)
 
-    contents = component.get('contents', [])
-    shuffle(contents)
-    for it in contents:
-        subcomponent = defs.get(it)
-        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            preinstall(defs, component, subcomponent)
-
-    if 'systems' not in component and not get_cache(defs, component):
-        if app.config.get('instances', 1) > 1:
-            with claim(defs, component):
-                # in here, exceptions get eaten
+        if 'systems' not in component and not get_cache(defs, component):
+            if app.config.get('instances', 1) > 1:
+                with claim(defs, component):
+                    # in here, exceptions get eaten
+                    do_build(defs, component)
+            else:
+                # in here, exceptions do not get eaten
                 do_build(defs, component)
-        else:
-            # in here, exceptions do not get eaten
-            do_build(defs, component)
-
-    app.remove_dir(component['sandbox'])
 
     return cache_key(defs, component)
 

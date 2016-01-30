@@ -16,7 +16,7 @@
 
 
 import sandboxlib
-
+import contextlib
 import os
 import pipes
 import shutil
@@ -35,6 +35,7 @@ from repos import get_repo_url
 executor = None
 
 
+@contextlib.contextmanager
 def setup(this):
     currentdir = os.getcwd()
     tempfile.tempdir = app.config['tmp']
@@ -53,6 +54,11 @@ def setup(this):
     assembly_dir = this['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
+
+    try:
+        yield
+    finally:
+        app.remove_dir(this['sandbox'])
 
 
 def install(defs, this, component):
