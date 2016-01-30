@@ -49,24 +49,25 @@ class RetryException(Exception):
         pass
 
 
-def assemble(defs, target):
-    '''Assemble dependencies and contents recursively until target exists.'''
+def traverse(defs, target):
+    '''Work through defs tree, building and assembling until target exists'''
 
     component = defs.get(target)
 
+    # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
         return False
 
+    # if this is already cached, we're done
     if get_cache(defs, component):
         return cache_key(defs, component)
 
+    # if we have a kbas, look there to see if this component exists
     if app.config.get('kbas-url'):
         with claim(defs, component):
             if get_remote(defs, component):
                 app.config['counter'].increment()
                 return cache_key(defs, component)
-
-    random.seed(datetime.datetime.now())
 
     if component.get('arch') and component['arch'] != app.config['arch']:
         return None
@@ -75,9 +76,9 @@ def assemble(defs, target):
         systems = component.get('systems', [])
         shuffle(systems)
         for system in systems:
-            assemble(defs, system['path'])
+            traverse(defs, system['path'])
             for subsystem in system.get('subsystems', []):
-                assemble(defs, subsystem)
+                traverse(defs, subsystem)
 
         contents = component.get('contents', [])
         shuffle(contents)
@@ -104,6 +105,7 @@ def assemble(defs, target):
 
 def shuffle(contents):
     if app.config.get('instances', 1) > 1:
+        random.seed(datetime.datetime.now())
         random.shuffle(contents)
 
 
@@ -139,6 +141,7 @@ def preinstall(defs, component, it):
     dependency = defs.get(it)
     if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                    dependency['name'] + '.meta')):
+        # dependency has already been preinstalled
         return
 
     dependencies = dependency.get('build-depends', [])
@@ -155,7 +158,7 @@ def preinstall(defs, component, it):
         if it.get('build-mode', 'staging') != 'bootstrap':
             preinstall(defs, component, it)
 
-    assemble(defs, dependency)
+    traverse(defs, dependency)
     sandbox.install(defs, component, dependency)
 
 
