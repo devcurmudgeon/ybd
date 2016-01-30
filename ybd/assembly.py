@@ -79,10 +79,6 @@ def assemble(defs, target):
             for subsystem in system.get('subsystems', []):
                 assemble(defs, subsystem)
 
-        dependencies = component.get('build-depends', [])
-        for it in dependencies:
-            preinstall(defs, component, it)
-
         contents = component.get('contents', [])
         shuffle(contents)
         for it in contents:
@@ -91,6 +87,10 @@ def assemble(defs, target):
                 preinstall(defs, component, subcomponent)
 
         if 'systems' not in component and not get_cache(defs, component):
+            dependencies = component.get('build-depends', [])
+            for it in dependencies:
+                preinstall(defs, component, it)
+
             if app.config.get('instances', 1) > 1:
                 with claim(defs, component):
                     # in here, exceptions get eaten
