@@ -73,19 +73,8 @@ def traverse(defs, target):
         return None
 
     with sandbox.setup(component):
-        systems = component.get('systems', [])
-        shuffle(systems)
-        for system in systems:
-            traverse(defs, system['path'])
-            for subsystem in system.get('subsystems', []):
-                traverse(defs, subsystem)
 
-        contents = component.get('contents', [])
-        shuffle(contents)
-        for it in contents:
-            subcomponent = defs.get(it)
-            if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-                preinstall(defs, component, subcomponent)
+        assemble(defs, component)
 
         if 'systems' not in component and not get_cache(defs, component):
             dependencies = component.get('build-depends', [])
@@ -101,6 +90,22 @@ def traverse(defs, target):
                 do_build(defs, component)
 
     return cache_key(defs, component)
+
+
+def assemble(defs, component):
+    systems = component.get('systems', [])
+    shuffle(systems)
+    for system in systems:
+        traverse(defs, system['path'])
+        for subsystem in system.get('subsystems', []):
+            traverse(defs, subsystem)
+
+    contents = component.get('contents', [])
+    shuffle(contents)
+    for it in contents:
+        subcomponent = defs.get(it)
+        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
+            preinstall(defs, component, subcomponent)
 
 
 def shuffle(contents):
