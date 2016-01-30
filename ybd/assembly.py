@@ -74,7 +74,7 @@ def assemble(defs, target):
     sandbox.setup(component)
 
     systems = component.get('systems', [])
-    random.shuffle(systems)
+    shuffle(systems)
     for system in systems:
         assemble(defs, system['path'])
         for subsystem in system.get('subsystems', []):
@@ -85,7 +85,7 @@ def assemble(defs, target):
         preinstall(defs, component, it)
 
     contents = component.get('contents', [])
-    random.shuffle(contents)
+    shuffle(contents)
     for it in contents:
         subcomponent = defs.get(it)
         if subcomponent.get('build-mode', 'staging') != 'bootstrap':
@@ -103,6 +103,11 @@ def assemble(defs, target):
     app.remove_dir(component['sandbox'])
 
     return cache_key(defs, component)
+
+
+def shuffle(contents):
+    if app.config.get('instances', 1) > 1:
+        random.shuffle(contents)
 
 
 def do_build(defs, component):
@@ -147,7 +152,7 @@ def preinstall(defs, component, it):
             preinstall(defs, component, it)
 
     contents = dependency.get('contents', [])
-    random.shuffle(contents)
+    shuffle(contents)
     for sub in contents:
         it = defs.get(sub)
         if it.get('build-mode', 'staging') != 'bootstrap':
