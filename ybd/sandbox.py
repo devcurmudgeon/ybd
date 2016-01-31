@@ -326,3 +326,13 @@ def create_devices(this):
         app.log(this, "Creating device node", destfile)
         os.mknod(destfile, mode, os.makedev(device['major'], device['minor']))
         os.chown(destfile, device['uid'], device['gid'])
+
+
+def list_files(component):
+    try:
+        app.log(component, 'Sandbox directory contains\n',
+                os.listdir(component['sandbox']))
+        app.log(component, 'Baserock directory contains\n',
+                os.listdir(os.path.join(component['sandbox'], 'baserock')))
+    except:
+        app.log(component, 'No baserock directory in', component['sandbox'])
