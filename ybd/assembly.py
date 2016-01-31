@@ -49,7 +49,7 @@ class RetryException(Exception):
         pass
 
 
-def traverse(defs, target):
+def compose(defs, target):
     '''Work through defs tree, building and assembling until target exists'''
 
     component = defs.get(target)
@@ -89,9 +89,9 @@ def assemble(defs, component):
     systems = component.get('systems', [])
     shuffle(systems)
     for system in systems:
-        traverse(defs, system['path'])
+        compose(defs, system['path'])
         for subsystem in system.get('subsystems', []):
-            traverse(defs, subsystem)
+            compose(defs, subsystem)
 
     contents = component.get('contents', [])
     shuffle(contents)
@@ -204,7 +204,7 @@ def preinstall(defs, component, it):
         if it.get('build-mode', 'staging') != 'bootstrap':
             preinstall(defs, component, it)
 
-    traverse(defs, dependency)
+    compose(defs, dependency)
     sandbox.install(defs, component, dependency)
 
 

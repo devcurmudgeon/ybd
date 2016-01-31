@@ -21,7 +21,7 @@ import os
 import sys
 import fcntl
 import app
-from assembly import traverse, RetryException
+from assembly import compose, RetryException
 from deployment import deploy
 from definitions import Definitions
 import cache
@@ -62,7 +62,7 @@ with app.timer('TOTAL'):
     target = defs.get(app.config['target'])
     while True:
         try:
-            traverse(defs, target)
+            compose(defs, target)
             break
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
