@@ -53,6 +53,8 @@ def compose(defs, target):
     '''Work through defs tree, building and assembling until target exists'''
 
     component = defs.get(target)
+    if app.config.get('log-verbose'):
+        app.log(target, "Composing", component['name'])
 
     # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
@@ -73,23 +75,16 @@ def compose(defs, target):
         return None
 
     with sandbox.setup(component):
-
         assemble(defs, component)
-
         if 'systems' not in component and not get_cache(defs, component):
-            dependencies = component.get('build-depends', [])
-            for it in dependencies:
-                preinstall(defs, component, it)
-
-            if app.config.get('log-verbose'):
-                sandbox.list_files(component)
-
+            install_dependencies(defs, component)
             build(defs, component)
 
     return cache_key(defs, component)
 
 
 def assemble(defs, component):
+    '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
     shuffle(systems)
     for system in systems:
@@ -97,12 +92,7 @@ def assemble(defs, component):
         for subsystem in system.get('subsystems', []):
             compose(defs, subsystem)
 
-    contents = component.get('contents', [])
-    shuffle(contents)
-    for it in contents:
-        subcomponent = defs.get(it)
-        if subcomponent.get('build-mode', 'staging') != 'bootstrap':
-            preinstall(defs, component, subcomponent)
+    install_contents(defs, component)
 
 
 def build(defs, component):
@@ -194,30 +184,63 @@ def claim(defs, this):
             return
 
 
-def preinstall(defs, component, it):
-    '''Install it and all its recursed dependencies into component sandbox.'''
-    dependency = defs.get(it)
-    if os.path.exists(os.path.join(component['sandbox'], 'baserock',
-                                   dependency['name'] + '.meta')):
-        # dependency has already been preinstalled
-        return
+def install_contents(defs, component):
+    '''Install recursed contents of component into component's sandbox.'''
 
-    dependencies = dependency.get('build-depends', [])
-    for dep in dependencies:
-        it = defs.get(dep)
-        if (it.get('build-mode', 'staging') ==
-                dependency.get('build-mode', 'staging')):
-            preinstall(defs, component, it)
+    def install(defs, component, contents):
+        shuffle(contents)
+        for it in contents:
+            content = defs.get(it)
+            if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+                                           content['name'] + '.meta')):
+                # content has already been installed
+                if app.config.get('log-verbose'):
+                    app.log(component, 'Already installed', content['name'])
+                continue
+            install(defs, component, content.get('contents', []))
+            compose(defs, content)
+            if content.get('build-mode', 'staging') != 'bootstrap':
+                sandbox.install(defs, component, content)
 
-    contents = dependency.get('contents', [])
-    shuffle(contents)
-    for sub in contents:
-        it = defs.get(sub)
-        if it.get('build-mode', 'staging') != 'bootstrap':
-            preinstall(defs, component, it)
+    component = defs.get(component)
+    contents = component.get('contents', [])
+    if app.config.get('log-verbose'):
+        app.log(component, 'Installing contents\n', contents)
+    install(defs, component, contents)
+    if app.config.get('log-verbose'):
+        sandbox.list_files(component)
 
-    compose(defs, dependency)
-    sandbox.install(defs, component, dependency)
+
+def install_dependencies(defs, component):
+    '''Install recursed dependencies of component into component's sandbox.'''
+
+    def install(defs, component, dependencies):
+        shuffle(dependencies)
+        for it in dependencies:
+            dependency = defs.get(it)
+            if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+                                           dependency['name'] + '.meta')):
+                # dependency has already been installed
+                if app.config.get('log-verbose'):
+                    app.log(component, 'Already installed', dependency['name'])
+                continue
+
+            install(defs, component, dependency.get('build-depends', []))
+            if (it in component['build-depends']) or \
+                (dependency.get('build-mode', 'staging') ==
+                    component.get('build-mode', 'staging')):
+                compose(defs, dependency)
+                if dependency.get('contents'):
+                    install(defs, component, dependency.get('contents'))
+                sandbox.install(defs, component, dependency)
+
+    component = defs.get(component)
+    dependencies = component.get('build-depends', [])
+    if app.config.get('log-verbose'):
+        app.log(component, 'Installing dependencies\n', dependencies)
+    install(defs, component, dependencies)
+    if app.config.get('log-verbose'):
+        sandbox.list_files(component)
 
 
 def get_build_commands(defs, this):
