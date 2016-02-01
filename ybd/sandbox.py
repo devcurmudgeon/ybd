@@ -330,9 +330,11 @@ def create_devices(this):
 
 def list_files(component):
     try:
-        app.log(component, 'Sandbox directory contains\n',
+        app.log(component, 'Sandbox %s contains\n' % component['sandbox'],
                 os.listdir(component['sandbox']))
-        app.log(component, 'Baserock directory contains\n',
-                os.listdir(os.path.join(component['sandbox'], 'baserock')))
+        files = os.listdir(os.path.join(component['sandbox'], 'baserock'))
+        app.log(component,
+                'Baserock directory contains %s items\n' % len(files),
+                sorted(files))
     except:
         app.log(component, 'No baserock directory in', component['sandbox'])
