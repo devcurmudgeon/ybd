@@ -80,6 +80,10 @@ def compose(defs, target):
             dependencies = component.get('build-depends', [])
             for it in dependencies:
                 preinstall(defs, component, it)
+
+            if app.config.get('log-verbose'):
+                sandbox.list_files(component)
+
             build(defs, component)
 
     return cache_key(defs, component)
