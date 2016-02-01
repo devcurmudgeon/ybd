@@ -67,7 +67,7 @@ def install(defs, this, component):
                                    component['name'] + '.meta')):
         return
     if app.config.get('log-verbose'):
-        app.log(this, 'Installing %s' % component['cache'])
+        app.log(this, 'Sandbox: installing %s' % component['cache'])
     if cache.get_cache(defs, component) is False:
         app.exit(this, 'ERROR: unable to get cache for', component['name'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
