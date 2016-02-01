@@ -120,6 +120,10 @@ def run_build(defs, this):
     been assembled.
     '''
 
+    if app.config.get('no-build'):
+        app.log(this, 'SKIPPING BUILD: artifact will be empty')
+        return
+
     if this.get('build-mode') != 'bootstrap':
         sandbox.ldconfig(this)
 
