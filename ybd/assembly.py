@@ -100,15 +100,15 @@ def build(defs, component):
     if get_cache(defs, component):
         return
 
-    if 'systems' not in component:
-        with claim(defs, component):
+    with claim(defs, component):
+        if component.get('kind', 'chunk') == 'chunk':
             install_dependencies(defs, component)
-            with app.timer(component, 'build of %s' % component['cache']):
-                run_build(defs, component)
+        with app.timer(component, 'build of %s' % component['cache']):
+            run_build(defs, component)
 
-            with app.timer(component, 'artifact creation'):
-                do_manifest(component)
-                cache(defs, component)
+        with app.timer(component, 'artifact creation'):
+            do_manifest(component)
+            cache(defs, component)
 
 
 def run_build(defs, this):
