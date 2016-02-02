@@ -155,7 +155,8 @@ config values you may want to override include:
     log-elapsed: True # log elapsed times since start, or actual time
     log-verbose: False # log extra info including all sandbox installation steps
     min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
-
+    no-build: False # for debugging ybd itself - if True, run the assembly
+ logic, but don't compile things
     tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
     tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
 
