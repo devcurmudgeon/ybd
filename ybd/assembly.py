@@ -115,10 +115,6 @@ def run_build(defs, this):
 
     if app.config.get('no-build'):
         app.log(this, 'SKIPPING BUILD: artifact will be empty')
-        os.rename(this['sandbox'],
-                  os.path.join(app.config['tmp'], this['name']))
-        app.log(this, 'Pre-build sandbox is moved to',
-                os.path.join(app.config['tmp'], this['name']))
         return
 
     if this.get('build-mode') != 'bootstrap':
