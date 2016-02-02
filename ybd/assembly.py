@@ -53,8 +53,6 @@ def compose(defs, target):
     '''Work through defs tree, building and assembling until target exists'''
 
     component = defs.get(target)
-    if app.config.get('log-verbose'):
-        app.log(target, "Composing", component['name'])
 
     # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
@@ -63,6 +61,9 @@ def compose(defs, target):
     # if this component is already cached, we're done
     if get_cache(defs, component):
         return cache_key(defs, component)
+
+    if app.config.get('log-verbose'):
+        app.log(target, "Composing", component['name'])
 
     # if we have a kbas, look there to see if this component exists
     if app.config.get('kbas-url'):
@@ -75,10 +76,8 @@ def compose(defs, target):
         return None
 
     with sandbox.setup(component):
-        assemble(defs, component)
-        if 'systems' not in component and not get_cache(defs, component):
-            install_dependencies(defs, component)
-            build(defs, component)
+        assemble(defs, component) # this brings in 'contents' recursively
+        build(defs, component) # this brings in 'build-depends', and runs make
 
     return cache_key(defs, component)
 
@@ -98,13 +97,18 @@ def assemble(defs, component):
 def build(defs, component):
     '''Create an artifact for a single component and add it to the cache'''
 
-    with claim(defs, component):
-        with app.timer(component, 'build of %s' % component['cache']):
-            run_build(defs, component)
+    if get_cache(defs, component):
+        return
 
-        with app.timer(component, 'artifact creation'):
-            do_manifest(component)
-            cache(defs, component)
+    if 'systems' not in component:
+        with claim(defs, component):
+            install_dependencies(defs, component)
+            with app.timer(component, 'build of %s' % component['cache']):
+                run_build(defs, component)
+
+            with app.timer(component, 'artifact creation'):
+                do_manifest(component)
+                cache(defs, component)
 
 
 def run_build(defs, this):
