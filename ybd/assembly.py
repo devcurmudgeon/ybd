@@ -99,7 +99,6 @@ def build(defs, component):
     '''Create an artifact for a single component and add it to the cache'''
 
     with claim(defs, component):
-        app.config['counter'].increment()
         with app.timer(component, 'build of %s' % component['cache']):
             run_build(defs, component)
 

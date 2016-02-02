@@ -112,6 +112,7 @@ def cache(defs, this):
         utils.make_deterministic_gztar_archive(cachefile, this['install'])
         os.rename('%s.tar.gz' % cachefile, cachefile)
 
+    app.config['counter'].increment()
     unpack(defs, this, cachefile)
 
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
