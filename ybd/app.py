@@ -184,34 +184,6 @@ def cleanup(tmpdir):
         log('SETUP', 'No cleanup for', tmpdir)
 
 
-def sorted_ls(path):
-    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
-    return list(sorted(os.listdir(path), key=mtime))
-
-
-def cull(artifact_dir):
-    deleted = 0
-    artifacts = sorted_ls(artifact_dir)
-    stat = os.statvfs(artifact_dir)
-    free = stat.f_frsize * stat.f_bavail / 1000000000
-    for artifact in artifacts:
-        stat = os.statvfs(artifact_dir)
-        free = stat.f_frsize * stat.f_bavail / 1000000000
-        if free > config.get('min-gigabytes', 10):
-            log('SETUP', '%sGB is enough free space' % free)
-            if deleted > 0:
-                log('SETUP', 'Culled %s artifacts in' % deleted, artifact_dir)
-            return
-        path = os.path.join(artifact_dir, artifact)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
-        deleted += 1
-    if free < config.get('min-gigabytes', 10):
-        log('SETUP', 'ERROR: %s is less than min-gigabytes' % free)
-
-
 def remove_dir(tmpdir):
     if (os.path.dirname(tmpdir) == config['tmp']) and os.path.isdir(tmpdir):
         try:

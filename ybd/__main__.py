@@ -36,7 +36,7 @@ if not os.path.exists('./VERSION'):
             os.chdir(os.path.join(os.getcwd(), 'definitions'))
 app.setup(sys.argv)
 app.cleanup(app.config['tmp'])
-app.cull(app.config['artifacts'])
+cache.cull(app.config['artifacts'])
 
 with app.timer('TOTAL'):
     tmp_lock = open(os.path.join(app.config['tmp'], 'lock'), 'r')

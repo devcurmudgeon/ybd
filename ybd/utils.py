@@ -293,6 +293,11 @@ def find_extensions():
     return _find_extensions(paths)
 
 
+def sorted_ls(path):
+    mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
+    return list(sorted(os.listdir(path), key=mtime))
+
+
 @contextlib.contextmanager
 def monkeypatch(obj, attr, new_value):
     '''Temporarily override the attribute of some object.

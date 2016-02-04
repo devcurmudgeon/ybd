@@ -225,3 +225,42 @@ def get_remote(defs, this):
             app.log(this, 'WARNING: failed downloading', cache_key(defs, this))
 
     return False
+
+
+def cull(artifact_dir):
+    tempfile.tempdir = app.config['tmp']
+    deleted = 0
+
+    def clear(deleted, artifact_dir):
+        artifacts = utils.sorted_ls(artifact_dir)
+        for artifact in artifacts:
+            stat = os.statvfs(artifact_dir)
+            free = stat.f_frsize * stat.f_bavail / 1000000000
+            if free >= app.config.get('min-gigabytes', 10):
+                app.log('SETUP', '%sGB is enough free space' % free)
+                if deleted > 0:
+                    app.log('SETUP', 'Culled %s items in' % deleted,
+                        artifact_dir)
+                return True
+            path = os.path.join(artifact_dir, artifact)
+            if os.path.exists(os.path.join(path, artifact + '.unpacked')):
+                path = os.path.join(path, artifact + '.unpacked')
+            if os.path.exists(path):
+                tmpdir = tempfile.mkdtemp()
+                os.rename(path, os.path.join(tmpdir, 'to-delete'))
+                app.remove_dir(tmpdir)
+                deleted += 1
+        return False
+
+    # cull unpacked dirs first
+    if clear(deleted, artifact_dir):
+        return
+
+    # cull artifacts
+    if clear(deleted, artifact_dir):
+        return
+
+    stat = os.statvfs(artifact_dir)
+    free = stat.f_frsize * stat.f_bavail / 1000000000
+    if free < app.config.get('min-gigabytes', 10):
+        app.log('SETUP', 'ERROR: %sGB is less than min-gigabytes' % free)
