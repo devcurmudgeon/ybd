@@ -134,9 +134,9 @@ def write_chunk_metafile(defs, chunk):
     metadata['ref'] = chunk.get('ref')
 
     install_dir = chunk['install']
-    # Find the chunk-specific rule, otherwise use the defaults
-    split_rules = chunk.get('products',
-                           defs.defaults.get_chunk_split_rules())
+    # Use both the chunk specific rules and the default rules
+    split_rules = chunk.get('products', {})
+    default_rules = defs.defaults.get_chunk_split_rules()
 
     # Compile the regexps
     regexps = []
@@ -149,15 +149,16 @@ def write_chunk_metafile(defs, chunk):
             if path:
                 used_dirs[path] = True
 
-    for rule in split_rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
-        artifact = rule.get('artifact')
-        if artifact.startswith('-'):
-            artifact = chunk['name'] + artifact
-        regexps.append([artifact, regexp])
-        splits[artifact] = []
+    for rules in split_rules, default_rules:
+        for rule in rules:
+            regexp = re.compile('^(?:'
+                                + '|'.join(rule.get('include'))
+                                + ')$')
+            artifact = rule.get('artifact')
+            if artifact.startswith('-'):
+                artifact = chunk['name'] + artifact
+            regexps.append([artifact, regexp])
+            splits[artifact] = []
 
     for root, dirs, files in os.walk(install_dir, topdown=False):
 	root = os.path.relpath(root, install_dir)
@@ -204,24 +205,15 @@ def write_stratum_metafiles(defs, stratum):
     # Compile the regexps
     regexps = []
     splits = {}
-    for rule in split_rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
-        artifact = rule.get('artifact')
-        if artifact.startswith('-'):
-            artifact = stratum['name'] + artifact
-        regexps.append([artifact, regexp])
-        splits[artifact] = []
 
-    for rule in default_rules:
-        artifact = rule.get('artifact')
-        if artifact.startswith('-'):
-            artifact = stratum['name'] + artifact
-        if artifact not in splits:
+    for rules in split_rules, default_rules:
+        for rule in rules:
             regexp = re.compile('^(?:'
                                 + '|'.join(rule.get('include'))
                                 + ')$')
+            artifact = rule.get('artifact')
+            if artifact.startswith('-'):
+                artifact = stratum['name'] + artifact
             regexps.append([artifact, regexp])
             splits[artifact] = []
 
