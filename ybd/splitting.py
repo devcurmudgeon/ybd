@@ -236,6 +236,10 @@ def write_stratum_metafiles(defs, stratum):
         split_metadata['repo'] = metadata['repo']
         split_metadata['products'] = []
 
+        chunk_artifacts = defs.get(chunk).get('artifacts', {})
+        for artifact, target in chunk_artifacts.items():
+            splits[target].append(artifact)
+
         for element in metadata['products']:
             for artifact, rule in regexps:
                 if rule.match(element['artifact']):
