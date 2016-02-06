@@ -28,6 +28,7 @@ import sandbox
 from shutil import copyfile
 import time
 import datetime
+import splitting
 
 
 class RetryException(Exception):
@@ -108,7 +109,12 @@ def build(defs, component):
             run_build(defs, component)
 
         with app.timer(component, 'artifact creation'):
-            do_manifest(component)
+            kind = component.get('kind', 'chunk')
+            if kind == 'chunk':
+               splitting.write_chunk_metafile(defs, component)
+            elif kind == 'stratum':
+               splitting.write_stratum_metafiles(defs, component)
+
             cache(defs, component)
 
 
@@ -196,6 +202,20 @@ def install_contents(defs, component):
                 if app.config.get('log-verbose'):
                     app.log(component, 'Already installed', content['name'])
                 continue
+
+            if component.get('kind', 'chunk') == 'system':
+                artifacts = None
+
+                for stratum in component['strata']:
+                    if stratum['path'] == content['path']:
+                        artifacts = stratum.get('artifacts')
+                        break
+
+                if artifacts:
+                    compose(defs, content)
+                    splitting.install_stratum_artifacts(defs, component, content, artifacts)
+                    continue
+
             install(defs, component, content.get('contents', []))
             compose(defs, content)
             if content.get('build-mode', 'staging') != 'bootstrap':
@@ -300,12 +320,3 @@ def gather_integration_commands(defs, this):
         result.extend(all_commands[key])
     return result
 
-
-def do_manifest(this):
-    metafile = os.path.join(this['baserockdir'], this['name'] + '.meta')
-    with app.chdir(this['install']), open(metafile, "w") as f:
-        f.write("repo: %s\nref: %s\n" % (this.get('repo'), this.get('ref')))
-        f.flush()
-        call(['find'], stdout=f, stderr=f)
-    copyfile(metafile, os.path.join(app.config['artifacts'],
-                                    this['cache'] + '.meta'))
