@@ -61,7 +61,6 @@ with app.timer('TOTAL'):
 
     target = defs.get(app.config['target'])
     while True:
-        app.log('FOO', 'start of True loop')
         try:
             compose(defs, target)
             break
@@ -69,10 +68,8 @@ with app.timer('TOTAL'):
             app.log(target, 'Interrupted by user')
             os._exit(1)
         except RetryException:
-            app.log('FOO', 'retry-exception')
             pass
         except:
-            app.log('FOO', 'except-exception')
             import traceback
             traceback.print_exc()
             app.log(target, 'Exiting: uncaught exception')
