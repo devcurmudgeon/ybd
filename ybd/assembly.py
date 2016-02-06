@@ -48,7 +48,6 @@ class RetryException(Exception):
         for dirname in app.config['sandboxes']:
             app.remove_dir(dirname)
         app.config['sandboxes'] = []
-        pass
 
 
 def compose(defs, target):
@@ -172,10 +171,9 @@ def claim(defs, this):
         try:
             with open(lockfile(defs, this), 'a') as l:
                 fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                try:
-                    yield
-                finally:
-                    return
+                yield
+            os.remove(lockfile(defs, this))
+            return
         except IOError as e:
             raise RetryException(defs, this)
     else:
