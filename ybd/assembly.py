@@ -35,13 +35,15 @@ class RetryException(Exception):
         if app.config['log-verbose'] and \
                 app.config.get('last-retry-component') != component:
             app.log(component, 'Already downloading/building, so wait/retry')
-        if app.config.get('last-retry'):
-            wait = datetime.datetime.now() - app.config.get('last-retry')
+        if app.config.get('last-retry-time'):
+            wait = datetime.datetime.now() - app.config.get('last-retry-time')
             if wait.seconds < 1:
                 with open(lockfile(defs, component), 'r') as l:
                     call(['flock', '--shared', '--timeout',
                           app.config.get('timeout', '60'), str(l.fileno())])
-        app.config['last-retry'] = datetime.datetime.now()
+                if app.config['log-verbose']:
+                    app.log(component, 'Finished wait loop')
+        app.config['last-retry-time'] = datetime.datetime.now()
         app.config['last-retry-component'] = component
         for dirname in app.config['sandboxes']:
             app.remove_dir(dirname)
