@@ -72,6 +72,9 @@ def cache_key(defs, this):
         for system in definition.get('systems', []):
             hash_system_recursively(system)
 
+    if app.config.get('artifact-version', False):
+        hash_factors['artifact-version'] = app.config.get('artifact-version')
+
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
     safename = definition['name'].replace('/', '-')
