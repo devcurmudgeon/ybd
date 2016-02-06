@@ -121,7 +121,8 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         # normal mode: builds run in a chroot with only their dependencies
         # present.
 
-        mounts.extend([('tmpfs', '/dev/shm', 'tmpfs'), ('proc', '/proc', 'proc'), ])
+        mounts.extend([('tmpfs', '/dev/shm', 'tmpfs'),
+                       ('proc', '/proc', 'proc'), ])
 
         if this.get('kind') == 'system':
             writable_paths = 'all'

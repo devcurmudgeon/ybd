@@ -34,7 +34,8 @@ def load_metafile(defs, target):
     definition = defs.get(target)
     name = definition['name']
     cachepath, cachedir = os.path.split(get_cache(defs, target))
-    metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock', name + '.meta')
+    metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock',
+                            name + '.meta')
     metadata = None
 
     path = None
@@ -79,12 +80,14 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                 split_stratum_metadata['products'].append(product)
 
     if app.config.get('log-verbose'):
-        app.log(component, 'installing artifacts: ' + str(artifacts) + ' components: ' + str(components))
+        app.log(component, 'Installing artifacts: ' + str(artifacts)
+                + ' components: ' + str(components))
 
     baserockpath = os.path.join(component['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):
         os.mkdir(baserockpath)
-    split_stratum_metafile = os.path.join(baserockpath, stratum['name'] + '.meta')
+    split_stratum_metafile = os.path.join(baserockpath,
+                                          stratum['name'] + '.meta')
     with open(split_stratum_metafile, "w") as f:
         yaml.safe_dump(split_stratum_metadata, f, default_flow_style=False)
 
@@ -94,7 +97,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock', chunk['name'] + '.meta')
+        metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock',
+                                chunk['name'] + '.meta')
         try:
             with open(metafile, "r") as f:
                 filelist = []
@@ -109,13 +113,15 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                         split_metadata['products'].append(element)
 
                 if split_metadata['products'] != []:
-                    split_metafile = os.path.join(baserockpath, os.path.basename(metafile))
+                    split_metafile = os.path.join(baserockpath,
+                                                  os.path.basename(metafile))
                     with open(split_metafile, "w") as f:
-                        yaml.safe_dump(split_metadata, f, default_flow_style=False)
+                        yaml.safe_dump(split_metadata, f,
+                                       default_flow_style=False)
 
-                    chunk_cachepath, chunk_cachedir = os.path.split(get_cache(defs, chunk))
-                    srcpath = os.path.join(chunk_cachepath, chunk_cachedir + '.unpacked')
-                    utils.copy_file_list(srcpath, component['sandbox'], filelist)
+                    cachepath, cachedir = os.path.split(get_cache(defs, chunk))
+                    path = os.path.join(cachepath, cachedir + '.unpacked')
+                    utils.copy_file_list(path, component['sandbox'], filelist)
         except:
             app.log(stratum, 'WARNING: problem loading ', metafile)
 
@@ -123,8 +129,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
 def write_chunk_metafile(defs, chunk):
     '''Writes a chunk .meta file to the baserock dir of the chunk
 
-    The split rules are used to divide up the installed files for the chunk into
-    artifacts in the 'products' list
+    The split rules are used to divide up the installed files for the chunk
+    into artifacts in the 'products' list
 
     '''
     app.log(chunk['name'], 'splitting chunk')
@@ -161,9 +167,10 @@ def write_chunk_metafile(defs, chunk):
             splits[artifact] = []
 
     for root, dirs, files in os.walk(install_dir, topdown=False):
-	root = os.path.relpath(root, install_dir)
-	if root == '.':
-	    root = ''
+        root = os.path.relpath(root, install_dir)
+
+        if root == '.':
+            root = ''
 
         for name in files:
             path = os.path.join(root, name)
@@ -181,8 +188,9 @@ def write_chunk_metafile(defs, chunk):
                         splits[artifact].append(path)
                         break
 
-    unique_artifacts = sorted(set( [a for a, r in regexps] ))
-    products = [ { 'artifact': a, 'files': sorted(splits[a]) } for a in unique_artifacts ]
+    unique_artifacts = sorted(set([a for a, r in regexps]))
+    products = [{'artifact': a, 'files': sorted(splits[a])}
+                for a in unique_artifacts]
     metadata['products'] = products
     with app.chdir(chunk['install']), open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
@@ -191,9 +199,9 @@ def write_chunk_metafile(defs, chunk):
 def write_stratum_metafiles(defs, stratum):
     '''Write the .meta files for a stratum to the baserock dir
 
-    The split rules are used to divide up the installed components into artifacts
-    in the 'products' list in the stratum .meta file. Each artifact contains a
-    list of chunk artifacts which match the stratum splitting rules
+    The split rules are used to divide up the installed components into
+    artifacts in the 'products' list in the stratum .meta file. Each artifact
+    contains a list of chunk artifacts which match the stratum splitting rules
 
     '''
 
@@ -239,13 +247,15 @@ def write_stratum_metafiles(defs, stratum):
                     splits[artifact].append(element['artifact'])
                     break
 
-        split_metafile = os.path.join(stratum['baserockdir'], chunk['name'] + '.meta')
+        split_metafile = os.path.join(stratum['baserockdir'],
+                                      chunk['name'] + '.meta')
         with open(split_metafile, "w") as f:
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
     metadata = {}
-    products = [ { 'artifact': a, 'components': sorted(set(splits[a])) } for a, r in regexps ]
+    products = [{'artifact': a, 'components': sorted(set(splits[a]))}
+                for a, r in regexps]
     metadata['products'] = products
 
     with app.chdir(stratum['install']), open(metafile, "w") as f:

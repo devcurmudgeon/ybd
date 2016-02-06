@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015  Codethink Limited
+# Copyright (C) 2014-2016  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,8 +78,8 @@ def compose(defs, target):
         return None
 
     with sandbox.setup(component):
-        assemble(defs, component) # this brings in 'contents' recursively
-        build(defs, component) # this brings in 'build-depends', and runs make
+        assemble(defs, component)  # bring in 'contents' recursively
+        build(defs, component)     # bring in 'build-depends', and run make
 
     return cache_key(defs, component)
 
@@ -111,9 +111,9 @@ def build(defs, component):
         with app.timer(component, 'artifact creation'):
             kind = component.get('kind', 'chunk')
             if kind == 'chunk':
-               splitting.write_chunk_metafile(defs, component)
+                splitting.write_chunk_metafile(defs, component)
             elif kind == 'stratum':
-               splitting.write_stratum_metafiles(defs, component)
+                splitting.write_stratum_metafiles(defs, component)
 
             cache(defs, component)
 
@@ -213,7 +213,8 @@ def install_contents(defs, component):
 
                 if artifacts:
                     compose(defs, content)
-                    splitting.install_stratum_artifacts(defs, component, content, artifacts)
+                    splitting.install_stratum_artifacts(defs, component,
+                                                        content, artifacts)
                     continue
 
             install(defs, component, content.get('contents', []))
@@ -319,4 +320,3 @@ def gather_integration_commands(defs, this):
     for key in sorted(all_commands.keys()):
         result.extend(all_commands[key])
     return result
-
