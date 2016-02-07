@@ -66,11 +66,26 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/<name>')
     @bottle.get('/artifacts/<name>')
     def list(name=""):
+
+        def check(artifact):
+            try:
+                artifact = os.path.join(app.config['artifact-dir'], artifact,
+                                         artifact)
+                checkfile = artifact + '.md5'
+                if not os.path.exists(checkfile):
+                    checksum = app.md5(artifact)
+                    with open(checkfile, "a") as f:
+                        f.write(checksum)
+
+                return(open(checkfile).read())
+            except:
+                return('================================')
+
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))), x]
-                   for x in names]
+        content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))),
+                   check(x), x] for x in names]
         os.chdir(current_dir)
         return template('kbas',
                         title='Available Artifacts:',
@@ -134,6 +149,9 @@ class KeyedBinaryArtifactServer(object):
             shutil.rmtree(unpackdir)
             os.rename(tmpdir, os.path.join(app.config['artifact-dir'],
                                            cache_id))
+            checksum = app.md5(artifact)
+            with open(artifact + '.md5', "a") as f:
+                write(f, checksum)
             response.status = 201  # success!
             return
         except:
