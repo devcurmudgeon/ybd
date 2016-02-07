@@ -68,7 +68,7 @@ def compose(defs, target):
         app.log(target, "Composing", component['name'])
 
     # if we have a kbas, look there to see if this component exists
-    if app.config.get('kbas-url'):
+    if app.config.get('kbas-url') and not app.config.get('reproduce'):
         with claim(defs, component):
             if get_remote(defs, component):
                 app.config['counter'].increment()

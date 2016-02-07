@@ -120,6 +120,7 @@ def setup(args):
             config['kbas-url'] += '/'
 
     config['total'] = config['tasks'] = config['counter'] = 0
+    config['reproduced'] = 0
     config['pid'] = os.getpid()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))
@@ -233,13 +234,3 @@ def spawn():
             config['fork'] = fork
             log('FORKS', 'I am fork', config.get('fork'))
             break
-
-
-def md5(filename):
-    # From http://stackoverflow.com/questions/3431825
-    # answer by http://stackoverflow.com/users/370483/quantumsoup
-    hash = hashlib.md5()
-    with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-    return hash.hexdigest()

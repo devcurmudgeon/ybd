@@ -134,13 +134,14 @@ def unpack(defs, this, tmpfile):
         return False
 
     try:
+        print 'in true'
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
             app.exit(this, 'ERROR: problem creating cache artifact', path)
 
         size = os.path.getsize(get_cache(defs, this))
-        checksum = app.md5(get_cache(defs, this))
+        checksum = md5(get_cache(defs, this))
         app.log(this, 'Cached %s bytes %s as' % (size, checksum),
                 cache_key(defs, this))
         return path
@@ -154,12 +155,18 @@ def upload(defs, this):
     cachefile = get_cache(defs, this)
     url = app.config['kbas-url'] + 'upload'
     params = {"filename": this['cache'],
-              "password": app.config['kbas-password']}
+              "password": app.config['kbas-password'],
+              "checksum": md5(cachefile)}
     with open(cachefile, 'rb') as f:
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
                 app.log(this, 'Uploaded %s to' % this['cache'], url)
+                return
+            if response.status_code == 777:
+                app.log(this, 'Reproduced %s at' % md5(cachefile),
+                        this['cache'])
+                app.config['reproduced'] += 1
                 return
             if response.status_code == 405:
                 app.log(this, 'Artifact server already has', this['cache'])
@@ -270,3 +277,28 @@ def cull(artifact_dir):
     if free < app.config.get('min-gigabytes', 10):
         app.exit('SETUP', 'ERROR: %sGB is less than min-gigabytes:' % free,
                  app.config.get('min-gigabytes', 10))
+
+
+def check(artifact):
+    try:
+        artifact = os.path.join(app.config['artifact-dir'], artifact,
+                                 artifact)
+        checkfile = artifact + '.md5'
+        if not os.path.exists(checkfile):
+            checksum = md5(artifact)
+            with open(checkfile, "w") as f:
+                f.write(checksum)
+
+        return(open(checkfile).read())
+    except:
+        return('================================')
+
+
+def md5(filename):
+    # From http://stackoverflow.com/questions/3431825
+    # answer by http://stackoverflow.com/users/370483/quantumsoup
+    hash = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash.hexdigest()

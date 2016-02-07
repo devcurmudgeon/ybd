@@ -75,6 +75,11 @@ with app.timer('TOTAL'):
             app.log(target, 'Exiting: uncaught exception')
             os._exit(1)
 
+    if app.config.get('reproduce'):
+        app.log('REPRODUCED', 'Reproduced %s of' % config['reproduced'],
+                config['tasks'])
+
+
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):
             deploy(defs, target)
