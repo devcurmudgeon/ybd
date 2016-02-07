@@ -25,6 +25,7 @@ import yaml
 from multiprocessing import cpu_count
 from subprocess import call, check_output
 import platform
+import hashlib
 from repos import get_version
 
 
@@ -232,3 +233,13 @@ def spawn():
             config['fork'] = fork
             log('FORKS', 'I am fork', config.get('fork'))
             break
+
+
+def md5(filename):
+    # From http://stackoverflow.com/questions/3431825
+    # answer by http://stackoverflow.com/users/370483/quantumsoup
+    hash = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash.update(chunk)
+    return hash.hexdigest()

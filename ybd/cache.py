@@ -140,7 +140,7 @@ def unpack(defs, this, tmpfile):
             app.exit(this, 'ERROR: problem creating cache artifact', path)
 
         size = os.path.getsize(get_cache(defs, this))
-        checksum = md5(get_cache(defs, this))
+        checksum = app.md5(get_cache(defs, this))
         app.log(this, 'Cached %s bytes %s as' % (size, checksum),
                 cache_key(defs, this))
         return path
@@ -148,16 +148,6 @@ def unpack(defs, this, tmpfile):
         app.log(this, 'Bah! I raced on', cache_key(defs, this))
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
-
-
-def md5(filename):
-    # From http://stackoverflow.com/questions/3431825
-    # answer by http://stackoverflow.com/users/370483/quantumsoup
-    hash = hashlib.md5()
-    with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-    return hash.hexdigest()
 
 
 def upload(defs, this):
