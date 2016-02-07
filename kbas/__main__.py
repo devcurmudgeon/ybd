@@ -74,7 +74,7 @@ class KeyedBinaryArtifactServer(object):
                 checkfile = artifact + '.md5'
                 if not os.path.exists(checkfile):
                     checksum = app.md5(artifact)
-                    with open(checkfile, "a") as f:
+                    with open(checkfile, "w") as f:
                         f.write(checksum)
 
                 return(open(checkfile).read())
