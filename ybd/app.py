@@ -35,7 +35,7 @@ config = {}
 class Counter(object):
     def __init__(self, pid):
         self._counter_file = os.path.join(config['tmp'], str(pid))
-        with open(self._counter_file, 'a') as f:
+        with open(self._counter_file, 'w') as f:
             f.write(str(0))
 
     def increment(self):
