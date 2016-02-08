@@ -27,6 +27,12 @@ from subprocess import call, check_output
 import platform
 import hashlib
 from repos import get_version
+try:
+    from riemann_client.transport import TCPTransport
+    from riemann_client.client import QueuedClient
+    riemann_available = True
+except ImportError:
+    riemann_available = False
 
 
 config = {}
@@ -218,7 +224,19 @@ def timer(this, message=''):
         raise
     else:
         text = '' if message == '' else ' for ' + message
-        log(this, 'Elapsed time' + text, elapsed(starttime))
+        time_elapsed = elapsed(starttime)
+        log(this, 'Elapsed time' + text, time_elapsed)
+        if riemann_available and 'riemann-server' in config:
+            host_name = config['riemann-server']
+            port = config['riemann-port']
+            time_split = time_elapsed.split(':')
+            time_sec = int(time_split[0]) * 3600 \
+                + int(time_split[1]) * 60 + int(time_split[2])
+            with QueuedClient(TCPTransport(host_name, port,
+                                           timeout=30)) as client:
+                client.event(service="Timer",
+                             description=text, metric_f=time_sec)
+                client.flush()
 
 
 def elapsed(starttime):

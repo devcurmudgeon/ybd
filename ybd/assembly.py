@@ -29,6 +29,12 @@ from shutil import copyfile
 import time
 import datetime
 import splitting
+try:
+    from riemann_client.transport import TCPTransport
+    from riemann_client.client import QueuedClient
+    riemann_available = True
+except ImportError:
+    riemann_available = False
 
 
 class RetryException(Exception):
@@ -154,7 +160,20 @@ def run_build(defs, this):
         sandbox.create_devices(this)
 
     with open(this['log'], "a") as logfile:
-        logfile.write('Elapsed_time: %s\n' % app.elapsed(this['start-time']))
+        time_elapsed = app.elapsed(this['start-time'])
+        logfile.write('Elapsed_time: %s\n' % time_elapsed)
+        if riemann_available and 'riemann-server' in app.config:
+            host_name = app.config['riemann-server']
+            port = app.config['riemann-port']
+            time_split = time_elapsed.split(':')
+            time_sec = int(time_split[0]) * 3600 \
+                + int(time_split[1]) * 60 + int(time_split[2])
+            with QueuedClient(TCPTransport(host_name, port,
+                                           timeout=30)) as client:
+                client.event(service="Artifact_Timer",
+                             description=this['name'],
+                             metric_f=time_sec)
+                client.flush()
 
 
 def shuffle(contents):
