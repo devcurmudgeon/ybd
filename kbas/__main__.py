@@ -129,7 +129,7 @@ class KeyedBinaryArtifactServer(object):
 
         tempfile.tempdir = app.config['artifact-dir']
         tmpdir = tempfile.mkdtemp()
-        if True:
+        try:
             upload = request.files.get('file')
             artifact = os.path.join(tmpdir, cache_id)
             upload.save(artifact)
