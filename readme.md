@@ -11,8 +11,8 @@ currently ybd understands the semantics of yaml
 [definitions](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/definitions.git/tree/)
 from the [Baserock](http://wiki.baserock.org) project.
 
-the total codebase for ybd is only ~ 1700 lines of Python. even so ybd can
-reproducibly build all systems in Baserock's definitions.git, i.e. all of the
+the total codebase for ybd is only ~ 2100 lines of Python. even so ybd can
+repeatably build all systems in Baserock's definitions.git, i.e. all of the
 FOSS components required for Linux appliances up to and including, for example
 
 - self-hosting Linux development systems
@@ -141,6 +141,7 @@ config values you may want to override include:
       'github:': 'git://github.com/'
       'gnome:': 'git://git.gnome.org/'
       'upstream:': 'git://git.baserock.org/delta/'
+    artifact-version: 1 # new in 16.06, allows versioning of artifact key
     base-path: ['/usr/bin', '/bin', '/usr/sbin', '/sbin'] # default build path
     defaults: 'config/defaults.conf' # definitions defaults if not found elsewhere
     directories:
@@ -155,8 +156,8 @@ config values you may want to override include:
     log-elapsed: True # log elapsed times since start, or actual time
     log-verbose: False # log extra info including all sandbox installation steps
     min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
-    no-build: False # for debugging ybd itself - if True, run the assembly
- logic, but don't compile things
+    no-build: False # for testing/debugging ybd - if True, only run the assembly logic, don't compile things
+    reproduce: False # if True, build and compare against artifacts on server
     tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
     tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
 
