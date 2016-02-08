@@ -76,8 +76,8 @@ with app.timer('TOTAL'):
             os._exit(1)
 
     if app.config.get('reproduce'):
-        app.log('REPRODUCED', 'Reproduced %s of' % config['reproduced'],
-                config['tasks'])
+        app.log('REPRODUCED', 'Reproduced %s of' % app.config['reproduced'],
+                app.config['tasks'])
 
 
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
