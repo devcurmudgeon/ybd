@@ -66,16 +66,17 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/<name>')
     @bottle.get('/artifacts/<name>')
     def list(name=""):
-        current_dir = os.getcwd()
-        os.chdir(app.config['artifact-dir'])
-        names = glob.glob('*' + name + '*')
+        names = glob.glob(os.path.join(app.config['artifact-dir'],
+                          '*' + name + '*'))
         try:
             content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))),
-                       cache.check(x), x] for x in names]
+                       cache.check(os.path.basename(x)),
+                       os.path.basename(x)] for x in names]
         except:
-            content = [['--------', cache.check(x), x] for x in names]
+            content = [['--------',
+                       cache.check(os.path.basename(x)),
+                       os.path.basename(x)] for x in names]
 
-        os.chdir(current_dir)
         return template('kbas',
                         title='Available Artifacts:',
                         content=reversed(sorted(content)),
