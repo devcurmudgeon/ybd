@@ -134,7 +134,6 @@ def unpack(defs, this, tmpfile):
         return False
 
     try:
-        print 'in true'
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
         os.rename(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
