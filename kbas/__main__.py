@@ -69,8 +69,12 @@ class KeyedBinaryArtifactServer(object):
         current_dir = os.getcwd()
         os.chdir(app.config['artifact-dir'])
         names = glob.glob('*' + name + '*')
-        content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))),
-                   cache.check(x), x] for x in names]
+        try:
+            content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))),
+                       cache.check(x), x] for x in names]
+        except:
+            content = [['--------', cache.check(x), x] for x in names]
+
         os.chdir(current_dir)
         return template('kbas',
                         title='Available Artifacts:',
@@ -125,7 +129,7 @@ class KeyedBinaryArtifactServer(object):
 
         tempfile.tempdir = app.config['artifact-dir']
         tmpdir = tempfile.mkdtemp()
-        try:
+        if True:
             upload = request.files.get('file')
             artifact = os.path.join(tmpdir, cache_id)
             upload.save(artifact)
@@ -135,16 +139,19 @@ class KeyedBinaryArtifactServer(object):
                 app.log(this, 'ERROR: Problem unpacking', artifact)
                 raise
             shutil.rmtree(unpackdir)
-            os.rename(tmpdir, os.path.join(app.config['artifact-dir'],
-                                           cache_id))
             checksum = cache.md5(artifact)
             with open(artifact + '.md5', "a") as f:
-                write(f, checksum)
+                f.write(checksum)
+            os.rename(tmpdir, os.path.join(app.config['artifact-dir'],
+                                           cache_id))
             response.status = 201  # success!
             return
         except:
             # something went wrong, clean up
-            shutil.rmtree(tmpdir)
+            try:
+                shutil.rmtree(tmpdir)
+            except:
+                pass
             response.status = 999
 
         return
