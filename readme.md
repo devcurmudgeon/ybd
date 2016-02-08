@@ -50,11 +50,14 @@ If you want to serve artifacts using kbas, it requires
 [bottle](https://github.com/bottlepy/bottle) and optionally
 [cherrypy](https://github.com/cherrypy/cherrypy.git)
 
+If you'd like to use Riemann functionality, you will require
+[riemann-client](https://github.com/borntyping/python-riemann-client)
+
 if you trust the Python Package Index (PyPI) and pip is available on your
 machine, you can install these dependencies with:
 
 ```
-    pip install pyyaml sandboxlib requests jsonschema bottle cherrypy
+    pip install pyyaml sandboxlib requests jsonschema bottle cherrypy riemann-client
 ```
 
 if you need to install pip itself:
@@ -160,6 +163,8 @@ config values you may want to override include:
     reproduce: False # if True, build and compare against artifacts on server
     tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
     tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
+    riemann-server: '127.0.0.1' # address of a riemann server to optionally send events to
+    riemann-port: 5555 # associated port of riemann server
 
 ### interesting features
 
