@@ -91,14 +91,13 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
     with open(split_stratum_metafile, "w") as f:
         yaml.safe_dump(split_stratum_metadata, f, default_flow_style=False)
 
-    cachepath, cachedir = os.path.split(get_cache(defs, stratum))
     for path in stratum['contents']:
         chunk = defs.get(path)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock',
-                                chunk['name'] + '.meta')
+        metafile = os.path.join(get_cache(defs, chunk) + '.unpacked',
+                                'baserock', chunk['name'] + '.meta')
         try:
             with open(metafile, "r") as f:
                 filelist = []
