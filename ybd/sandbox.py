@@ -40,6 +40,7 @@ def setup(this):
     currentdir = os.getcwd()
     tempfile.tempdir = app.config['tmp']
     this['sandbox'] = tempfile.mkdtemp()
+    os.environ['TMPDIR'] = app.config['tmp']
     app.config['sandboxes'] += [this['sandbox']]
     this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
     this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
