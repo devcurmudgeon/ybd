@@ -307,6 +307,8 @@ def env_vars_for_build(defs, this):
     env['MORPH_ARCH'] = arch
     env['DEFINITIONS_REF'] = app.config['def-version']
     env['PROGRAM_REF'] = app.config['my-version']
+    if this.get('SOURCE_DATE_EPOCH'):
+        env['SOURCE_DATE_EPOCH'] = this['SOURCE_DATE_EPOCH']
 
     return env
 

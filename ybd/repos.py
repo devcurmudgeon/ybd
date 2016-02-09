@@ -199,6 +199,11 @@ def checkout(name, repo, ref, checkout):
     utils.set_mtime_recursively(checkout)
 
 
+def source_date_epoch(checkout):
+    with app.chdir(checkout):
+        return check_output(['git', 'log', '-1', '--pretty=%ct'])[:-1]
+
+
 def extract_commit(name, repo, ref, target_dir):
     '''Check out a single commit (or tree) from a Git repo.
     The checkout() function actually clones the entire repo, so this
