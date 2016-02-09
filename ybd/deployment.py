@@ -44,38 +44,37 @@ def deploy_system(defs, system_spec, parent_location=''):
     system = defs.get(system_spec['path'])
     deploy_defaults = system_spec.get('deploy-defaults')
 
-    sandbox.setup(system)
-    app.log(system, 'Extracting system artifact into', system['sandbox'])
-    with open(cache.get_cache(defs, system), 'r') as artifact:
-        call(['tar', 'x', '--directory', system['sandbox']], stdin=artifact)
+    with sandbox.setup(system):
+        app.log(system, 'Extracting system artifact into', system['sandbox'])
+        with open(cache.get_cache(defs, system), 'r') as artifact:
+            call(['tar', 'x', '--directory', system['sandbox']], stdin=artifact)
 
-    for subsystem in system_spec.get('subsystems', []):
-        if deploy_defaults:
-            subsystem = dict(deploy_defaults.items() + subsystem.items())
-        deploy_system(defs, subsystem, parent_location=system['sandbox'])
+        for subsystem in system_spec.get('subsystems', []):
+            if deploy_defaults:
+                subsystem = dict(deploy_defaults.items() + subsystem.items())
+            deploy_system(defs, subsystem, parent_location=system['sandbox'])
 
-    for name, deployment in system_spec.get('deploy', {}).iteritems():
-        method = deployment.get('type') or deployment.get('upgrade-type')
-        method = os.path.basename(method)
-        if deploy_defaults:
-            deployment = dict(deploy_defaults.items() + deployment.items())
-        do_deployment_manifest(system, deployment)
-        if parent_location:
-            location = deployment.get('location') or \
-                deployment.get('upgrade-location')
-            deployment['location'] = os.path.join(parent_location,
+        for name, deployment in system_spec.get('deploy', {}).iteritems():
+            method = deployment.get('type') or deployment.get('upgrade-type')
+            method = os.path.basename(method)
+            if deploy_defaults:
+                deployment = dict(deploy_defaults.items() + deployment.items())
+            do_deployment_manifest(system, deployment)
+            if parent_location:
+                location = deployment.get('location') or \
+                    deployment.get('upgrade-location')
+                deployment['location'] = os.path.join(parent_location,
                                                   location.lstrip('/'))
-        try:
-            sandbox.run_extension(system, deployment, 'check', method)
-        except KeyError:
-            app.log(system, "Couldn't find a check extension for", method)
+            try:
+                sandbox.run_extension(system, deployment, 'check', method)
+            except KeyError:
+                app.log(system, "Couldn't find a check extension for", method)
 
-        for ext in system.get('configuration-extensions', []):
-            sandbox.run_extension(system, deployment, 'configure',
+            for ext in system.get('configuration-extensions', []):
+                sandbox.run_extension(system, deployment, 'configure',
                                   os.path.basename(ext))
-        os.chmod(system['sandbox'], 0o755)
-        sandbox.run_extension(system, deployment, 'write', method)
-    app.remove_dir(system['sandbox'])
+            os.chmod(system['sandbox'], 0o755)
+            sandbox.run_extension(system, deployment, 'write', method)
 
 
 def do_deployment_manifest(system, configuration):
