@@ -100,7 +100,7 @@ def get_tree(this):
                 stderr=fnull):
             # can't resolve this ref. is it upstream?
             app.log(this, 'Fetching from upstream to resolve %s' % ref)
-            call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
+            update_mirror(this['name'], this['repo'], gitdir)
 
         try:
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
@@ -125,12 +125,7 @@ def mirror(name, repo):
             call(['wget', os.path.join(app.config['tar-url'], tar_file)])
             call(['tar', 'xf', tar_file], stderr=fnull)
             os.remove(tar_file)
-            call(['git', 'config', 'remote.origin.url', repo_url])
-            call(['git', 'config', 'remote.origin.mirror', 'true'])
-            if call(['git', 'config', 'remote.origin.fetch',
-                     '+refs/*:refs/*']) != 0:
-                raise BaseException('Did not get a valid git repo')
-            call(['git', 'fetch', 'origin'])
+            update_mirror(name, repo, tmpdir)
     except:
         app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
