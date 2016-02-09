@@ -163,8 +163,8 @@ def mirror_has_ref(gitdir, ref):
 def update_mirror(name, repo, gitdir):
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         app.log(name, 'Refreshing mirror for %s' % repo)
-        if call(['git', 'remote', 'update', 'origin'], stdout=fnull,
-                stderr=fnull):
+        if call(['git', 'fetch', get_repo_url(repo), '+refs/*:refs/*'],
+                stdout=fnull, stderr=fnull):
             app.exit(name, 'ERROR: git update mirror failed', repo)
 
 
