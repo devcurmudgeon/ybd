@@ -189,24 +189,14 @@ def lockfile(defs, this):
 
 @contextlib.contextmanager
 def claim(defs, this):
-    # take a lock so we don't race building 'this'
-    # FIXME: we should claim always, but the claim code is eating exceptions
-    # so currently we only claim on multi-instance so it's easier to debug
-    # on single instance runs
-    if app.config.get('instances', 1) > 1:
-        try:
-            with open(lockfile(defs, this), 'a') as l:
-                fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                yield
-            os.remove(lockfile(defs, this))
-            return
-        except IOError as e:
-            raise RetryException(defs, this)
-    else:
-        try:
+    try:
+        with open(lockfile(defs, this), 'a') as l:
+            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
             yield
-        finally:
-            return
+        os.remove(lockfile(defs, this))
+        return
+    except IOError as e:
+        raise RetryException(defs, this)
 
 
 def install_contents(defs, component):
