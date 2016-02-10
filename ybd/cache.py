@@ -281,7 +281,7 @@ def cull(artifact_dir):
 def check(artifact):
     try:
         artifact = os.path.join(app.config['artifact-dir'], artifact,
-                                 artifact)
+                                artifact)
         checkfile = artifact + '.md5'
         if not os.path.exists(checkfile):
             checksum = md5(artifact)

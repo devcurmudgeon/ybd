@@ -47,7 +47,8 @@ def deploy_system(defs, system_spec, parent_location=''):
     with sandbox.setup(system):
         app.log(system, 'Extracting system artifact into', system['sandbox'])
         with open(cache.get_cache(defs, system), 'r') as artifact:
-            call(['tar', 'x', '--directory', system['sandbox']], stdin=artifact)
+            call(['tar', 'x', '--directory', system['sandbox']],
+                 stdin=artifact)
 
         for subsystem in system_spec.get('subsystems', []):
             if deploy_defaults:
@@ -64,7 +65,7 @@ def deploy_system(defs, system_spec, parent_location=''):
                 location = deployment.get('location') or \
                     deployment.get('upgrade-location')
                 deployment['location'] = os.path.join(parent_location,
-                                                  location.lstrip('/'))
+                                                      location.lstrip('/'))
             try:
                 sandbox.run_extension(system, deployment, 'check', method)
             except KeyError:
@@ -72,7 +73,7 @@ def deploy_system(defs, system_spec, parent_location=''):
 
             for ext in system.get('configuration-extensions', []):
                 sandbox.run_extension(system, deployment, 'configure',
-                                  os.path.basename(ext))
+                                      os.path.basename(ext))
             os.chmod(system['sandbox'], 0o755)
             sandbox.run_extension(system, deployment, 'write', method)
 

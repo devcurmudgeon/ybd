@@ -123,7 +123,7 @@ class KeyedBinaryArtifactServer(object):
         cache_id = request.forms.get('filename')
         if os.path.isdir(os.path.join(app.config['artifact-dir'], cache_id)):
             if cache.check(cache_id) == request.forms.get('checksum', 'XYZ'):
-                response.status = 777 # this is the same binary we have
+                response.status = 777  # this is the same binary we have
                 return
             response.status = 405  # method not allowed, this artifact exists
             return

@@ -83,7 +83,6 @@ with app.timer('TOTAL'):
         app.log('REPRODUCED', 'Reproduced %s of' % app.config['reproduced'],
                 app.config['tasks'])
 
-
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):
             deploy(defs, target)
