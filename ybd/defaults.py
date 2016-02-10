@@ -90,12 +90,12 @@ class Defaults(object):
         '''Automatically detect the build system, if possible.'''
 
         for build_system in sorted(self.build_systems):
-            indicators = self.build_systems[build_system]['indicators']
+            indicators = self.build_systems[build_system].get('indicators', [])
             if any(x in file_list for x in indicators):
                 return build_system
 
         for build_system in sorted(self.build_systems):
-            indicators = self.build_systems[build_system]['indicators']
+            indicators = self.build_systems[build_system].get('indicators', [])
             for indicator in indicators:
                 if any(x.endswith(indicator) for x in file_list):
                     return build_system
