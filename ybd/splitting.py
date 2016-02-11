@@ -31,30 +31,17 @@ def load_metafile(defs, target):
     built artifact
 
     '''
-    definition = defs.get(target)
-    name = definition['name']
-    cachepath, cachedir = os.path.split(get_cache(defs, target))
-    metafile = os.path.join(cachepath, cachedir + '.unpacked', 'baserock',
-                            name + '.meta')
-    metadata = None
-
-    path = None
-    if type(target) is str:
-        path = target
-    else:
-        path = target['name']
-
+    target = defs.get(target)
+    metafile = os.path.join(get_cache(defs, target) + '.unpacked', 'baserock',
+                            target['name'] + '.meta')
     try:
         with open(metafile, "r") as f:
             metadata = yaml.safe_load(f)
+        app.log(target, 'Loaded metadata for', target['path'])
+        return metadata
     except:
         app.log(name, 'WARNING: problem loading metadata', metafile)
         return None
-
-    if metadata:
-        app.log(name, 'loaded metadata for', path)
-
-    return metadata
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
