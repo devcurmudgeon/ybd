@@ -157,7 +157,8 @@ class Definitions(object):
             if definition['path'] == 'ERROR':
                 app.exit(definition, 'ERROR: no path, no name?')
         if definition.get('name') is None:
-            definition['name'] = definition['path'].replace('/', '-')
+            definition['name'] = definition['path']
+        definition['name'] = definition['name'].replace('/', '-')
         if definition['name'] == app.config['target']:
             app.config['target'] = definition['path']
 
