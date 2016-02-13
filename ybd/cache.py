@@ -27,6 +27,7 @@ import app
 import repos
 import utils
 import tempfile
+import yaml
 
 cache_list = {}
 
@@ -203,6 +204,27 @@ def get_cache(defs, this):
         return os.path.join(cachedir, cache_key(defs, this))
 
     return False
+
+
+def get_metadata(defs, this):
+    '''Load an individual .meta file
+
+    The .meta file is expected to be in the .unpacked/baserock directory of the
+    built artifact
+
+    '''
+    this = defs.get(this)
+    metafile = os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
+                            this['name'] + '.meta')
+    try:
+        with open(metafile, "r") as f:
+            metadata = yaml.safe_load(f)
+        if app.config.get('log-verbose'):
+            app.log(this, 'Loaded metadata for', this['path'])
+        return metadata
+    except:
+        app.log(this, 'WARNING: problem loading metadata', metafile)
+        return None
 
 
 def get_remote(defs, this):

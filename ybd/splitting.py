@@ -15,33 +15,13 @@
 # =*= License: GPL-2 =*=
 
 import app
-from cache import cache, cache_key, get_cache, get_remote
+from cache import cache, cache_key, get_cache, get_remote, get_metadata
 import os
 import glob
 import re
 import assembly
 import yaml
 import utils
-
-
-def load_metafile(defs, target):
-    '''Load an individual .meta file for a chunk or stratum
-
-    The .meta file is expected to be in the .unpacked/baserock directory of the
-    built artifact
-
-    '''
-    target = defs.get(target)
-    metafile = os.path.join(get_cache(defs, target) + '.unpacked', 'baserock',
-                            target['name'] + '.meta')
-    try:
-        with open(metafile, "r") as f:
-            metadata = yaml.safe_load(f)
-        app.log(target, 'Loaded metadata for', target['path'])
-        return metadata
-    except:
-        app.log(name, 'WARNING: problem loading metadata', metafile)
-        return None
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
@@ -56,7 +36,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                                    stratum['name'] + '.meta')):
         return
 
-    stratum_metadata = load_metafile(defs, stratum['path'])
+    stratum_metadata = get_medata(defs, stratum['path'])
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
     components = []
@@ -216,7 +196,7 @@ def write_stratum_metafiles(defs, stratum):
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metadata = load_metafile(defs, chunk['path'])
+        metadata = get_metadata(defs, chunk['path'])
         split_metadata = {}
         split_metadata['ref'] = metadata['ref']
         split_metadata['repo'] = metadata['repo']
