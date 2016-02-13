@@ -248,6 +248,7 @@ def write_stratum_metafiles(defs, stratum):
 
         split_metafile = os.path.join(stratum['baserockdir'],
                                       chunk['name'] + '.meta')
+
         with open(split_metafile, "w") as f:
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
@@ -257,5 +258,5 @@ def write_stratum_metafiles(defs, stratum):
                 for a, r in regexps]
     metadata['products'] = products
 
-    with app.chdir(stratum['install']), open(metafile, "w") as f:
+    with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
