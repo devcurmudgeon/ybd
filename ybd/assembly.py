@@ -191,6 +191,11 @@ def claim(defs, this):
         os.remove(lockfile(defs, this))
         return
     except IOError as e:
+        print e
+        if app.config.get('instances', 1) == 1:
+            import traceback
+            traceback.print_exc()
+            app.exit(this, 'ERROR: a surprise exception happened', '')
         raise RetryException(defs, this)
 
 
