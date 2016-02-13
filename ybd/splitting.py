@@ -36,7 +36,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                                    stratum['name'] + '.meta')):
         return
 
-    stratum_metadata = get_medata(defs, stratum['path'])
+    stratum_metadata = get_metadata(defs, stratum['path'])
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
     components = []
