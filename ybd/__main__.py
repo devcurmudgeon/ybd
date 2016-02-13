@@ -80,8 +80,10 @@ with app.timer('TOTAL'):
             os._exit(1)
 
     if app.config.get('reproduce'):
-        app.log('REPRODUCED', 'Reproduced %s of' % app.config['reproduced'],
+        app.log('REPRODUCED',
+                'Matched %s of' % len(app.config['reproduced']),
                 app.config['tasks'])
+        print app.config['reproduced']
 
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):

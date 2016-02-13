@@ -166,7 +166,8 @@ def upload(defs, this):
             if response.status_code == 777:
                 app.log(this, 'Reproduced %s at' % md5(cachefile),
                         this['cache'])
-                app.config['reproduced'] += 1
+                app.config['reproduced'].append([md5(cachefile),
+                                                 this['cache']])
                 return
             if response.status_code == 405:
                 app.log(this, 'Artifact server already has', this['cache'])
