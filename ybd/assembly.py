@@ -115,12 +115,7 @@ def build(defs, component):
             run_build(defs, component)
 
         with app.timer(component, 'artifact creation'):
-            kind = component.get('kind', 'chunk')
-            if kind == 'chunk':
-                splitting.write_chunk_metafile(defs, component)
-            elif kind == 'stratum':
-                splitting.write_stratum_metafiles(defs, component)
-
+            splitting.write_metadata(defs, component)
             cache(defs, component)
 
 

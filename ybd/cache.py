@@ -213,11 +213,8 @@ def get_metadata(defs, this):
     built artifact
 
     '''
-    this = defs.get(this)
-    metafile = os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
-                            this['name'] + '.meta')
     try:
-        with open(metafile, "r") as f:
+        with open(get_metafile(defs, this), "r") as f:
             metadata = yaml.safe_load(f)
         if app.config.get('log-verbose'):
             app.log(this, 'Loaded metadata for', this['path'])
@@ -225,6 +222,14 @@ def get_metadata(defs, this):
     except:
         app.log(this, 'WARNING: problem loading metadata', metafile)
         return None
+
+
+def get_metafile(defs, this):
+    ''' Return the path to metadata file for this. '''
+
+    this = defs.get(this)
+    return os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
+                        this['name'] + '.meta')
 
 
 def get_remote(defs, this):

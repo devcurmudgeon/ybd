@@ -15,7 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import app
-from cache import cache, cache_key, get_cache, get_remote, get_metadata
+from cache import get_cache, get_remote, get_metadata, get_metafile
 import os
 import glob
 import re
@@ -90,6 +90,14 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                     utils.copy_file_list(path, component['sandbox'], filelist)
         except:
             app.log(stratum, 'WARNING: problem loading ', metafile)
+
+
+def write_metadata(defs, component):
+    kind = component.get('kind', 'chunk')
+    if kind == 'chunk':
+        write_chunk_metafile(defs, component)
+    elif kind == 'stratum':
+        write_stratum_metafiles(defs, component)
 
 
 def write_chunk_metafile(defs, chunk):
