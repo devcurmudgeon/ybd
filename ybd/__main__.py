@@ -83,7 +83,8 @@ with app.timer('TOTAL'):
         app.log('REPRODUCED',
                 'Matched %s of' % len(app.config['reproduced']),
                 app.config['tasks'])
-        print app.config['reproduced']
+        for match in app.config['reproduced']:
+            print match[0], match[1]
 
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):
