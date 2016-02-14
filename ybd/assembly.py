@@ -39,7 +39,7 @@ except ImportError:
 
 class RetryException(Exception):
     def __init__(self, defs, component):
-        if app.config['log-verbose'] and \
+        if app.config.get('log-verbose') and \
                 app.config.get('last-retry-component') != component:
             app.log(component, 'Already downloading/building, so wait/retry')
         if app.config.get('last-retry-time'):
