@@ -75,6 +75,7 @@ def cache_key(defs, this):
 
     if app.config.get('artifact-version', False):
         hash_factors['artifact-version'] = app.config.get('artifact-version')
+        hash_factors['default-build-systems'] = defs.defaults.build_systems
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
 
