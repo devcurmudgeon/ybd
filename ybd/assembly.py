@@ -188,7 +188,8 @@ def claim(defs, this):
         with open(lockfile(defs, this), 'a') as l:
             fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
             yield
-        os.remove(lockfile(defs, this))
+            if os.path.isfile(lockfile(defs, this)):
+                os.remove(lockfile(defs, this))
         return
     except IOError as e:
         if app.config.get('instances', 1) == 1:
