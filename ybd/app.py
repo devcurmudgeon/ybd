@@ -48,7 +48,12 @@ class Counter(object):
         with open(self._counter_file, 'r') as f:
             count = f.read()
         with open(self._counter_file, 'w') as f:
-            f.write(str(int(count) + 1))
+            try:
+                count = int(count) + 1
+                f.write(str(int(count) + 1))
+            except:
+                # FIXME work out how we can ever get here...
+                pass
 
     def get(self):
         with open(self._counter_file, 'r') as f:
@@ -179,6 +184,7 @@ def load_configs(config_files):
 
 def cleanup(tmpdir):
     try:
+        log('SETUP', 'Trying cleanup for', tmpdir)
         with open(os.path.join(tmpdir, 'lock'), 'w') as tmp_lock:
             fcntl.flock(tmp_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             to_delete = os.listdir(tmpdir)
