@@ -54,7 +54,6 @@ class Defaults(object):
         return defaults
 
     def _load(self, path, ignore_errors=True):
-        contents = None
         try:
             with open(path) as f:
                 contents = yaml.safe_load(f)
