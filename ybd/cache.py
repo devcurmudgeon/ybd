@@ -236,13 +236,14 @@ def get_metafile(defs, this):
 
 def get_remote(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
-    if app.config.get('last-retry-component') == this:
+    if app.config.get('last-retry-component') == this or this.get('tried'):
         return False
 
     if this.get('kind', 'chunk') != 'chunk':
         return False
 
     try:
+        this['tried'] = True  # let's not keep asking for this artifact
         app.log(this, 'Try downloading', cache_key(defs, this))
         url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
         response = requests.get(url=url, stream=True)
