@@ -107,7 +107,7 @@ class KeyedBinaryArtifactServer(object):
         started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
         content = [['Started:', started]]
         content += [['Space:', str(free) + 'GB']]
-        content += [['Files:', str(artifacts)]]
+        content += [['Artifacts:', str(artifacts)]]
         return template('kbas',
                         title='KBAS status',
                         content=content,
