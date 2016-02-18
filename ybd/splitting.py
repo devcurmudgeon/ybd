@@ -15,7 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import app
-from cache import get_cache, get_remote, get_metadata, get_metafile
+from cache import get_cache, get_metadata, get_metafile
 import os
 import glob
 import re
