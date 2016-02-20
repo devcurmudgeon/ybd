@@ -208,7 +208,8 @@ def run_extension(this, deployment, step, method):
         command.append(this['sandbox'])
 
     if step in ('write', 'check'):
-        command.append(deployment['location'])
+        command.append(deployment.get('location') or
+                       deployment.get('upgrade-location'))
 
     with app.chdir(app.config['defdir']):
         try:
