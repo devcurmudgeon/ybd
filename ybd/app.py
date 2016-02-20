@@ -50,7 +50,7 @@ class Counter(object):
         with open(self._counter_file, 'w') as f:
             try:
                 count = int(count) + 1
-                f.write(str(int(count) + 1))
+                f.write(str(count))
             except:
                 # FIXME work out how we can ever get here...
                 pass
