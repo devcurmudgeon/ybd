@@ -21,6 +21,7 @@ import cache
 from subprocess import check_output, PIPE
 import hashlib
 import defaults
+import jsonschema
 
 
 class Definitions(object):
@@ -30,14 +31,7 @@ class Definitions(object):
         self._definitions = {}
         self._trees = {}
 
-        json_schema = self._load(app.config.get('json-schema'))
-        definitions_schema = self._load(app.config.get('defs-schema'))
-        if json_schema and definitions_schema:
-            import jsonschema as js
-            js.validate(json_schema, json_schema)
-            js.validate(definitions_schema, json_schema)
-
-        things_have_changed = not self._check_trees()
+        schemas = self.load_schemas()
         with app.chdir(directory):
             for dirname, dirnames, filenames in os.walk('.'):
                 filenames.sort()
@@ -46,13 +40,13 @@ class Definitions(object):
                     dirnames.remove('.git')
                 for filename in filenames:
                     if filename.endswith(('.def', '.morph')):
-                        contents = self._load(os.path.join(dirname, filename))
-                        if contents is not None:
-                            if things_have_changed and definitions_schema:
-                                app.log(filename, 'Validating schema')
-                                js.validate(contents, definitions_schema)
-                            self._fix_keys(contents)
-                            self._tidy_and_insert_recursively(contents)
+                        path = os.path.join(dirname, filename)
+                        data = self._load(path)
+                        if data is not None:
+                            self.validate_schema(schemas, data)
+                            data['path'] = path[2:]
+                            self._fix_keys(data)
+                            self._tidy_and_insert_recursively(data)
 
         self.defaults = defaults.Defaults()
 
@@ -66,6 +60,25 @@ class Definitions(object):
             except:
                 app.log('DEFINITIONS', 'WARNING: problem with .trees file')
                 pass
+
+    def load_schemas(self):
+        schemas = {}
+        for schema in app.config.get('schemas'):
+             schemas[schema] = self._load(app.config['schemas'][schema])
+        return schemas
+
+    def validate_schema(self, schemas, data):
+        if schemas == {} or \
+                app.config.get('schema-validation', False) is False:
+            return
+        try:
+            jsonschema.validate(data, schemas[data.get('kind', None)])
+        except jsonschema.exceptions.ValidationError as e:
+            if app.config.get('schema-validation') == 'strict':
+                app.exit(data, 'ERROR: schema validation failed:\n', e)
+
+            app.log(data, 'WARNING: schema validation failed:')
+            print e
 
     def write(self, output):
         for path in self._definitions:
@@ -94,7 +107,6 @@ class Definitions(object):
             app.log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,
                     str(contents)[0:50])
             return None
-        contents['path'] = path[2:]
         return contents
 
     def _tidy_and_insert_recursively(self, definition):
