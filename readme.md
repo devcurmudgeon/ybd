@@ -161,6 +161,8 @@ config values you may want to override include:
     min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
     no-build: False # for testing/debugging ybd - if True, only run the assembly logic, don't compile things
     reproduce: False # if True, build and compare against artifacts on server
+    schemas: # files defining schemas for definitions (currently schemas/*)
+    schema-validation: False # set to True to warn, 'strict' to exit on error
     tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
     tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
     riemann-server: '127.0.0.1' # address of a riemann server to optionally send events to
