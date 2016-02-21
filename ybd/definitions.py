@@ -65,6 +65,8 @@ class Definitions(object):
         schemas = {}
         for schema in app.config.get('schemas'):
              schemas[schema] = self._load(app.config['schemas'][schema])
+        app.log('SCHEMAS', 'Validation is',
+                app.config.get('schema-validation', 'off'))
         return schemas
 
     def validate_schema(self, schemas, data):
