@@ -90,8 +90,19 @@ def _process_tree(srcpath, destpath, actionfunc):
     elif stat.S_ISLNK(mode):
         # Copy the symlink.
         if os.path.lexists(destpath):
-            app.log(srcpath.replace(app.config['artifacts'], '')[1:20],
-                    'WARNING: Overlapping file', os.path.basename(destpath))
+            import re
+            path = re.search('/.*$', re.search('tmp[^/]+/.*$',
+                             destpath).group(0)).group(0)
+            app.log('OVERLAP', 'WARNING: Overlapping file', path)
+            baserockdir = os.path.join(destpath.replace(path, ''), 'baserock')
+
+            for filename in os.listdir(baserockdir):
+                with open(os.path.join(baserockdir, filename)) as f:
+                    for line in f:
+                        if path[1:] in line:
+                            app.log(filename, 'Contains', path[1:])
+                            break
+
             os.remove(destpath)
         os.symlink(os.readlink(srcpath), destpath)
 
