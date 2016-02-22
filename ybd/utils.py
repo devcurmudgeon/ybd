@@ -90,6 +90,8 @@ def _process_tree(srcpath, destpath, actionfunc):
     elif stat.S_ISLNK(mode):
         # Copy the symlink.
         if os.path.lexists(destpath):
+            app.log(srcpath.replace(app.config['artifacts'], '')[1:20],
+                    'WARNING: Overlapping file', os.path.basename(destpath))
             os.remove(destpath)
         os.symlink(os.readlink(srcpath), destpath)
 
