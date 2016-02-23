@@ -21,19 +21,14 @@ import cache
 from subprocess import check_output
 import hashlib
 import shutil
-
+from fs.osfs import OSFS
 
 def detect_format(source):
-    with app.chdir(source):
-        for dirname, dirnames, filenames in os.walk('.'):
-            if '.git' in dirnames:
-                dirnames.remove('.git')
-            for filename in filenames:
-                if filename.endswith('.morph'):
-                    return 'baserock-morphologies'
-            for filename in filenames:
-                if filename.endswith('.cida'):
-                    return 'cida-definitions'
+    fs = OSFS(source)
+    if fs.walkfiles('/', '*.morph'):
+        return 'baserock-morphologies'
+    if fs.walkfiles('/', '*.cida'):
+        return 'cida-definitions'
     return None
 
 
