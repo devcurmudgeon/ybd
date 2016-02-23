@@ -62,12 +62,10 @@ class Definitions(object):
                 pass
 
     def load_schemas(self):
-        schemas = {}
-        for schema in app.config.get('schemas'):
-             schemas[schema] = self._load(app.config['schemas'][schema])
         app.log('SCHEMAS', 'Validation is',
                 app.config.get('schema-validation', 'off'))
-        return schemas
+        return {x: self._load(app.config['schemas'][x])
+		for x in app.config.get('schemas')}
 
     def validate_schema(self, schemas, data):
         if schemas == {} or \
