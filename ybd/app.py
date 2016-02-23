@@ -230,21 +230,22 @@ def timer(this, message=''):
         yield
     except:
         raise
-    else:
-        text = '' if message == '' else ' for ' + message
-        time_elapsed = elapsed(starttime)
-        log(this, 'Elapsed time' + text, time_elapsed)
-        if riemann_available and 'riemann-server' in config:
-            host_name = config['riemann-server']
-            port = config['riemann-port']
-            time_split = time_elapsed.split(':')
-            time_sec = int(time_split[0]) * 3600 \
-                + int(time_split[1]) * 60 + int(time_split[2])
-            with QueuedClient(TCPTransport(host_name, port,
-                                           timeout=30)) as client:
-                client.event(service="Timer",
-                             description=text, metric_f=time_sec)
-                client.flush()
+    text = '' if message == '' else ' for ' + message
+    time_elapsed = elapsed(starttime)
+    log(this, 'Elapsed time' + text, time_elapsed)
+    log_riemann(this, 'Timer', text, time_elapsed)
+
+
+def log_riemann(this, service, text, time_elapsed):
+    if riemann_available and 'riemann-server' in config:
+        time_split = time_elapsed.split(':')
+        time_sec = int(time_split[0]) * 3600 \
+            + int(time_split[1]) * 60 + int(time_split[2])
+        with QueuedClient(TCPTransport(config['riemann-server'],
+                                       config['riemann-port'],
+                                       timeout=30)) as client:
+            client.event(service=service, description=text, metric_f=time_sec)
+            client.flush()
 
 
 def elapsed(starttime):
