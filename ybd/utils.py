@@ -20,12 +20,12 @@ import contextlib
 import os
 import shutil
 import stat
-import calendar
-
+import datetime
+from fs.osfs import OSFS
 import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
-default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
+default_magic_timestamp = datetime.datetime(2011, 11, 11, 11, 11, 11, 11)
 
 
 def set_mtime_recursively(root, set_time=default_magic_timestamp):
@@ -34,16 +34,9 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
     The aim is to make builds more predictable.
 
     '''
-
-    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
-                                               topdown=False):
-        for basename in basenames:
-            pathname = os.path.join(dirname, basename)
-            # we need the following check to ignore broken symlinks
-            if os.path.exists(pathname):
-                os.utime(pathname, (set_time, set_time))
-        os.utime(dirname, (set_time, set_time))
-
+    rfs = OSFS(root)
+    map(lambda x: rfs.settimes(x, set_time, set_time), rfs.walkfiles('/', search='depth'))
+    map(lambda x: rfs.settimes(x, set_time, set_time), rfs.walkdirs('/', search='depth'))
 
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
