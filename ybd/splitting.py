@@ -22,6 +22,7 @@ import re
 import assembly
 import yaml
 import utils
+from collections import OrderedDict
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
@@ -120,7 +121,7 @@ def write_chunk_metafile(defs, chunk):
     rules = default_rules + split_rules
 
     # Compile the regexps
-    regexps = []
+    regexps = OrderedDict()
     splits = {}
     used_dirs = {}
 
@@ -137,7 +138,7 @@ def write_chunk_metafile(defs, chunk):
         artifact = rule.get('artifact')
         if artifact.startswith('-'):
             artifact = chunk['name'] + artifact
-        regexps.append([artifact, regexp])
+        regexps[artifact] = regexp
         splits[artifact] = []
 
     for root, dirs, files in os.walk(install_dir, topdown=False):
@@ -148,7 +149,7 @@ def write_chunk_metafile(defs, chunk):
 
         for name in files:
             path = os.path.join(root, name)
-            for artifact, rule in regexps:
+            for artifact, rule in regexps.iteritems():
                 if rule.match(path):
                     splits[artifact].append(path)
                     mark_used_path(path)
@@ -157,12 +158,12 @@ def write_chunk_metafile(defs, chunk):
         for name in dirs:
             path = os.path.join(root, name)
             if not path in used_dirs:
-                for artifact, rule in regexps:
+                for artifact, rule in regexps.iteritems():
                     if rule.match(path) or rule.match(path + '/'):
                         splits[artifact].append(path)
                         break
 
-    unique_artifacts = sorted(set([a for a, r in regexps]))
+    unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
     products = [{'artifact': a, 'files': sorted(splits[a])}
                 for a in unique_artifacts]
     metadata['products'] = products
@@ -186,7 +187,7 @@ def write_stratum_metafiles(defs, stratum):
     rules = split_rules + default_rules
 
     # Compile the regexps
-    regexps = []
+    regexps = OrderedDict()
     splits = {}
 
     for rule in rules:
@@ -196,7 +197,7 @@ def write_stratum_metafiles(defs, stratum):
         artifact = rule.get('artifact')
         if artifact.startswith('-'):
             artifact = stratum['name'] + artifact
-        regexps.append([artifact, regexp])
+        regexps[artifact] = regexp
         splits[artifact] = []
 
     for item in stratum['contents']:
@@ -215,7 +216,7 @@ def write_stratum_metafiles(defs, stratum):
             splits[target].append(artifact)
 
         for element in metadata['products']:
-            for artifact, rule in regexps:
+            for artifact, rule in regexps.iteritems():
                 if rule.match(element['artifact']):
                     split_metadata['products'].append(element)
                     splits[artifact].append(element['artifact'])
@@ -230,7 +231,7 @@ def write_stratum_metafiles(defs, stratum):
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
     metadata = {}
     products = [{'artifact': a, 'components': sorted(set(splits[a]))}
-                for a, r in regexps]
+                for a, r in regexps.iteritems()]
     metadata['products'] = products
 
     with open(metafile, "w") as f:
