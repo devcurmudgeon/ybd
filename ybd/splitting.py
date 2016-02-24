@@ -118,11 +118,9 @@ def write_chunk_metafile(defs, chunk):
     # Use both the chunk specific rules and the default rules
     split_rules = chunk.get('products', [])
     default_rules = defs.defaults.get_chunk_split_rules()
-    rules = default_rules + split_rules
+    rules = split_rules + default_rules
 
     # Compile the regexps
-    regexps = OrderedDict()
-    splits = {}
     used_dirs = {}
 
     def mark_used_path(path):
@@ -131,15 +129,15 @@ def write_chunk_metafile(defs, chunk):
             if path:
                 used_dirs[path] = True
 
-    for rule in rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
-        artifact = rule.get('artifact')
-        if artifact.startswith('-'):
-            artifact = chunk['name'] + artifact
-        regexps[artifact] = regexp
-        splits[artifact] = []
+    match_rules = OrderedDict(
+                    (r.get('artifact'), r.get('include')) for r in rules)
+
+    regexps = OrderedDict(
+                  (chunk['name'] + a if a.startswith('-') else a,
+                   re.compile('^(?:%s)$' % '|'.join(r)))
+                  for a, r in match_rules.iteritems())
+
+    splits = { a : [] for a in regexps.keys() }
 
     for root, dirs, files in os.walk(install_dir, topdown=False):
         root = os.path.relpath(root, install_dir)
@@ -187,18 +185,15 @@ def write_stratum_metafiles(defs, stratum):
     rules = split_rules + default_rules
 
     # Compile the regexps
-    regexps = OrderedDict()
-    splits = {}
+    match_rules = OrderedDict(
+                    (r.get('artifact'), r.get('include')) for r in rules)
 
-    for rule in rules:
-        regexp = re.compile('^(?:'
-                            + '|'.join(rule.get('include'))
-                            + ')$')
-        artifact = rule.get('artifact')
-        if artifact.startswith('-'):
-            artifact = stratum['name'] + artifact
-        regexps[artifact] = regexp
-        splits[artifact] = []
+    regexps = OrderedDict(
+                  (stratum['name'] + a if a.startswith('-') else a,
+                   re.compile('^(?:%s)$' % '|'.join(r)))
+                  for a, r in match_rules.iteritems())
+
+    splits = { a : [] for a in regexps.keys() }
 
     for item in stratum['contents']:
         chunk = defs.get(item)
