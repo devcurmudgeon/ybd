@@ -71,10 +71,9 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
-                split_metadata = {}
-                split_metadata['ref'] = metadata['ref']
-                split_metadata['repo'] = metadata['repo']
-                split_metadata['products'] = []
+                split_metadata = {'ref': metadata['ref'],
+                                  'repo': metadata['repo'],
+                                  'products': []}
                 for element in metadata['products']:
                     if element['artifact'] in components:
                         filelist += element.get('files', [])
@@ -111,9 +110,6 @@ def write_chunk_metafile(defs, chunk):
     '''
     app.log(chunk['name'], 'splitting chunk')
     metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
-    metadata = {}
-    metadata['repo'] = chunk.get('repo')
-    metadata['ref'] = chunk.get('ref')
 
     install_dir = chunk['install']
     # Use both the chunk specific rules and the default rules
@@ -151,9 +147,10 @@ def write_chunk_metafile(defs, chunk):
                     break
 
     unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
-    products = [{'artifact': a, 'files': sorted(splits[a])}
-                for a in unique_artifacts]
-    metadata['products'] = products
+    metadata = {'repo': chunk.get('repo'),
+                'ref': chunk.get('ref'),
+                'products': [{'artifact': a, 'files': sorted(splits[a])}
+                             for a in unique_artifacts]}
     with app.chdir(chunk['install']), open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
 
@@ -190,10 +187,9 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk['path'])
-        split_metadata = {}
-        split_metadata['ref'] = metadata['ref']
-        split_metadata['repo'] = metadata['repo']
-        split_metadata['products'] = []
+        split_metadata = {'ref': metadata['ref'],
+                          'repo': metadata['repo'],
+                          'products': []}
 
         chunk_artifacts = defs.get(chunk).get('artifacts', {})
         for artifact, target in chunk_artifacts.items():
@@ -213,10 +209,8 @@ def write_stratum_metafiles(defs, stratum):
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
-    metadata = {}
-    products = [{'artifact': a, 'components': sorted(set(splits[a]))}
-                for a, r in regexps.iteritems()]
-    metadata['products'] = products
+    metadata = {'products': [{'artifact': a, 'components': sorted(set(splits[a]))}
+                             for a, r in regexps.iteritems()]
 
     with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
