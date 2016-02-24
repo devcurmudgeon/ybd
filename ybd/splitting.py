@@ -122,14 +122,6 @@ def write_chunk_metafile(defs, chunk):
     rules = split_rules + default_rules
 
     # Compile the regexps
-    used_dirs = {}
-
-    def mark_used_path(path):
-        while path:
-            path, file = os.path.split(path)
-            if path:
-                used_dirs[path] = True
-
     match_rules = OrderedDict(
                     (r.get('artifact'), r.get('include')) for r in rules)
 
@@ -148,11 +140,11 @@ def write_chunk_metafile(defs, chunk):
         for artifact, rule in regexps.iteritems():
             if rule.match(path):
                 splits[artifact].append(path)
-                mark_used_path(path)
                 break
 
+    all_files = [a for x in splits.values() for a in x]
     for path in dirs:
-        if not path in used_dirs:
+        if not any(map(lambda y: y.startswith(path), all_files)) and path != '':
            for artifact, rule in regexps.iteritems():
                 if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
