@@ -23,6 +23,7 @@ import assembly
 import yaml
 import utils
 from collections import OrderedDict
+from fs.osfs import OSFS
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
@@ -139,27 +140,23 @@ def write_chunk_metafile(defs, chunk):
 
     splits = { a : [] for a in regexps.keys() }
 
-    for root, dirs, files in os.walk(install_dir, topdown=False):
-        root = os.path.relpath(root, install_dir)
+    fs = OSFS(install_dir)
+    files = fs.walkfiles('.', search='depth')
+    dirs = fs.walkdirs('.', search='depth')
 
-        if root == '.':
-            root = ''
+    for path in files:
+        for artifact, rule in regexps.iteritems():
+            if rule.match(path):
+                splits[artifact].append(path)
+                mark_used_path(path)
+                break
 
-        for name in files:
-            path = os.path.join(root, name)
-            for artifact, rule in regexps.iteritems():
-                if rule.match(path):
+    for path in dirs:
+        if not path in used_dirs:
+           for artifact, rule in regexps.iteritems():
+                if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
-                    mark_used_path(path)
                     break
-
-        for name in dirs:
-            path = os.path.join(root, name)
-            if not path in used_dirs:
-                for artifact, rule in regexps.iteritems():
-                    if rule.match(path) or rule.match(path + '/'):
-                        splits[artifact].append(path)
-                        break
 
     unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
     products = [{'artifact': a, 'files': sorted(splits[a])}
