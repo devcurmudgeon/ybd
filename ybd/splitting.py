@@ -22,6 +22,8 @@ import re
 import assembly
 import yaml
 import utils
+from collections import OrderedDict
+from fs.osfs import OSFS
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
@@ -69,10 +71,9 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
-                split_metadata = {}
-                split_metadata['ref'] = metadata['ref']
-                split_metadata['repo'] = metadata['repo']
-                split_metadata['products'] = []
+                split_metadata = {'ref': metadata['ref'],
+                                  'repo': metadata['repo'],
+                                  'products': []}
                 for element in metadata['products']:
                     if element['artifact'] in components:
                         filelist += element.get('files', [])
@@ -109,63 +110,47 @@ def write_chunk_metafile(defs, chunk):
     '''
     app.log(chunk['name'], 'splitting chunk')
     metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
-    metadata = {}
-    metadata['repo'] = chunk.get('repo')
-    metadata['ref'] = chunk.get('ref')
 
     install_dir = chunk['install']
     # Use both the chunk specific rules and the default rules
-    split_rules = chunk.get('products', {})
+    split_rules = chunk.get('products', [])
     default_rules = defs.defaults.get_chunk_split_rules()
+    rules = split_rules + default_rules
 
     # Compile the regexps
-    regexps = []
-    splits = {}
-    used_dirs = {}
+    match_rules = OrderedDict(
+                    (r.get('artifact'), r.get('include')) for r in rules)
 
-    def mark_used_path(path):
-        while path:
-            path, file = os.path.split(path)
-            if path:
-                used_dirs[path] = True
+    regexps = OrderedDict(
+                  (chunk['name'] + a if a.startswith('-') else a,
+                   re.compile('^(?:%s)$' % '|'.join(r)))
+                  for a, r in match_rules.iteritems())
 
-    for rules in split_rules, default_rules:
-        for rule in rules:
-            regexp = re.compile('^(?:'
-                                + '|'.join(rule.get('include'))
-                                + ')$')
-            artifact = rule.get('artifact')
-            if artifact.startswith('-'):
-                artifact = chunk['name'] + artifact
-            regexps.append([artifact, regexp])
-            splits[artifact] = []
+    splits = { a : [] for a in regexps.keys() }
 
-    for root, dirs, files in os.walk(install_dir, topdown=False):
-        root = os.path.relpath(root, install_dir)
+    fs = OSFS(install_dir)
+    files = fs.walkfiles('.', search='depth')
+    dirs = fs.walkdirs('.', search='depth')
 
-        if root == '.':
-            root = ''
+    for path in files:
+        for artifact, rule in regexps.iteritems():
+            if rule.match(path):
+                splits[artifact].append(path)
+                break
 
-        for name in files:
-            path = os.path.join(root, name)
-            for artifact, rule in regexps:
-                if rule.match(path):
+    all_files = [a for x in splits.values() for a in x]
+    for path in dirs:
+        if not any(map(lambda y: y.startswith(path), all_files)) and path != '':
+           for artifact, rule in regexps.iteritems():
+                if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
-                    mark_used_path(path)
                     break
 
-        for name in dirs:
-            path = os.path.join(root, name)
-            if not path in used_dirs:
-                for artifact, rule in regexps:
-                    if rule.match(path) or rule.match(path + '/'):
-                        splits[artifact].append(path)
-                        break
-
-    unique_artifacts = sorted(set([a for a, r in regexps]))
-    products = [{'artifact': a, 'files': sorted(splits[a])}
-                for a in unique_artifacts]
-    metadata['products'] = products
+    unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
+    metadata = {'repo': chunk.get('repo'),
+                'ref': chunk.get('ref'),
+                'products': [{'artifact': a, 'files': sorted(splits[a])}
+                             for a in unique_artifacts]}
     with app.chdir(chunk['install']), open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
 
@@ -181,23 +166,20 @@ def write_stratum_metafiles(defs, stratum):
 
     # Use both the stratum-specific rules and the default rules
     app.log(stratum['name'], 'splitting stratum')
-    split_rules = stratum.get('products', {})
+    split_rules = stratum.get('products', [])
     default_rules = defs.defaults.get_stratum_split_rules()
+    rules = split_rules + default_rules
 
     # Compile the regexps
-    regexps = []
-    splits = {}
+    match_rules = OrderedDict(
+                    (r.get('artifact'), r.get('include')) for r in rules)
 
-    for rules in split_rules, default_rules:
-        for rule in rules:
-            regexp = re.compile('^(?:'
-                                + '|'.join(rule.get('include'))
-                                + ')$')
-            artifact = rule.get('artifact')
-            if artifact.startswith('-'):
-                artifact = stratum['name'] + artifact
-            regexps.append([artifact, regexp])
-            splits[artifact] = []
+    regexps = OrderedDict(
+                  (stratum['name'] + a if a.startswith('-') else a,
+                   re.compile('^(?:%s)$' % '|'.join(r)))
+                  for a, r in match_rules.iteritems())
+
+    splits = { a : [] for a in regexps.keys() }
 
     for item in stratum['contents']:
         chunk = defs.get(item)
@@ -205,17 +187,16 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk['path'])
-        split_metadata = {}
-        split_metadata['ref'] = metadata['ref']
-        split_metadata['repo'] = metadata['repo']
-        split_metadata['products'] = []
+        split_metadata = {'ref': metadata['ref'],
+                          'repo': metadata['repo'],
+                          'products': []}
 
         chunk_artifacts = defs.get(chunk).get('artifacts', {})
         for artifact, target in chunk_artifacts.items():
             splits[target].append(artifact)
 
         for element in metadata['products']:
-            for artifact, rule in regexps:
+            for artifact, rule in regexps.iteritems():
                 if rule.match(element['artifact']):
                     split_metadata['products'].append(element)
                     splits[artifact].append(element['artifact'])
@@ -228,10 +209,8 @@ def write_stratum_metafiles(defs, stratum):
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
-    metadata = {}
-    products = [{'artifact': a, 'components': sorted(set(splits[a]))}
-                for a, r in regexps]
-    metadata['products'] = products
+    metadata = {'products': [{'artifact': a, 'components': sorted(set(splits[a]))}
+                             for a, r in regexps.iteritems()]
 
     with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)

@@ -20,12 +20,13 @@ import contextlib
 import os
 import shutil
 import stat
-import calendar
-
+import datetime
+from fs.osfs import OSFS
+from fs.multifs import MultiFS
 import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
-default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
+default_magic_timestamp = datetime.datetime(2011, 11, 11, 11, 11, 11, 11)
 
 
 def set_mtime_recursively(root, set_time=default_magic_timestamp):
@@ -34,16 +35,9 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
     The aim is to make builds more predictable.
 
     '''
-
-    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
-                                               topdown=False):
-        for basename in basenames:
-            pathname = os.path.join(dirname, basename)
-            # we need the following check to ignore broken symlinks
-            if os.path.exists(pathname):
-                os.utime(pathname, (set_time, set_time))
-        os.utime(dirname, (set_time, set_time))
-
+    rfs = OSFS(root)
+    map(lambda x: rfs.settimes(x, set_time, set_time), rfs.walkfiles('/', search='depth'))
+    map(lambda x: rfs.settimes(x, set_time, set_time), rfs.walkdirs('/', search='depth'))
 
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
@@ -278,24 +272,15 @@ def _find_extensions(paths):
     '''Iterate the paths, in order, finding extensions and adding them to
     the return dict.'''
 
-    ret = {}
     extension_kinds = ['check', 'configure', 'write']
+    efs = MultiFS()
+    map(lambda x: efs.addfs(x, OSFS(x)), paths)
 
-    for e in extension_kinds:
-        ret[e] = {}
+    def get_extensions(kind):
+        return {os.path.splitext(x)[0] : efs.getsyspath(x)
+                for x in efs.walkfiles('.', '*.%s' % kind)}
 
-    def scan_path(path):
-        for kind in extension_kinds:
-            for dirpath, dirnames, filenames in os.walk(path):
-                for filename in filenames:
-                    if filename.endswith(kind):
-                        filepath = os.path.join(dirpath, filename)
-                        ret[kind][os.path.splitext(filename)[0]] = filepath
-
-    for p in paths:
-        scan_path(p)
-
-    return ret
+    return {e: get_extensions(e) for e in extension_kinds}
 
 
 def find_extensions():

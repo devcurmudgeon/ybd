@@ -62,12 +62,10 @@ class Definitions(object):
                 pass
 
     def load_schemas(self):
-        schemas = {}
-        for schema in app.config.get('schemas'):
-             schemas[schema] = self._load(app.config['schemas'][schema])
         app.log('SCHEMAS', 'Validation is',
                 app.config.get('schema-validation', 'off'))
-        return schemas
+        return {x: self._load(app.config['schemas'][x])
+		for x in app.config.get('schemas')}
 
     def validate_schema(self, schemas, data):
         if schemas == {} or \
@@ -165,14 +163,11 @@ class Definitions(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        if definition.get('path', None) is None:
-            definition['path'] = definition.pop('morph',
-                                                definition.get('name', name))
-            if definition['path'] == 'ERROR':
-                app.exit(definition, 'ERROR: no path, no name?')
-        if definition.get('name') is None:
-            definition['name'] = definition['path']
-        definition['name'] = definition['name'].replace('/', '-')
+        definition.setdefault('path',
+                definition.pop('morph', definition.get('name', name)))
+        if definition['path'] == 'ERROR':
+            app.exit(definition, 'ERROR: no path, no name?')
+        definition.setdefault('name', definition['path']).replace('/', '-')
         if definition['name'] == app.config['target']:
             app.config['target'] = definition['path']
 
