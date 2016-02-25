@@ -210,7 +210,7 @@ def write_stratum_metafiles(defs, stratum):
 
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
     metadata = {'products': [{'artifact': a, 'components': sorted(set(splits[a]))}
-                             for a, r in regexps.iteritems()]
+                             for a, r in regexps.iteritems()]}
 
     with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
