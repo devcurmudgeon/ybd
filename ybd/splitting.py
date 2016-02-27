@@ -98,21 +98,28 @@ def check_overlaps(defs, component):
         app.config['new-overlaps'] = []
         return
 
-    app.config['overlaps'] = list(set(app.config['new-overlaps'] +
-                                      app.config['overlaps']))
     app.config['new-overlaps'] = list(set(app.config['new-overlaps']))
     for path in app.config['new-overlaps']:
-        app.log(component, 'WARNING: Overlapping file: ', path)
+        app.log(component, 'WARNING: overlapping path', path)
+        for filename in os.listdir(component['baserockdir']):
+            with open(os.path.join(component['baserockdir'], filename)) as f:
+                for line in f:
+                    if path[1:] in line:
+                        app.log(filename, 'WARNING: overlap at', path[1:])
+                        break
+
+    app.config['overlaps'] = list(set(app.config['new-overlaps'] +
+                                      app.config['overlaps']))
     app.config['new-overlaps'] = []
 
 
 def write_metadata(defs, component):
-    check_overlaps(defs, component)
     kind = component.get('kind', 'chunk')
     if kind == 'chunk':
         write_chunk_metafile(defs, component)
     elif kind == 'stratum':
         write_stratum_metafiles(defs, component)
+    check_overlaps(defs, component)
 
 
 def write_chunk_metafile(defs, chunk):
