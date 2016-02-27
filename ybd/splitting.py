@@ -166,16 +166,7 @@ def write_chunk_metafile(defs, chunk):
                     splits[artifact].append(path)
                     break
 
-    unique_artifacts = sorted(set([a for a, r in rules.iteritems()]))
-
-    metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
-    metadata = {'repo': chunk.get('repo'),
-                'ref': chunk.get('ref'),
-                'products': [{'artifact': a, 'files': sorted(splits[a])}
-                             for a in unique_artifacts]}
-
-    with open(metafile, "w") as f:
-        yaml.safe_dump(metadata, f, default_flow_style=False)
+    write_metafile(rules, splits, chunk)
 
 
 def write_stratum_metafiles(defs, stratum):
@@ -218,10 +209,23 @@ def write_stratum_metafiles(defs, stratum):
         with open(split_metafile, "w") as f:
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
-    metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
+    write_metafile(rules, splits, stratum)
+
+
+def write_metafile(rules, splits, component):
     metadata = {'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
                              for a, r in rules.iteritems()]}
+
+    if component.get('kind', 'chunk') == 'chunk':
+        unique_artifacts = sorted(set([a for a, r in rules.iteritems()]))
+        metadata = {'repo': component.get('repo'),
+                    'ref': component.get('ref'),
+                    'products': [{'artifact': a, 'files': sorted(splits[a])}
+                                 for a in unique_artifacts]}
+
+    metafile = os.path.join(component['baserockdir'],
+                            component['name'] + '.meta')
 
     with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
