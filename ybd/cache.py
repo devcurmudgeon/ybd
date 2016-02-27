@@ -84,6 +84,10 @@ def cache_key(defs, this):
     app.config['total'] += 1
     if not get_cache(defs, this) and definition.get('kind') != 'cluster':
         app.config['tasks'] += 1
+
+    if app.config.get('no-build'):
+        definition['cache'] = definition['name'] + '.no-build'
+
     app.log(definition, 'Cache_key is', definition['cache'])
 
     # If you want to catalog the artifacts for a system, do so
