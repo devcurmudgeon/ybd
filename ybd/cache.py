@@ -78,9 +78,9 @@ def cache_key(defs, this):
         hash_factors['default-build-systems'] = defs.defaults.build_systems
 
     result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
+    result = hashlib.sha256(result).hexdigest()
 
-    safename = definition['name'].replace('/', '-')
-    definition['cache'] = safename + "." + hashlib.sha256(result).hexdigest()
+    definition['cache'] = definition['name'] + "." + result
     app.config['total'] += 1
     if not get_cache(defs, this) and definition.get('kind') != 'cluster':
         app.config['tasks'] += 1
