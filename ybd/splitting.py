@@ -122,14 +122,17 @@ def write_metadata(defs, component):
     check_overlaps(defs, component)
 
 
-def compile_regexps(rules, component):
+def compile_rules(defs, component):
+    split_rules = component.get('products', [])
+    default_rules = defs.defaults.get_split_rules(component.get('kind',
+                                                                'chunk'))
     match_rules = OrderedDict((r.get('artifact'), r.get('include'))
-                              for r in rules)
+                              for r in (split_rules + default_rules))
 
-    regexps = OrderedDict((component['name'] + a if a.startswith('-') else a,
+    rules = OrderedDict((component['name'] + a if a.startswith('-') else a,
                           re.compile('^(?:%s)$' % '|'.join(r)))
                           for a, r in match_rules.iteritems())
-    return regexps
+    return rules
 
 
 def write_chunk_metafile(defs, chunk):
@@ -140,22 +143,16 @@ def write_chunk_metafile(defs, chunk):
 
     '''
     app.log(chunk['name'], 'splitting chunk')
+    rules = compile_rules(defs, chunk)
+    splits = {a: [] for a in rules.keys()}
 
     install_dir = chunk['install']
-    # Use both the chunk specific rules and the default rules
-    split_rules = chunk.get('products', [])
-    default_rules = defs.defaults.get_chunk_split_rules()
-    rules = split_rules + default_rules
-
-    regexps = compile_regexps(rules, chunk)
-    splits = {a: [] for a in regexps.keys()}
-
     fs = OSFS(install_dir)
     files = fs.walkfiles('.', search='depth')
     dirs = fs.walkdirs('.', search='depth')
 
     for path in files:
-        for artifact, rule in regexps.iteritems():
+        for artifact, rule in rules.iteritems():
             if rule.match(path):
                 splits[artifact].append(path)
                 break
@@ -164,12 +161,12 @@ def write_chunk_metafile(defs, chunk):
     for path in dirs:
         if not any(map(lambda y: y.startswith(path),
                    all_files)) and path != '':
-            for artifact, rule in regexps.iteritems():
+            for artifact, rule in rules.iteritems():
                 if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
                     break
 
-    unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
+    unique_artifacts = sorted(set([a for a, r in rules.iteritems()]))
 
     metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
     metadata = {'repo': chunk.get('repo'),
@@ -190,14 +187,9 @@ def write_stratum_metafiles(defs, stratum):
 
     '''
 
-    # Use both the stratum-specific rules and the default rules
     app.log(stratum['name'], 'splitting stratum')
-    split_rules = stratum.get('products', [])
-    default_rules = defs.defaults.get_stratum_split_rules()
-    rules = split_rules + default_rules
-
-    regexps = compile_regexps(rules, stratum)
-    splits = {a: [] for a in regexps.keys()}
+    rules = compile_rules(defs, stratum)
+    splits = {a: [] for a in rules.keys()}
 
     for item in stratum['contents']:
         chunk = defs.get(item)
@@ -214,7 +206,7 @@ def write_stratum_metafiles(defs, stratum):
             splits[target].append(artifact)
 
         for element in metadata['products']:
-            for artifact, rule in regexps.iteritems():
+            for artifact, rule in rules.iteritems():
                 if rule.match(element['artifact']):
                     split_metadata['products'].append(element)
                     splits[artifact].append(element['artifact'])
@@ -229,7 +221,7 @@ def write_stratum_metafiles(defs, stratum):
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
     metadata = {'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
-                             for a, r in regexps.iteritems()]}
+                             for a, r in rules.iteritems()]}
 
     with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)

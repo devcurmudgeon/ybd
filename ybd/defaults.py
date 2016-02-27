@@ -66,11 +66,8 @@ class Defaults(object):
         contents['path'] = path[2:]
         return contents
 
-    def get_chunk_split_rules(self):
-        return self.split_rules.get('chunk', {})
-
-    def get_stratum_split_rules(self):
-        return self.split_rules.get('stratum', {})
+    def get_split_rules(self, kind):
+        return self.split_rules.get(kind, {})
 
     def lookup_build_system(self, name, default=None):
         '''Return build system that corresponds to the name.
