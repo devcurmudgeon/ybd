@@ -226,7 +226,7 @@ def get_metadata(defs, this):
             app.log(this, 'Loaded metadata for', this['path'])
         return metadata
     except:
-        app.log(this, 'WARNING: problem loading metadata', metafile)
+        app.log(this, 'WARNING: problem loading metadata', this)
         return None
 
 
