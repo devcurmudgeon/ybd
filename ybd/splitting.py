@@ -174,7 +174,7 @@ def write_chunk_metafile(defs, chunk):
                 'products': [{'artifact': a, 'files': sorted(splits[a])}
                              for a in unique_artifacts]}
 
-    with app.chdir(chunk['install']), open(metafile, "w") as f:
+    with open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
 
 
