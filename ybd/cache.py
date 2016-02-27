@@ -82,11 +82,12 @@ def cache_key(defs, this):
 
     definition['cache'] = definition['name'] + "." + result
     app.config['total'] += 1
-    if not get_cache(defs, this) and definition.get('kind') != 'cluster':
-        app.config['tasks'] += 1
 
     if app.config.get('no-build'):
         definition['cache'] = definition['name'] + '.no-build'
+
+    if not get_cache(defs, this):
+        app.config['tasks'] += 1
 
     app.log(definition, 'Cache_key is', definition['cache'])
 
