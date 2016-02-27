@@ -167,7 +167,8 @@ class Definitions(object):
                 definition.pop('morph', definition.get('name', name)))
         if definition['path'] == 'ERROR':
             app.exit(definition, 'ERROR: no path, no name?')
-        definition.setdefault('name', definition['path']).replace('/', '-')
+        definition.setdefault('name', definition['path'])
+        definition['name'] = definition['name'].replace('/', '-')
         if definition['name'] == app.config['target']:
             app.config['target'] = definition['path']
 
