@@ -65,7 +65,7 @@ class Definitions(object):
         app.log('SCHEMAS', 'Validation is',
                 app.config.get('schema-validation', 'off'))
         return {x: self._load(app.config['schemas'][x])
-		for x in app.config.get('schemas')}
+                for x in app.config.get('schemas')}
 
     def validate_schema(self, schemas, data):
         if schemas == {} or \
@@ -164,7 +164,8 @@ class Definitions(object):
 
         '''
         definition.setdefault('path',
-                definition.pop('morph', definition.get('name', name)))
+                              definition.pop('morph', definition.get('name',
+                                                                     name)))
         if definition['path'] == 'ERROR':
             app.exit(definition, 'ERROR: no path, no name?')
         definition.setdefault('name', definition['path'])

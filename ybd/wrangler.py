@@ -23,6 +23,7 @@ import hashlib
 import shutil
 from fs.osfs import OSFS
 
+
 def detect_format(source):
     fs = OSFS(source)
     if fs.walkfiles('/', '*.morph'):

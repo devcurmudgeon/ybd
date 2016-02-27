@@ -143,7 +143,7 @@ def setup(args):
     config['extsdir'] = os.path.join(config['defdir'], 'extensions')
     base_dir = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~')
     config.setdefault('base',
-        os.path.join(base_dir, config['directories']['base']))
+                      os.path.join(base_dir, config['directories']['base']))
     for directory, path in config.get('directories', {}).items():
         try:
             if config.get(directory) is None:

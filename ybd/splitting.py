@@ -139,15 +139,14 @@ def write_chunk_metafile(defs, chunk):
     rules = split_rules + default_rules
 
     # Compile the regexps
-    match_rules = OrderedDict(
-                    (r.get('artifact'), r.get('include')) for r in rules)
+    match_rules = OrderedDict((r.get('artifact'), r.get('include'))
+                              for r in rules)
 
-    regexps = OrderedDict(
-                  (chunk['name'] + a if a.startswith('-') else a,
-                   re.compile('^(?:%s)$' % '|'.join(r)))
-                  for a, r in match_rules.iteritems())
+    regexps = OrderedDict((chunk['name'] + a if a.startswith('-') else a,
+                          re.compile('^(?:%s)$' % '|'.join(r)))
+                          for a, r in match_rules.iteritems())
 
-    splits = { a : [] for a in regexps.keys() }
+    splits = {a: [] for a in regexps.keys()}
 
     fs = OSFS(install_dir)
     files = fs.walkfiles('.', search='depth')
@@ -161,8 +160,9 @@ def write_chunk_metafile(defs, chunk):
 
     all_files = [a for x in splits.values() for a in x]
     for path in dirs:
-        if not any(map(lambda y: y.startswith(path), all_files)) and path != '':
-           for artifact, rule in regexps.iteritems():
+        if not any(map(lambda y: y.startswith(path),
+                   all_files)) and path != '':
+            for artifact, rule in regexps.iteritems():
                 if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
                     break
@@ -193,15 +193,14 @@ def write_stratum_metafiles(defs, stratum):
     rules = split_rules + default_rules
 
     # Compile the regexps
-    match_rules = OrderedDict(
-                    (r.get('artifact'), r.get('include')) for r in rules)
+    match_rules = OrderedDict((r.get('artifact'), r.get('include'))
+                              for r in rules)
 
-    regexps = OrderedDict(
-                  (stratum['name'] + a if a.startswith('-') else a,
-                   re.compile('^(?:%s)$' % '|'.join(r)))
-                  for a, r in match_rules.iteritems())
+    regexps = OrderedDict((stratum['name'] + a if a.startswith('-') else a,
+                          re.compile('^(?:%s)$' % '|'.join(r)))
+                          for a, r in match_rules.iteritems())
 
-    splits = { a : [] for a in regexps.keys() }
+    splits = {a: [] for a in regexps.keys()}
 
     for item in stratum['contents']:
         chunk = defs.get(item)
@@ -231,7 +230,8 @@ def write_stratum_metafiles(defs, stratum):
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
     metafile = os.path.join(stratum['baserockdir'], stratum['name'] + '.meta')
-    metadata = {'products': [{'artifact': a, 'components': sorted(set(splits[a]))}
+    metadata = {'products': [{'artifact': a,
+                              'components': sorted(set(splits[a]))}
                              for a, r in regexps.iteritems()]}
 
     with open(metafile, "w") as f:

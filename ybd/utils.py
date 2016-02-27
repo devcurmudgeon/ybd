@@ -276,7 +276,7 @@ def _find_extensions(paths):
     map(lambda x: efs.addfs(x, OSFS(x)), paths)
 
     def get_extensions(kind):
-        return {os.path.splitext(x)[0] : efs.getsyspath(x)
+        return {os.path.splitext(x)[0]: efs.getsyspath(x)
                 for x in efs.walkfiles('.', '*.%s' % kind)}
 
     return {e: get_extensions(e) for e in extension_kinds}
