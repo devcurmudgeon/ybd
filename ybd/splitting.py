@@ -122,6 +122,16 @@ def write_metadata(defs, component):
     check_overlaps(defs, component)
 
 
+def compile_regexps(rules, component):
+    match_rules = OrderedDict((r.get('artifact'), r.get('include'))
+                              for r in rules)
+
+    regexps = OrderedDict((component['name'] + a if a.startswith('-') else a,
+                          re.compile('^(?:%s)$' % '|'.join(r)))
+                          for a, r in match_rules.iteritems())
+    return regexps
+
+
 def write_chunk_metafile(defs, chunk):
     '''Writes a chunk .meta file to the baserock dir of the chunk
 
@@ -130,7 +140,6 @@ def write_chunk_metafile(defs, chunk):
 
     '''
     app.log(chunk['name'], 'splitting chunk')
-    metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
 
     install_dir = chunk['install']
     # Use both the chunk specific rules and the default rules
@@ -138,14 +147,7 @@ def write_chunk_metafile(defs, chunk):
     default_rules = defs.defaults.get_chunk_split_rules()
     rules = split_rules + default_rules
 
-    # Compile the regexps
-    match_rules = OrderedDict((r.get('artifact'), r.get('include'))
-                              for r in rules)
-
-    regexps = OrderedDict((chunk['name'] + a if a.startswith('-') else a,
-                          re.compile('^(?:%s)$' % '|'.join(r)))
-                          for a, r in match_rules.iteritems())
-
+    regexps = compile_regexps(rules, chunk)
     splits = {a: [] for a in regexps.keys()}
 
     fs = OSFS(install_dir)
@@ -168,6 +170,8 @@ def write_chunk_metafile(defs, chunk):
                     break
 
     unique_artifacts = sorted(set([a for a, r in regexps.iteritems()]))
+
+    metafile = os.path.join(chunk['baserockdir'], chunk['name'] + '.meta')
     metadata = {'repo': chunk.get('repo'),
                 'ref': chunk.get('ref'),
                 'products': [{'artifact': a, 'files': sorted(splits[a])}
@@ -192,14 +196,7 @@ def write_stratum_metafiles(defs, stratum):
     default_rules = defs.defaults.get_stratum_split_rules()
     rules = split_rules + default_rules
 
-    # Compile the regexps
-    match_rules = OrderedDict((r.get('artifact'), r.get('include'))
-                              for r in rules)
-
-    regexps = OrderedDict((stratum['name'] + a if a.startswith('-') else a,
-                          re.compile('^(?:%s)$' % '|'.join(r)))
-                          for a, r in match_rules.iteritems())
-
+    regexps = compile_regexps(rules, stratum)
     splits = {a: [] for a in regexps.keys()}
 
     for item in stratum['contents']:
