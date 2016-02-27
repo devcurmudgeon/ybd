@@ -38,7 +38,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                                    stratum['name'] + '.meta')):
         return
 
-    stratum_metadata = get_metadata(defs, stratum['path'])
+    stratum_metadata = get_metadata(defs, stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
     components = []
@@ -208,7 +208,7 @@ def write_stratum_metafiles(defs, stratum):
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metadata = get_metadata(defs, chunk['path'])
+        metadata = get_metadata(defs, chunk)
         split_metadata = {'ref': metadata['ref'],
                           'repo': metadata['repo'],
                           'products': []}
