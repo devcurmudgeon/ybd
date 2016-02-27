@@ -113,6 +113,8 @@ def setup(args):
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
     config['sandboxes'] = []
+    config['overlaps'] = []
+    config['new-overlaps'] = []
 
     warnings.formatwarning = warning_handler
     # Suppress multiple instances of the same warning.

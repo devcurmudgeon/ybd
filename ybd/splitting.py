@@ -93,7 +93,21 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             app.log(stratum, 'WARNING: problem loading ', metafile)
 
 
+def check_overlaps(defs, component):
+    if set(app.config['new-overlaps']) <= set(app.config['overlaps']):
+        app.config['new-overlaps'] = []
+        return
+
+    app.config['overlaps'] = list(set(app.config['new-overlaps'] +
+                                      app.config['overlaps']))
+    app.config['new-overlaps'] = list(set(app.config['new-overlaps']))
+    for path in app.config['new-overlaps']:
+        app.log(component, 'WARNING: Overlapping file: ', path)
+    app.config['new-overlaps'] = []
+
+
 def write_metadata(defs, component):
+    check_overlaps(defs, component)
     kind = component.get('kind', 'chunk')
     if kind == 'chunk':
         write_chunk_metafile(defs, component)
@@ -151,6 +165,7 @@ def write_chunk_metafile(defs, chunk):
                 'ref': chunk.get('ref'),
                 'products': [{'artifact': a, 'files': sorted(splits[a])}
                              for a in unique_artifacts]}
+
     with app.chdir(chunk['install']), open(metafile, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
 
