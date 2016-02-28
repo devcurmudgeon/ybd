@@ -28,7 +28,6 @@ import app
 import utils
 import tempfile
 
-
 if sys.version_info.major == 2:
     # For compatibility with Python 2.
     from ConfigParser import RawConfigParser
@@ -164,7 +163,17 @@ def update_mirror(name, repo, gitdir):
             app.exit(name, 'ERROR: git update mirror failed', repo)
 
 
-def checkout(name, repo, ref, checkout):
+def checkout(this):
+    _checkout(this['name'], this['repo'], this['ref'], this['build'])
+
+    with app.chdir(this['build']):
+        if os.path.exists('.gitmodules') or this.get('submodules'):
+            checkout_submodules(this)
+
+    utils.set_mtime_recursively(this['build'])
+
+
+def _checkout(name, repo, ref, checkout):
     gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
@@ -188,11 +197,6 @@ def checkout(name, repo, ref, checkout):
 
             app.log(name, 'Git checkout %s in %s' % (repo, checkout))
             app.log(name, 'Upstream version %s' % get_version(checkout, ref))
-
-            if os.path.exists('.gitmodules'):
-                checkout_submodules(name, ref)
-
-    utils.set_mtime_recursively(checkout)
 
 
 def source_date_epoch(checkout):
@@ -228,8 +232,8 @@ def extract_commit(name, repo, ref, target_dir):
     utils.set_mtime_recursively(target_dir)
 
 
-def checkout_submodules(name, ref):
-    app.log(name, 'Git submodules')
+def checkout_submodules(this):
+    app.log(this, 'Checking git submodules')
     with open('.gitmodules', "r") as gitfile:
         # drop indentation in sections, as RawConfigParser cannot handle it
         content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
@@ -240,13 +244,18 @@ def checkout_submodules(name, ref):
     for section in parser.sections():
         # validate section name against the 'submodule "foo"' pattern
         submodule = re.sub(r'submodule "(.*)"', r'\1', section)
-        url = parser.get(section, 'url')
         path = parser.get(section, 'path')
+        try:
+            url = this['submodules'][path]['url']
+            app.log(this, 'Processing submodule %s from' % path, url)
+        except:
+            url = parser.get(section, 'url')
+            app.log(this, 'WARNING: fallback to submodule %s from' % path, url)
 
         try:
             # list objects in the parent repo tree to find the commit
             # object that corresponds to the submodule
-            commit = check_output(['git', 'ls-tree', ref, path])
+            commit = check_output(['git', 'ls-tree', this['ref'], path])
 
             # read the commit hash from the output
             fields = commit.split()
@@ -258,11 +267,11 @@ def checkout_submodules(name, ref):
                     raise Exception
 
                 fulldir = os.path.join(os.getcwd(), path)
-                checkout(name, url, submodule_commit, fulldir)
+                _checkout(this['name'], url, submodule_commit, fulldir)
 
             else:
-                app.log(name, 'Skipping submodule %s, not a commit:' % path,
+                app.log(this, 'Skipping submodule %s, not a commit:' % path,
                         fields)
 
         except:
-            app.exit(name, "ERROR: git submodules problem")
+            app.exit(this, "ERROR: git submodules problem", "")

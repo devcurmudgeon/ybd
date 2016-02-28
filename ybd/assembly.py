@@ -127,7 +127,7 @@ def run_build(defs, this):
         sandbox.ldconfig(this)
 
     if this.get('repo'):
-        repos.checkout(this['name'], this['repo'], this['ref'], this['build'])
+        repos.checkout(this)
         this['SOURCE_DATE_EPOCH'] = repos.source_date_epoch(this['build'])
 
     get_build_commands(defs, this)

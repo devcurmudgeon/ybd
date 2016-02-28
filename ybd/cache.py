@@ -59,7 +59,7 @@ def cache_key(defs, this):
     for factor in definition.get('contents', []):
         hash_factors[factor] = cache_key(defs, factor)
 
-    for factor in ['tree'] + defs.defaults.build_steps:
+    for factor in ['tree', 'submodules'] + defs.defaults.build_steps:
         if definition.get(factor):
             hash_factors[factor] = definition[factor]
 
