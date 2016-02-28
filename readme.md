@@ -16,7 +16,7 @@ repeatably build all systems in Baserock's definitions.git, i.e. all of the
 FOSS components required for Linux appliances up to and including, for example
 
 - self-hosting Linux development systems
-- GENIVI baseline systems
+- GENIVI Baseline and GENIVI Demo Platform systems for x86 and ARMv7
 - OpenStack appliances
 - OpenWRT appliances
 
@@ -29,9 +29,9 @@ first time please start with the latest tag, not master.
 
 ### dependencies
 
-currently ybd is for Linux only, and requires git, gcc, make, autotools,
-python, tar, wget. note that the Baserock definitions also
-require gawk.
+currently ybd is for Linux only, but can be used on environments (eg MacOS) using Vagrant and VirtualBox. 
+
+ybd requires git, gcc, make, autotools, python, tar, wget. note that the Baserock definitions also require gawk.
 
 so for a Debian-based system:
 
@@ -47,11 +47,11 @@ ybd also depends on [pyfilesystem](http://pyfilesystem.org),
 [requests](https://github.com/kennethreitz/requests),
 and optionally [jsonschema](https://github.com/Julian/jsonschema).
 
-If you want to serve artifacts using kbas, it requires
+to serve artifacts using kbas, it additionally requires
 [bottle](https://github.com/bottlepy/bottle) and optionally
 [cherrypy](https://github.com/cherrypy/cherrypy.git)
 
-If you'd like to use Riemann functionality, you will require
+to use the Riemann functionality, it additionally requires
 [riemann-client](https://github.com/borntyping/python-riemann-client)
 
 if you trust the Python Package Index (PyPI) and pip is available on your
@@ -61,7 +61,7 @@ machine, you can install these dependencies with:
     pip install fs pyyaml sandboxlib requests jsonschema bottle cherrypy riemann-client
 ```
 
-if you need to install pip itself:
+If you need to install pip itself:
 
 ```
     wget https://bootstrap.pypa.io/get-pip.py
@@ -72,8 +72,10 @@ if you need to install pip itself:
 ### quick start
 
 ```
-    git clone git://github.com/devcurmudgeon/ybd
-    git clone git://git.baserock.org/baserock/baserock/definitions
+    git clone git://github.com/devcurmudgeon/ybd && cd ybd
+    # checkout latest tag
+    git checkout `git describe --tags $(git rev-list --tags --max-count=1)`
+    cd .. && git clone git://git.baserock.org/baserock/baserock/definitions
     cd definitions
 ```
 
@@ -176,7 +178,8 @@ ybd can fork several instances of itself to parallelise its work. there is no
 intelligence in the scheduling at this point - all of the forks just randomise
 their build-order and try to build everything. for building a set of overlapping systems in parallel on a many core machine this proves to be quite
 effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
-of ybd take only 84 minutes to build all of the x86_64 systems in definitions/clusters/ci.morph
+of ybd can build all of the x86_64 systems in definitions/clusters/ci.morph
+much faster than a single instance.
 
 #### kbas cache server
 there's a basic server which can be used to allow other users to access
@@ -200,7 +203,8 @@ non-Linux operating systems (eg BSD, MacOS). However it may be have differently 
 - ybd aims to have less dependencies
 - ybd has faster, simpler calculation of cache-keys, and faster resolution of
   build-order
-- ybd can drop the words morphology, stratum, chunk from the Baserock vocabulary
+- ybd aims to drop the words morphology, stratum, chunk from the Baserock
+  vocabulary
 - ybd recognises generic 'definitions'
   - a definition can contain definitions, nested
   - definitions can be stored in one file or many, one directory or many
@@ -234,16 +238,6 @@ doing to/with ybd:
   Aboriginal Linux and non-Linux systems
 - test/fix to work on old versions of definitions, and on morphs.git
   (and separate out the idiosyncrasies, so code is tidy for future changes)
-- command line syntax and args
-- add some or all of ybd to definitions, as reference code to parse and build
-  definitions.
-
-### and if possible
-
-- establish a common cache algorithm/name/standard with Baserock upstream
-- establish roadmap for improvements to definitions format, based on lessons
-  from ybd, morph, Ansible, Cloud Foundry and other projects defining loads of
-  configuration data in yaml.
 
 ### project guidelines
 
@@ -261,7 +255,7 @@ doing to/with ybd:
 
 - license is GPLv2 but other licensing can be considered on request
 - most of the copyright is currently Codethink but don't let that put you off.
-  There's no intent to keep this as a Codethink-only project, nor will there be
-  any attempt to get folks to sign a contributor agreement.
+  There's no intent to keep this as a Codethink-only project, nor will there
+  be any attempt to get folks to sign a contributor agreement.
   contributors retain their own copyright.
 
