@@ -137,7 +137,7 @@ def mirror(name, repo):
 
     gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     try:
-        os.rename(tmpdir, gitdir)
+        shutil.move(tmpdir, gitdir)
         app.log(name, 'Git repo is mirrored at', gitdir)
     except:
         pass
