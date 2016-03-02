@@ -116,11 +116,11 @@ def cache(defs, this):
         shutil.rmtree(this['build'])
         utils.set_mtime_recursively(this['sandbox'])
         utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
-        os.rename('%s.tar' % cachefile, cachefile)
+        shutil.move('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(this['install'])
         utils.make_deterministic_gztar_archive(cachefile, this['install'])
-        os.rename('%s.tar.gz' % cachefile, cachefile)
+        shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     app.config['counter'].increment()
     unpack(defs, this, cachefile)
@@ -142,7 +142,7 @@ def unpack(defs, this, tmpfile):
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(defs, this))
-        os.rename(os.path.dirname(tmpfile), path)
+        shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
             app.exit(this, 'ERROR: problem creating cache artifact', path)
 
@@ -202,7 +202,7 @@ def get_cache(defs, this):
                 app.log(this, 'Problem unpacking', artifact)
                 return False
             try:
-                os.rename(tmpdir, unpackdir)
+                shutil.move(tmpdir, unpackdir)
             except:
                 # corner case... if we are here ybd is multi-instance, this
                 # artifact was uploaded from somewhere, and more than one
@@ -293,7 +293,7 @@ def cull(artifact_dir):
                 path = os.path.join(path, artifact + '.unpacked')
             if os.path.exists(path):
                 tmpdir = tempfile.mkdtemp()
-                os.rename(path, os.path.join(tmpdir, 'to-delete'))
+                shutil.move(path, os.path.join(tmpdir, 'to-delete'))
                 app.remove_dir(tmpdir)
                 deleted += 1
         return False

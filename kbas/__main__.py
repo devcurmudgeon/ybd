@@ -143,8 +143,8 @@ class KeyedBinaryArtifactServer(object):
             checksum = cache.md5(artifact)
             with open(artifact + '.md5', "a") as f:
                 f.write(checksum)
-            os.rename(tmpdir, os.path.join(app.config['artifact-dir'],
-                                           cache_id))
+            shutil.move(tmpdir, os.path.join(app.config['artifact-dir'],
+                                             cache_id))
             response.status = 201  # success!
             return
         except:
