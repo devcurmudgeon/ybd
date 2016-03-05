@@ -167,30 +167,22 @@ def lockfile(defs, this):
 
 @contextlib.contextmanager
 def claim(defs, this):
-    l = open(lockfile(defs, this), 'a')
-    try:
-        fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError as e:
-        l.close()
-        if e.errno in (errno.EACCES, errno.EAGAIN):
-            # flock() will report EACCESS or EAGAIN when the lock fails.
-            if app.config.get('instances', 1) == 1:
+    with open(lockfile(defs, this), 'a') as l:
+        try:
+            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except Exception as e:
+            if e.errno in (errno.EACCES, errno.EAGAIN):
+                # flock() will report EACCESS or EAGAIN when the lock fails.
+                raise RetryException(defs, this)
+            else:
                 import traceback
                 traceback.print_exc()
                 app.exit(this, 'ERROR: a surprise exception happened', '')
-            raise RetryException(defs, this)
-        else:
-            raise
-    except:
-        l.close()
-        raise
-
-    try:
-        yield
-    finally:
-        l.close()
-        if os.path.isfile(lockfile(defs, this)):
-            os.remove(lockfile(defs, this))
+        try:
+            yield
+        finally:
+            if os.path.isfile(lockfile(defs, this)):
+                os.remove(lockfile(defs, this))
 
 
 def install_contents(defs, component):
