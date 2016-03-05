@@ -100,9 +100,13 @@ class Definitions(object):
             with open(path) as f:
                 text = f.read()
             contents = yaml.safe_load(text)
-        except:
-            app.log('DEFINITIONS', 'WARNING: problem loading', path)
+        except yaml.YAMLError, exc:
+            app.log('DEFINITIONS', 'WARNING: Error parsing %s' % path, exc)
             return None
+        except:
+            app.log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
+            return None
+
         if type(contents) is not dict:
             app.log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,
                     str(contents)[0:50])
