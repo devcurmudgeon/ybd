@@ -19,6 +19,7 @@ import random
 from subprocess import call, check_output
 import contextlib
 import fcntl
+import errno
 
 import json
 import app
@@ -164,22 +165,32 @@ def shuffle(contents):
 def lockfile(defs, this):
     return os.path.join(app.config['tmp'], cache_key(defs, this) + '.lock')
 
-
 @contextlib.contextmanager
 def claim(defs, this):
+    l = open(lockfile(defs, this), 'a')
     try:
-        with open(lockfile(defs, this), 'a') as l:
-            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            yield
-            if os.path.isfile(lockfile(defs, this)):
-                os.remove(lockfile(defs, this))
-        return
+        fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError as e:
-        if app.config.get('instances', 1) == 1:
-            import traceback
-            traceback.print_exc()
-            app.exit(this, 'ERROR: a surprise exception happened', '')
-        raise RetryException(defs, this)
+        l.close()
+        if e.errno in (errno.EACCES, errno.EAGAIN):
+            # flock() will report EACCESS or EAGAIN when the lock fails.
+            if app.config.get('instances', 1) == 1:
+                import traceback
+                traceback.print_exc()
+                app.exit(this, 'ERROR: a surprise exception happened', '')
+            raise RetryException(defs, this)
+        else:
+            raise
+    except:
+        l.close()
+        raise
+
+    try:
+        yield
+    finally:
+        l.close()
+        if os.path.isfile(lockfile(defs, this)):
+            os.remove(lockfile(defs, this))
 
 
 def install_contents(defs, component):
