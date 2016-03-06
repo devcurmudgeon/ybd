@@ -53,6 +53,33 @@ def cache_key(defs, this):
     if definition.get('repo') and not definition.get('tree'):
         definition['tree'] = repos.get_tree(definition)
 
+    factors = hash_factors(defs, definition)
+    factors = json.dumps(factors, sort_keys=True).encode('utf-8')
+    key = hashlib.sha256(factors).hexdigest()
+    if app.config.get('no-build'):
+        key = 'no-build'
+
+    definition['cache'] = definition['name'] + "." + key
+
+    app.config['total'] += 1
+    if not get_cache(defs, this):
+        app.config['tasks'] += 1
+
+    app.log(definition, 'Cache_key is', definition['cache'])
+
+    # If you want to catalog the artifacts for a system, do so
+    if app.config.get('cache-log'):
+        cache_list[definition.get('name')] = definition.get('cache')
+        if definition.get('kind') == 'system':
+            with open(app.config.get('cache-log'), 'w') as f:
+                f.write(json.dumps(cache_list, indent=4))
+            app.log('cache-log', 'cache logged to',
+                    app.config.get('cache-log'))
+
+    return definition['cache']
+
+
+def hash_factors(defs, definition):
     hash_factors = {'arch': app.config['arch']}
 
     for factor in definition.get('build-depends', []):
@@ -79,30 +106,7 @@ def cache_key(defs, this):
         hash_factors['artifact-version'] = app.config.get('artifact-version')
         hash_factors['default-build-systems'] = defs.defaults.build_systems
 
-    result = json.dumps(hash_factors, sort_keys=True).encode('utf-8')
-    result = hashlib.sha256(result).hexdigest()
-
-    definition['cache'] = definition['name'] + "." + result
-    app.config['total'] += 1
-
-    if app.config.get('no-build'):
-        definition['cache'] = definition['name'] + '.no-build'
-
-    if not get_cache(defs, this):
-        app.config['tasks'] += 1
-
-    app.log(definition, 'Cache_key is', definition['cache'])
-
-    # If you want to catalog the artifacts for a system, do so
-    if app.config.get('cache-log'):
-        cache_list[definition.get('name')] = definition.get('cache')
-        if definition.get('kind') == 'system':
-            with open(app.config.get('cache-log'), 'w') as f:
-                f.write(json.dumps(cache_list, indent=4))
-            app.log('cache-log', 'cache logged to',
-                    app.config.get('cache-log'))
-
-    return definition['cache']
+    return hash_factors
 
 
 def cache(defs, this):
