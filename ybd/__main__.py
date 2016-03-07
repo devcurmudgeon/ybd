@@ -52,6 +52,12 @@ with app.timer('TOTAL'):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(defs, app.config['target'])
+
+    target = defs.get(app.config['target'])
+    if app.config['total'] == 0 or (app.config['total'] == 1 and
+                                    target.get('kind') == 'cluster'):
+        app.exit('ARCH', 'ERROR: no definitions found for', app.config['arch'])
+
     defs.save_trees()
 
     sandbox.executor = sandboxlib.executor_for_platform()
@@ -63,7 +69,6 @@ with app.timer('TOTAL'):
     if app.config.get('instances'):
         app.spawn()
 
-    target = defs.get(app.config['target'])
     while True:
         try:
             compose(defs, target)
