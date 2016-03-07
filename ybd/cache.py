@@ -44,8 +44,6 @@ def cache_key(defs, this):
         return definition['cache']
 
     if definition.get('arch', app.config['arch']) != app.config['arch']:
-        app.log(definition, 'Target arch is %s, so skip' % app.config['arch'],
-                definition['arch'])
         return False
 
     definition['cache'] = 'calculating'
