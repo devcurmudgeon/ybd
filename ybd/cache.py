@@ -131,7 +131,7 @@ def cache(defs, this):
 
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
-        if this.get('kind') in ['chunk', 'stratum']:
+        if this.get('kind', 'chunk') in ['chunk', 'stratum']:
             with app.timer(this, 'upload'):
                 upload(defs, this)
 
