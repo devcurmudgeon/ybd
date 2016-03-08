@@ -133,7 +133,7 @@ def setup(args):
             config['kbas-url'] += '/'
 
     config['total'] = config['tasks'] = config['counter'] = 0
-    config['reproduced'] = []
+    config['reproduced'] = config['keys'] = []
     config['pid'] = os.getpid()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))

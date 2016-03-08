@@ -40,7 +40,6 @@ if not os.path.exists('./VERSION'):
 
 app.setup(sys.argv)
 app.cleanup(app.config['tmp'])
-cache.cull(app.config['artifacts'])
 
 with app.timer('TOTAL'):
     tmp_lock = open(os.path.join(app.config['tmp'], 'lock'), 'r')
@@ -53,6 +52,7 @@ with app.timer('TOTAL'):
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(defs, app.config['target'])
 
+    cache.cull(app.config['artifacts'])
     target = defs.get(app.config['target'])
     if app.config['total'] == 0 or (app.config['total'] == 1 and
                                     target.get('kind') == 'cluster'):
