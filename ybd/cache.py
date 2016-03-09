@@ -292,7 +292,7 @@ def cull(artifact_dir):
         for artifact in artifacts:
             stat = os.statvfs(artifact_dir)
             free = stat.f_frsize * stat.f_bavail / 1000000000
-            if free >= app.config.get('min-gigabytes', 10):
+            if free >= app.config.get('min-gigabytes', 0):
                 app.log('SETUP', '%sGB is enough free space' % free)
                 if deleted > 0:
                     app.log('SETUP', 'Culled %s items in' % deleted,
@@ -318,9 +318,9 @@ def cull(artifact_dir):
 
     stat = os.statvfs(artifact_dir)
     free = stat.f_frsize * stat.f_bavail / 1000000000
-    if free < app.config.get('min-gigabytes', 10):
+    if free < app.config.get('min-gigabytes', 0):
         app.exit('SETUP', 'ERROR: %sGB is less than min-gigabytes:' % free,
-                 app.config.get('min-gigabytes', 10))
+                 app.config.get('min-gigabytes', 0))
 
 
 def check(artifact):
