@@ -134,12 +134,9 @@ class KeyedBinaryArtifactServer(object):
             upload = request.files.get('file')
             artifact = os.path.join(tmpdir, cache_id)
             upload.save(artifact)
-            unpackdir = artifact + '.unpacked'
-            os.makedirs(unpackdir)
-            if call(['tar', 'xf', artifact, '--directory', unpackdir]):
-                app.log(this, 'ERROR: Problem unpacking', artifact)
+            if call(['tar', 'tf', artifact]):
+                app.log(this, 'ERROR: not a valid tarfile:', artifact)
                 raise
-            shutil.rmtree(unpackdir)
             checksum = cache.md5(artifact)
             with open(artifact + '.md5', "a") as f:
                 f.write(checksum)
