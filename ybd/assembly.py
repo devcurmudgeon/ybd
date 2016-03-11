@@ -288,7 +288,7 @@ def get_build_commands(defs, this):
     else:
         files = os.listdir(this['build'])
         bs = defs.defaults.detect_build_system(files)
-        app.log(this, 'Autodetected build system is', bs)
+        app.log(this, 'WARNING: Autodetected build system is', bs)
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:
