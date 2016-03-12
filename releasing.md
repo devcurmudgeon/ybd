@@ -10,7 +10,7 @@ deploy them.
 
 No automated tests were produced because
 - the project aimed (and still aims) to have as little code as possible
-- upstream wanted to shoe that reliable software can be written without tests
+- upstream wanted to show that reliable software can be written without tests
 - it was possible to test ybd on actual definitions
 
 ### Present
@@ -39,13 +39,18 @@ There are some weaknesses in this:
 Ultimately ybd releases should be as automated as possible, to make the
 process efficient (minimum work) and reliable (minimum breakage).
 
-The preferred approach for automation is expected to be Concourse.
+The preferred approach for automation is expected to be one or more of
+- Concourse
+- GitLab CI
+- Travis
 
 
 ### Some Test Cases
 
+- verify ybd still gets same cache-keys for a given set of definitions
 - build old releases of definitions, as far back as possible
 - build with empty, partial and full cache
+- check ctrl-c works, and that re-start works
 - verify reproducible components are still the same
 - verify installation works, on
   - Vagrant
