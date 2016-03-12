@@ -20,7 +20,7 @@ import os
 import glob
 import shutil
 from time import strftime, gmtime
-import datetime
+from datetime import datetime
 import tempfile
 import yaml
 from bottle import Bottle, request, response, template, static_file
@@ -41,7 +41,8 @@ class KeyedBinaryArtifactServer(object):
         app.load_configs([
             os.path.join(os.getcwd(), 'kbas.conf'),
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
-        app.config['start-time'] = datetime.datetime.now()
+        app.config['start-time'] = datetime.now()
+        app.config['last-upload'] = datetime.now()
 
         try:
             import cherrypy
@@ -105,7 +106,11 @@ class KeyedBinaryArtifactServer(object):
         free = stat.f_frsize * stat.f_bavail / 1000000000
         artifacts = len(os.listdir(app.config['artifact-dir']))
         started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
+        last_upload = app.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
         content = [['Started:', started]]
+        content += [['Last upload:', last_upload]]
+        if app.config.get('last-reject'):
+            content += [['Last reject:', app.config['last-reject']]]
         content += [['Space:', str(free) + 'GB']]
         content += [['Artifacts:', str(artifacts)]]
         return template('kbas',
@@ -118,6 +123,8 @@ class KeyedBinaryArtifactServer(object):
         if app.config['password'] is 'insecure' or \
                 request.forms.get('password') != app.config['password']:
             print 'Upload attempt: password fail'
+            app.config['last-reject'] = \
+                datetime.now().strftime('%y-%m-%d %H:%M:%S')
             response.status = 401  # unauthorized
             return
         cache_id = request.forms.get('filename')
@@ -143,6 +150,7 @@ class KeyedBinaryArtifactServer(object):
             shutil.move(tmpdir, os.path.join(app.config['artifact-dir'],
                                              cache_id))
             response.status = 201  # success!
+            app.config['last-upload'] = datetime.now()
             return
         except:
             # something went wrong, clean up
