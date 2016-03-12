@@ -10,4 +10,4 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && rm get-pip.py
 
 # install python dependencies
-RUN pip install pyyaml sandboxlib requests jsonschema bottle cherrypy
+RUN pip install fs pyyaml sandboxlib requests jsonschema bottle cherrypy

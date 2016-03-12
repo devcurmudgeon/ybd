@@ -1,0 +1,22 @@
+image: devcurmudgeon/foo
+
+before_script:
+- pip install fs
+- sh ./install.sh
+
+variables:
+  NO_BUILD: "True"
+  BASE: "/src"
+
+cache:
+  path: "$BASE"
+
+stages:
+- cache_keys
+- build
+- test
+- deploy
+
+check_cache_keys:
+  stage: cache_keys
+  script: "echo 'base: /src' > ./ybd.conf && ../ybd/ybd.py ci x86_64"
