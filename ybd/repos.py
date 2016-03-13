@@ -51,8 +51,10 @@ def get_repo_name(repo):
     NOTE: this naming scheme is based on what lorry uses
 
     '''
+    def transl(x):
+        return x if x in valid_chars else '_'
+
     valid_chars = string.digits + string.ascii_letters + '%_'
-    transl = lambda x: x if x in valid_chars else '_'
     return ''.join([transl(x) for x in get_repo_url(repo)])
 
 

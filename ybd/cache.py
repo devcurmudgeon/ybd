@@ -301,7 +301,7 @@ def cull(artifact_dir):
             path = os.path.join(artifact_dir, artifact)
             if os.path.exists(os.path.join(path, artifact + '.unpacked')):
                 path = os.path.join(path, artifact + '.unpacked')
-            if os.path.exists(path) and not artifact in app.config['keys']:
+            if os.path.exists(path) and artifact not in app.config['keys']:
                 tmpdir = tempfile.mkdtemp()
                 shutil.move(path, os.path.join(tmpdir, 'to-delete'))
                 app.remove_dir(tmpdir)

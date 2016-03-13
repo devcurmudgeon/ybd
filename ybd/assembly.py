@@ -165,6 +165,7 @@ def shuffle(contents):
 def lockfile(defs, this):
     return os.path.join(app.config['tmp'], cache_key(defs, this) + '.lock')
 
+
 @contextlib.contextmanager
 def claim(defs, this):
     with open(lockfile(defs, this), 'a') as l:

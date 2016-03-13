@@ -49,8 +49,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                 split_stratum_metadata['products'].append(product)
 
     if app.config.get('log-verbose'):
-        app.log(component, 'Installing artifacts: ' + str(artifacts)
-                + ' components: ' + str(components))
+        app.log(component, 'Installing artifacts: ' + str(artifacts) +
+                ' components: ' + str(components))
 
     baserockpath = os.path.join(component['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):
@@ -130,9 +130,9 @@ def compile_rules(defs, component):
                                                                 'chunk'))
     for rules in split_rules, default_rules:
         for rule in rules:
-            regexp = re.compile('^(?:'
-                                + '|'.join(rule.get('include'))
-                                + ')$')
+            regexp = re.compile('^(?:' +
+                                '|'.join(rule.get('include')) +
+                                ')$')
             artifact = rule.get('artifact')
             if artifact.startswith('-'):
                 artifact = component['name'] + artifact
@@ -140,6 +140,7 @@ def compile_rules(defs, component):
             splits[artifact] = []
 
     return regexps, splits
+
 
 def write_chunk_metafile(defs, chunk):
     '''Writes a chunk .meta file to the baserock dir of the chunk
