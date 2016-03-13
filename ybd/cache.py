@@ -54,7 +54,7 @@ def cache_key(defs, this):
     factors = hash_factors(defs, definition)
     factors = json.dumps(factors, sort_keys=True).encode('utf-8')
     key = hashlib.sha256(factors).hexdigest()
-    if app.config.get('no-build'):
+    if app.config.get('mode', 'normal') == 'no-build':
         key = 'no-build'
 
     definition['cache'] = definition['name'] + "." + key

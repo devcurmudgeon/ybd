@@ -1,7 +1,5 @@
 image: devcurmudgeon/foo
 
-services:
-
 before_script:
 - sh ./install.sh
 
@@ -25,4 +23,4 @@ check_installation:
 
 check_cache_keys:
   stage: cache_keys
-  script: "echo 'base: /src' > ./ybd.conf && ../ybd/ybd.py ci x86_64"
+  script: "echo 'mode: keys-only' > ./ybd.conf && ../ybd/ybd.py ci x86_64"

@@ -51,6 +51,8 @@ with app.timer('TOTAL'):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(defs, app.config['target'])
+        if app.config.get('mode', 'normal') == 'keys-only':
+            os._exit(0)
 
     cache.cull(app.config['artifacts'])
     target = defs.get(app.config['target'])

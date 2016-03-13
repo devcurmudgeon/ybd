@@ -162,7 +162,7 @@ config values you may want to override include:
     log-elapsed: True # log elapsed times since start, or actual time
     log-verbose: False # log extra info including all sandbox installation steps
     min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
-    no-build: False # for testing/debugging ybd - if True, only run the assembly logic, don't compile things
+    mode: ['keys-only', 'no-build', 'normal'] # for testing/debugging ybd
     reproduce: False # if True, build and compare against artifacts on server
     schemas: # files defining schemas for definitions (currently schemas/*)
     schema-validation: False # set to True to warn, 'strict' to exit on error
