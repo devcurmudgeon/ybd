@@ -30,7 +30,6 @@ There are some weaknesses in this:
 
 - many use-cases are not tested
 - breakages happen
-- 
 - a full build of ci.morph now takes 3 hours on a huge AWS machine
 - documentation can get out-of-step
 
@@ -47,13 +46,23 @@ The preferred approach for automation is expected to be one or more of
 
 ### Some Test Cases
 
-- verify ybd still gets same cache-keys for a given set of definitions
-- build old releases of definitions, as far back as possible
-- build with empty, partial and full cache
-- check ctrl-c works, and that re-start works
-- verify reproducible components are still the same
-- verify installation works, on
+This list aims to identify the minimum set that would give confidence that
+a new version ybd *works*.
+
+- verify installation still works, on
   - Vagrant
   - AWS
   - Fedora
   - Debian/Ubuntu
+- verify ybd still gets same cache-keys for a given set of definitions
+- build old releases of definitions, as far back as possible
+- build with empty, partial and full cache
+- check ctrl-c works, and that re-start works
+- verify reproducible components are reproduced
+
+Even to test this minimum list fully on real definitions will take a lot of
+server time, because actual system builds are big and heavy. To improve on
+this we'd benefit from establishing a reference definition set which is
+specifically for exercising ybd/definitions/spec.
+
+
