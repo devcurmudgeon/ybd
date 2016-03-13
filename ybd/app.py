@@ -26,6 +26,7 @@ from multiprocessing import cpu_count
 from subprocess import call, check_output
 import platform
 import hashlib
+from fs.osfs import OSFS  # not used here, but we import it to check install
 from repos import get_version
 try:
     from riemann_client.transport import TCPTransport
@@ -104,12 +105,16 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
 
 
 def setup(args):
+    config['start-time'] = datetime.datetime.now()
+    config['program'] = os.path.basename(args[0])
+    config['my-version'] = get_version(os.path.dirname(__file__))
     if len(args) != 3:
-        sys.stderr.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
-        sys.exit(1)
+        sys.stdout.write("%s version is %s\n\n" % (config['program'],
+                         config['my-version']))
+        sys.stdout.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
+        sys.exit(0)
 
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
-    config['start-time'] = datetime.datetime.now()
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
     config['sandboxes'] = []
@@ -135,8 +140,6 @@ def setup(args):
     config['total'] = config['tasks'] = config['counter'] = 0
     config['reproduced'] = config['keys'] = []
     config['pid'] = os.getpid()
-    config['program'] = os.path.basename(args[0])
-    config['my-version'] = get_version(os.path.dirname(__file__))
     config['def-version'] = get_version('.')
 
     config['defdir'] = os.getcwd()
