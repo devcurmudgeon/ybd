@@ -1,7 +1,8 @@
 image: devcurmudgeon/foo
 
+services:
+
 before_script:
-- pip install fs
 - sh ./install.sh
 
 variables:
@@ -12,10 +13,15 @@ cache:
   path: "$BASE"
 
 stages:
+- installation
 - cache_keys
 - build
 - test
 - deploy
+
+check_installation:
+  stage: installation
+  script: "python setup.py install ; ./ybd.py"
 
 check_cache_keys:
   stage: cache_keys
