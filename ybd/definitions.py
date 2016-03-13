@@ -255,13 +255,17 @@ class Definitions(object):
         checksum for the state of the working subdirectories
         '''
         with app.chdir(app.config['defdir']):
-            checksum = check_output('ls -lRA */', shell=True)
+            try:
+                checksum = check_output('ls -lRA */', shell=True)
+            except:
+                checksum = check_output('ls -lRA .', shell=True)
         checksum = hashlib.md5(checksum).hexdigest()
         self._trees = {'.checksum': checksum}
         for name in self._definitions:
             if self._definitions[name].get('tree') is not None:
                 self._trees[name] = [self._definitions[name]['ref'],
-                                     self._definitions[name]['tree']]
+                                     self._definitions[name]['tree'],
+                                     self._definitions[name].get('cache')]
 
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))

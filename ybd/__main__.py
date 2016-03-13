@@ -51,8 +51,6 @@ with app.timer('TOTAL'):
         defs = Definitions()
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(defs, app.config['target'])
-        if app.config.get('mode', 'normal') == 'keys-only':
-            os._exit(0)
 
     cache.cull(app.config['artifacts'])
     target = defs.get(app.config['target'])
@@ -61,6 +59,9 @@ with app.timer('TOTAL'):
         app.exit('ARCH', 'ERROR: no definitions found for', app.config['arch'])
 
     defs.save_trees()
+    if app.config.get('mode', 'normal') == 'keys-only':
+        print target['cache']
+        os._exit(0)
 
     sandbox.executor = sandboxlib.executor_for_platform()
     app.log(app.config['target'], 'Sandbox using %s' % sandbox.executor)
