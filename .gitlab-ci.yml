@@ -11,11 +11,16 @@ cache:
   path: "$BASE"
 
 stages:
+- pep8
 - installation
 - cache_keys
 - build
 - test
 - deploy
+
+check_pep8:
+  stage: pep8
+  script: "pep8"
 
 check_installation:
   stage: installation
