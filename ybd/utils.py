@@ -41,11 +41,24 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
                                                topdown=False):
         for basename in basenames:
             pathname = os.path.join(dirname, basename)
-            # we need the following check to ignore broken symlinks
-            if os.path.exists(pathname):
-                os.utime(pathname, (set_time, set_time))
-        os.utime(dirname, (set_time, set_time))
 
+            # Python's os.utime only ever modifies the timestamp
+            # of the target, it is not acceptable to set the timestamp
+            # of the target here, if we are staging the link target we
+            # will also set it's timestamp.
+            #
+            # We should however find a way to modify the actual link's
+            # timestamp, this outdated python bug report claims that
+            # it is impossible:
+            #
+            #   http://bugs.python.org/issue623782
+            #
+            # However, nowadays it is possible at least on gnuish systems
+            # with with the lutimes function.
+            if not os.path.islink(pathname):
+                os.utime(pathname, (set_time, set_time))
+
+        os.utime(dirname, (set_time, set_time))
 
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
