@@ -60,6 +60,7 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
 
         os.utime(dirname, (set_time, set_time))
 
+
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
 
