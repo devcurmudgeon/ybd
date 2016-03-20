@@ -1,4 +1,8 @@
-# ybd
+Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd) 
+
+Gitlab: [![Build Status](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)
+
+## ybd
 
 ybd is a tool for building integrated software stacks. it does four things:
 
@@ -91,8 +95,8 @@ where
 - $2 specifies the architecture you're building/deploying for.
 
 note that all of the current baserock definitions are for native builds, no
-cross-compile. so if you're on a typical laptop it may be that your only
-option for $2 is `x86_64`
+cross-compile. so if you're on a PC/Mac it may be that your only
+option for $2 is x86_64
 
 Some examples to try:
 
