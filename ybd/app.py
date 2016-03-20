@@ -39,6 +39,26 @@ except ImportError:
 config = {}
 
 
+class RetryException(Exception):
+    def __init__(self, defs, component):
+        if config.get('log-verbose') and \
+                config.get('last-retry-component') != component:
+            log(component, 'Already downloading/building, so wait/retry')
+        if config.get('last-retry-time'):
+            wait = datetime.datetime.now() - config.get('last-retry-time')
+            if wait.seconds < 1:
+                with open(lockfile(defs, component), 'r') as l:
+                    call(['flock', '--shared', '--timeout',
+                          config.get('timeout', '60'), str(l.fileno())])
+                if config['log-verbose']:
+                    log(component, 'Finished wait loop')
+        config['last-retry-time'] = datetime.datetime.now()
+        config['last-retry-component'] = component
+        for dirname in config['sandboxes']:
+            remove_dir(dirname)
+        config['sandboxes'] = []
+
+
 class Counter(object):
     def __init__(self, pid):
         self._counter_file = os.path.join(config['tmp'], str(pid))

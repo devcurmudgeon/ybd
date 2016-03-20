@@ -59,6 +59,7 @@ def setup(this):
     try:
         yield
     finally:
+        app.log(this, "Removing sandbox dir", this['sandbox'])
         app.remove_dir(this['sandbox'])
 
 

@@ -22,7 +22,8 @@ import fcntl
 import errno
 
 import json
-import app
+from app import config, chdir, exit, timer, elapsed
+from app import log, log_riemann, RetryException
 from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
@@ -30,26 +31,6 @@ from shutil import copyfile
 import time
 import datetime
 import splitting
-
-
-class RetryException(Exception):
-    def __init__(self, defs, component):
-        if app.config.get('log-verbose') and \
-                app.config.get('last-retry-component') != component:
-            app.log(component, 'Already downloading/building, so wait/retry')
-        if app.config.get('last-retry-time'):
-            wait = datetime.datetime.now() - app.config.get('last-retry-time')
-            if wait.seconds < 1:
-                with open(lockfile(defs, component), 'r') as l:
-                    call(['flock', '--shared', '--timeout',
-                          app.config.get('timeout', '60'), str(l.fileno())])
-                if app.config['log-verbose']:
-                    app.log(component, 'Finished wait loop')
-        app.config['last-retry-time'] = datetime.datetime.now()
-        app.config['last-retry-component'] = component
-        for dirname in app.config['sandboxes']:
-            app.remove_dir(dirname)
-        app.config['sandboxes'] = []
 
 
 def compose(defs, target):
@@ -65,17 +46,17 @@ def compose(defs, target):
     if get_cache(defs, component):
         return cache_key(defs, component)
 
-    if app.config.get('log-verbose'):
-        app.log(target, "Composing", component['name'])
+    if config.get('log-verbose'):
+        log(target, "Composing", component['name'])
 
     # if we have a kbas, look there to see if this component exists
-    if app.config.get('kbas-url') and not app.config.get('reproduce'):
+    if config.get('kbas-url') and not config.get('reproduce'):
         with claim(defs, component):
             if get_remote(defs, component):
-                app.config['counter'].increment()
+                config['counter'].increment()
                 return cache_key(defs, component)
 
-    if component.get('arch') and component['arch'] != app.config['arch']:
+    if component.get('arch') and component['arch'] != config['arch']:
         return None
 
     with sandbox.setup(component):
@@ -106,10 +87,10 @@ def build(defs, component):
     with claim(defs, component):
         if component.get('kind', 'chunk') == 'chunk':
             install_dependencies(defs, component)
-        with app.timer(component, 'build of %s' % component['cache']):
+        with timer(component, 'build of %s' % component['cache']):
             run_build(defs, component)
 
-        with app.timer(component, 'artifact creation'):
+        with timer(component, 'artifact creation'):
             splitting.write_metadata(defs, component)
             cache(defs, component)
 
@@ -120,8 +101,8 @@ def run_build(defs, this):
     been assembled.
     '''
 
-    if app.config.get('mode', 'normal') == 'no-build':
-        app.log(this, 'SKIPPING BUILD: artifact will be empty')
+    if config.get('mode', 'normal') == 'no-build':
+        log(this, 'SKIPPING BUILD: artifact will be empty')
         return
 
     if this.get('build-mode') != 'bootstrap':
@@ -134,10 +115,10 @@ def run_build(defs, this):
     get_build_commands(defs, this)
     env_vars = sandbox.env_vars_for_build(defs, this)
 
-    app.log(this, 'Logging build commands to %s' % this['log'])
+    log(this, 'Logging build commands to %s' % this['log'])
     for build_step in defs.defaults.build_steps:
         if this.get(build_step):
-            app.log(this, 'Running', build_step)
+            log(this, 'Running', build_step)
         for command in this.get(build_step, []):
             if command is False:
                 command = "false"
@@ -151,19 +132,19 @@ def run_build(defs, this):
         sandbox.create_devices(this)
 
     with open(this['log'], "a") as logfile:
-        time_elapsed = app.elapsed(this['start-time'])
+        time_elapsed = elapsed(this['start-time'])
         logfile.write('Elapsed_time: %s\n' % time_elapsed)
-        app.log_riemann(this, 'Artifact_Timer', this['name'], time_elapsed)
+        log_riemann(this, 'Artifact_Timer', this['name'], time_elapsed)
 
 
 def shuffle(contents):
-    if app.config.get('instances', 1) > 1:
+    if config.get('instances', 1) > 1:
         random.seed(datetime.datetime.now())
         random.shuffle(contents)
 
 
 def lockfile(defs, this):
-    return os.path.join(app.config['tmp'], cache_key(defs, this) + '.lock')
+    return os.path.join(config['tmp'], cache_key(defs, this) + '.lock')
 
 
 @contextlib.contextmanager
@@ -178,7 +159,7 @@ def claim(defs, this):
             else:
                 import traceback
                 traceback.print_exc()
-                app.exit(this, 'ERROR: a surprise exception happened', '')
+                exit(this, 'ERROR: a surprise exception happened', '')
         try:
             yield
         finally:
@@ -196,8 +177,8 @@ def install_contents(defs, component):
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):
                 # content has already been installed
-                if app.config.get('log-verbose'):
-                    app.log(component, 'Already installed', content['name'])
+                if config.get('log-verbose'):
+                    log(component, 'Already installed', content['name'])
                 continue
 
             if component.get('kind', 'chunk') == 'system':
@@ -221,10 +202,10 @@ def install_contents(defs, component):
 
     component = defs.get(component)
     contents = component.get('contents', [])
-    if app.config.get('log-verbose'):
-        app.log(component, 'Installing contents\n', contents)
+    if config.get('log-verbose'):
+        log(component, 'Installing contents\n', contents)
     install(defs, component, contents)
-    if app.config.get('log-verbose'):
+    if config.get('log-verbose'):
         sandbox.list_files(component)
 
 
@@ -238,8 +219,8 @@ def install_dependencies(defs, component):
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            dependency['name'] + '.meta')):
                 # dependency has already been installed
-                if app.config.get('log-verbose'):
-                    app.log(component, 'Already installed', dependency['name'])
+                if config.get('log-verbose'):
+                    log(component, 'Already installed', dependency['name'])
                 continue
 
             install(defs, component, dependency.get('build-depends', []))
@@ -253,10 +234,10 @@ def install_dependencies(defs, component):
 
     component = defs.get(component)
     dependencies = component.get('build-depends', [])
-    if app.config.get('log-verbose'):
-        app.log(component, 'Installing dependencies\n', dependencies)
+    if config.get('log-verbose'):
+        log(component, 'Installing dependencies\n', dependencies)
     install(defs, component, dependencies)
-    if app.config.get('log-verbose'):
+    if config.get('log-verbose'):
         sandbox.list_files(component)
 
 
@@ -285,11 +266,11 @@ def get_build_commands(defs, this):
 
     if this.get('build-system') or os.path.exists(this['path']):
         bs = this.get('build-system', 'manual')
-        app.log(this, 'Defined build system is', bs)
+        log(this, 'Defined build system is', bs)
     else:
         files = os.listdir(this['build'])
         bs = defs.defaults.detect_build_system(files)
-        app.log(this, 'WARNING: Autodetected build system is', bs)
+        log(this, 'WARNING: Autodetected build system is', bs)
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:

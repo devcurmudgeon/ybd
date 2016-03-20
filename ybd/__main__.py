@@ -21,7 +21,7 @@ import os
 import sys
 import fcntl
 import app
-from assembly import compose, RetryException
+from assembly import compose
 from deployment import deploy
 from definitions import Definitions
 import cache
@@ -79,7 +79,7 @@ with app.timer('TOTAL'):
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
             os._exit(1)
-        except RetryException:
+        except app.RetryException:
             pass
         except:
             import traceback
