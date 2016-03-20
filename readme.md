@@ -251,6 +251,7 @@ doing to/with ybd:
   - 'Code LESS: every line creates a work-chain. Code is a liability, not an 
     asset'
   - think hard before adding dependencies
+  - code should be tested and pass pep8
 - upstream is at github because we need to build loads of stuff from github
   *anyway* and it's the easiest workflow/infrastructure for a small project.
   ybd will *remain* a small project.
