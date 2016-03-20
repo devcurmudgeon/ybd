@@ -58,10 +58,6 @@ def setup(this):
 
     try:
         yield
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        app.exit(this, 'ERROR: a surprise exception happened', '')
     finally:
         app.remove_dir(this['sandbox'])
 
