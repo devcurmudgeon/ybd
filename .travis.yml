@@ -1,0 +1,18 @@
+before_install:
+- sudo pip install pep8
+- pep8
+- sudo apt-get update -qq
+- sudo apt-get install -qq build-essential gawk git m4
+- sudo pip install fs pyyaml sandboxlib requests jsonschema
+- sudo pip install bottle cherrypy riemann-client
+
+install:
+- sudo python setup.py install
+- ./ybd.py
+
+script:
+- cd ..
+- git clone git://git.baserock.org/baserock/baserock/definitions
+- cd definitions
+- sudo echo 'mode: keys-only' > ./ybd.conf
+- ../ybd/ybd.py ci x86_64
