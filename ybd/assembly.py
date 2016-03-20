@@ -23,7 +23,7 @@ import errno
 
 import json
 from app import config, chdir, exit, timer, elapsed
-from app import log, log_riemann, RetryException
+from app import log, log_riemann, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
@@ -141,10 +141,6 @@ def shuffle(contents):
     if config.get('instances', 1) > 1:
         random.seed(datetime.datetime.now())
         random.shuffle(contents)
-
-
-def lockfile(defs, this):
-    return os.path.join(config['tmp'], cache_key(defs, this) + '.lock')
 
 
 @contextlib.contextmanager

@@ -28,6 +28,7 @@ import platform
 import hashlib
 from fs.osfs import OSFS  # not used here, but we import it to check install
 from repos import get_version
+from cache import cache_key
 try:
     from riemann_client.transport import TCPTransport
     from riemann_client.client import QueuedClient
@@ -80,6 +81,10 @@ class Counter(object):
         with open(self._counter_file, 'r') as f:
             count = f.read()
         return count
+
+
+def lockfile(defs, this):
+    return os.path.join(config['tmp'], cache_key(defs, this) + '.lock')
 
 
 def log(component, message='', data=''):
