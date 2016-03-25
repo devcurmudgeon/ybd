@@ -24,8 +24,8 @@ check_pep8:
 
 check_installation:
   stage: installation
-  script: "python setup.py install ; ./ybd.py"
+  script: "./ybd.py"
 
 check_cache_keys:
   stage: cache_keys
-  script: "echo 'mode: keys-only' > ./ybd.conf && ../ybd/ybd.py ci x86_64"
+  script: "export YBD_mode=keys-only > && ../ybd/ybd.py ci x86_64"
