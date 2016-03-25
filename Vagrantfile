@@ -11,12 +11,8 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    sudo apt-get update
-    sudo apt-get install -y build-essential gawk git m4
-    sudo wget https://bootstrap.pypa.io/get-pip.py
-    sudo python get-pip.py; rm get-pip.py
-    sudo pip install fs pyyaml sandboxlib jsonschema requests bottle
     cd /src
+    ./ybd/install.sh
     git clone git://git.baserock.org/baserock/baserock/definitions
     echo "base: /src" > ybd/ybd.conf
   SHELL

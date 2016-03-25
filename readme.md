@@ -1,4 +1,4 @@
-Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd) Gitlab: [![Build Status](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)
+Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd) GitLab: [![Build Status](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)
 
 ## ybd
 
@@ -13,7 +13,7 @@ currently ybd understands the semantics of yaml
 [definitions](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/definitions.git/tree/)
 from the [Baserock](http://wiki.baserock.org) project.
 
-the total codebase for ybd is only ~ 2100 lines of Python. even so ybd can
+the total codebase for ybd is only ~ 2200 lines of Python. even so ybd can
 repeatably build all systems in Baserock's definitions.git, i.e. all of the
 FOSS components required for Linux appliances up to and including, for example
 
