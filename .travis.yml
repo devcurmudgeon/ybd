@@ -14,3 +14,5 @@ script:
 - cd ..
 - git clone git://git.baserock.org/baserock/baserock/definitions
 - cd definitions
+- echo 'mode: keys-only' > ybd.conf
+- ../ybd/ybd.py ci x86_64
