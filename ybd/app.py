@@ -212,7 +212,10 @@ def load_configs(config_files):
         if os.path.exists(config_file):
             with open(config_file) as f:
                 text = f.read()
+                if yaml.safe_load(text) == None:
+                    return
             log('SETUP', 'Setting config from %s:' % config_file)
+
             for key, value in yaml.safe_load(text).items():
                 config[key] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
