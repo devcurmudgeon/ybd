@@ -150,8 +150,15 @@ def setup(args):
     # Suppress multiple instances of the same warning.
     warnings.simplefilter('once', append=True)
 
+    # dump any applicable environment variables into a config file
+    with open('./ybd.environment', 'w') as f:
+        for key in os.environ:
+            if key[:4] == "YBD_":
+                f.write(key[4:] + ": " + os.environ.get(key) + '\n')
+
     # load config files in reverse order of precedence
     load_configs([
+        os.path.join(os.getcwd(), 'ybd.environment'),
         os.path.join(os.getcwd(), 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
