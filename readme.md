@@ -1,6 +1,6 @@
 Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd) GitLab: [![Build Status](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)
 
-## ybd
+# ybd
 
 ybd is a tool for building integrated software stacks. it does four things:
 
@@ -29,7 +29,7 @@ projects. with a little work it can be used to build other software stacks too.
 ybd is under development. things will change :) If you're trying ybd for the
 first time please start with the latest tag, not master.
 
-### dependencies
+## dependencies
 
 currently ybd is for Linux only, but can be used on environments (eg MacOS) using Vagrant and VirtualBox. 
 
@@ -71,7 +71,7 @@ If you need to install pip itself:
 ```
 
 
-### quick start
+## quick start
 
 ```
     git clone git://github.com/devcurmudgeon/ybd && cd ybd
@@ -123,7 +123,7 @@ to explain what is happening. if you need a permanent log then try
 
     ../ybd/ybd.py clusters/upgrade-devel.morph x86_64 | tee some-memorable-name.log
 
-### configuration
+## configuration
 
 ybd is designed to be run from the command line and/or as part of an
 automated pipeline. all configuration is taken from conf files, in the
@@ -173,9 +173,9 @@ config values you may want to override include:
     riemann-server: '127.0.0.1' # address of a riemann server to optionally send events to
     riemann-port: 5555 # associated port of riemann server
 
-### interesting features
+## interesting features
 
-#### run ybd in parallel
+### run ybd in parallel
 ybd can fork several instances of itself to parallelise its work. there is no
 intelligence in the scheduling at this point - all of the forks just randomise
 their build-order and try to build everything. for building a set of overlapping systems in parallel on a many core machine this proves to be quite
@@ -183,14 +183,14 @@ effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
 of ybd can build all of the x86_64 systems in definitions/clusters/ci.morph
 much faster than a single instance.
 
-#### kbas cache server
+### kbas cache server
 there's a basic server which can be used to allow other users to access
 pre-built artifacts from previous or current runs of ybd. See kbas.py for the
 code. with minimal configuration it can serve artifacts to instances of ybd on
 other machines, and also receive uploaded artifacts.
 
 
-### comparison with morph
+## comparison with morph
 
 - morph does lots of things ybd can't do, and has more config options
 - ybd has core functionality only - parse definitions, build, cache artifacts
@@ -223,7 +223,7 @@ non-Linux operating systems (eg BSD, MacOS). However it may be have differently 
   - Elapsed time for each component, and group of components, and overall build
   - log the actual configure/build/install commands being run
 
-### todo
+## todo
 
 in no particular order, here's a list of things that may be interesting to try
 doing to/with ybd:
@@ -241,7 +241,7 @@ doing to/with ybd:
 - test/fix to work on old versions of definitions, and on morphs.git
   (and separate out the idiosyncrasies, so code is tidy for future changes)
 
-### project guidelines
+## project guidelines
 
 - contributions are extremely welcome - feedback, ideas, suggestions, bugs,
   documentation will be appreciated just as much as code.
@@ -254,7 +254,7 @@ doing to/with ybd:
   *anyway* and it's the easiest workflow/infrastructure for a small project.
   ybd will *remain* a small project.
 
-### license
+## license
 
 - license is GPLv2 but other licensing can be considered on request
 - most of the copyright is currently Codethink but don't let that put you off.
