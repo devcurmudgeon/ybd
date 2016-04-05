@@ -1,5 +1,5 @@
 before_install:
-- ./install.sh
+- ./install_dependencies.sh
 
 install:
 - sudo python setup.py install

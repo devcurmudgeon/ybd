@@ -1,7 +1,7 @@
 image: devcurmudgeon/foo
 
 before_script:
-- sh ./install.sh
+- sh ./install_dependencies.sh
 
 variables:
   NO_BUILD: "True"
@@ -28,4 +28,4 @@ check_installation:
 
 check_cache_keys:
   stage: cache_keys
-  script: "export YBD_mode=keys-only > && ../ybd/ybd.py ci x86_64"
+  script: "export YBD_mode=keys-only && ../ybd/ybd.py ci x86_64"

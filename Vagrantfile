@@ -12,7 +12,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     cd /src
-    ./ybd/install.sh
+    ./ybd/install_dependencies.sh
     git clone git://git.baserock.org/baserock/baserock/definitions
     echo "base: /src" > ybd/ybd.conf
   SHELL

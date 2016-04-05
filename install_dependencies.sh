@@ -15,11 +15,9 @@
 # =*= License: GPL-2 =*=
 
 #
-# This is a bash script which attempts to do a full install of ybd
-# and default definitions from git.baserock.org.
+# This is a bash script which attempts install ybd's dependencies
 # it's mainly intended for ci and automated test setups...
 #
-
 
 # install dependencies for debian, ubuntu
 which apt-get 2>&1 > /dev/null
