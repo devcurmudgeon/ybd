@@ -61,7 +61,7 @@ with app.timer('TOTAL'):
     defs.save_trees()
     if app.config.get('mode', 'normal') == 'keys-only':
         with open('./ybd.result', 'w') as f:
-            f.write(target['cache'] +'\n')
+            f.write(target['cache'] + '\n')
         os._exit(0)
 
     sandbox.executor = sandboxlib.executor_for_platform()

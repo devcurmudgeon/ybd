@@ -212,7 +212,7 @@ def load_configs(config_files):
         if os.path.exists(config_file):
             with open(config_file) as f:
                 text = f.read()
-                if yaml.safe_load(text) == None:
+                if yaml.safe_load(text) is None:
                     return
             log('SETUP', 'Setting config from %s:' % config_file)
 
