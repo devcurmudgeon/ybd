@@ -28,4 +28,9 @@ check_installation:
 
 check_cache_keys:
   stage: cache_keys
-  script: "export YBD_mode=keys-only && ../ybd/ybd.py ci x86_64"
+  script:
+  - cd ..
+  - git clone git://git.baserock.org/baserock/baserock/definitions
+  - cd definitions
+  - export YBD_mode=keys-only
+  - ../ybd/ybd.py ci x86_64
