@@ -122,9 +122,9 @@ the supplied default ybd.conf file. creating your own ybd.conf file means
 you can merge new/latest ybd using git with no possibility of a conflict,
 and your custom settings will continue to take precedence.
 
-to set config via environment variables, each must be prefixed with YBD_ and
-using '_' instead of '-'. ybd will strip the YBD_ prefix and convert '_' to
-'-', for example
+to set config via environment variables, each must be prefixed with ```YBD_```
+and using ```_``` instead of ```-```. ybd will strip the YBD_ prefix and
+convert ```_``` to ```-```, for example
 
 ```
     export YBD_artifact_version=1     # artifact-version: 1
