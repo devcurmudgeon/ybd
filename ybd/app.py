@@ -217,9 +217,9 @@ def load_configs(config_files):
             log('SETUP', 'Setting config from %s:' % config_file)
 
             for key, value in yaml.safe_load(text).items():
-                config[key] = value
+                config[key.replace('_', '-')] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
-                log('SETUP', '  %s=%s' % (key, msg))
+                log('SETUP', '  %s=%s' % (key.replace('_', '-'), msg))
 
 
 def cleanup(tmpdir):

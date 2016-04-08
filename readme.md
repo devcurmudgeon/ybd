@@ -126,22 +126,30 @@ to explain what is happening. if you need a permanent log then try
 ## configuration
 
 ybd is designed to be run from the command line and/or as part of an
-automated pipeline. all configuration is taken from conf files, in the
-following order of precedence:
+automated pipeline. all configuration is taken from conf files and/or
+environment variables, in the following order of precedence:
 
-    
+    YBD_* environment variables         # if found
     ./ybd.conf                          # if found
     $path/to/ybd.py/ybd.conf            # if found
     $path/to/ybd.py/ybd/config/ybd.conf # default, as provided in the ybd repo
 
-this means that it's possible to have custom config in either the definitions top-level directory, or the ybd top-level directory, without having to modify
+this means you can set custom config via env vars, or the definitions
+top-level directory, or the ybd top-level directory, without having to modify
 the supplied default ybd.conf file. creating your own ybd.conf file means
 you can merge new/latest ybd using git with no possibility of a conflict,
 and your custom settings will continue to take precedence.
 
 for various reasons so far ybd does not support unix-style commandline --flags. if enough people complain about this, it can be fixed.
 
-config values you may want to override include:
+to set config via environment variables, each must be prefixed with YBD_ and
+using '_' instead of '-'. ybd will strip the YBD_ prefix and convert '_' to
+'-', for example
+
+    export YBD_artifact_version=1     # artifact-version: 1
+    export YBD_log_verbose=True       # log-verbose: True
+
+Config values you may want to override include:
 
     aliases: # shortnames for commonly used online git resources
       'baserock:': 'git://git.baserock.org/baserock/'
@@ -189,6 +197,9 @@ pre-built artifacts from previous or current runs of ybd. See kbas.py for the
 code. with minimal configuration it can serve artifacts to instances of ybd on
 other machines, and also receive uploaded artifacts.
 
+by default ybd is configured to look for artifacts at
+
+    http://artifacts1.baserock.org:8000/
 
 ## comparison with morph
 
