@@ -15,9 +15,12 @@
 # =*= License: GPL-2 =*=
 
 #
-# This is a bash script which attempts install ybd's dependencies
-# it's mainly intended for ci and automated test setups...
+# This is a bash script which attempts to install ybd's dependencies.
+# It's mainly intended for ci and automated test setups...
 #
+
+# echo what we're doing
+set -x
 
 # install dependencies for debian, ubuntu
 which apt-get 2>&1 > /dev/null

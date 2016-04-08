@@ -29,56 +29,32 @@ projects. with a little work it can be used to build other software stacks too.
 ybd is under development. things will change :) If you're trying ybd for the
 first time please start with the latest tag, not master.
 
-## dependencies
-
-currently ybd is for Linux only, but can be used on environments (eg MacOS) using Vagrant and VirtualBox. 
-
-ybd requires git, gcc, make, autotools, python, tar, wget. note that the Baserock definitions also require gawk.
-
-so for a Debian-based system:
-
-    apt-get update; apt-get install build-essential gawk git m4
-
-...and a Fedora-based system:
-
-    yum install make automake gcc gcc-c++ kernel-devel git gawk m4
-
-ybd also depends on [pyfilesystem](http://pyfilesystem.org),
-[pyyaml](http://pyyaml.org/wiki/PyYAML),
-[sandboxlib](https://github.com/CodethinkLabs/sandboxlib),
-[requests](https://github.com/kennethreitz/requests),
-and optionally [jsonschema](https://github.com/Julian/jsonschema).
-
-to serve artifacts using kbas, it additionally requires
-[bottle](https://github.com/bottlepy/bottle) and optionally
-[cherrypy](https://github.com/cherrypy/cherrypy.git)
-
-to use the Riemann functionality, it additionally requires
-[riemann-client](https://github.com/borntyping/python-riemann-client)
-
-if you trust the Python Package Index (PyPI) and pip is available on your
-machine, you can install these dependencies with:
-
-```
-    pip install fs pyyaml sandboxlib requests jsonschema bottle cherrypy riemann-client
-```
-
-If you need to install pip itself:
-
-```
-    wget https://bootstrap.pypa.io/get-pip.py
-    python get-pip.py
-```
-
+ybd is designed for Linux, but can be used on other environments (eg
+MacOS) using Vagrant and VirtualBox.
 
 ## quick start
+
+on Fedora, Ubuntu, Debian:
 
 ```
     git clone git://github.com/devcurmudgeon/ybd && cd ybd
     # checkout latest tag
     git checkout `git describe --tags $(git rev-list --tags --max-count=1)`
+    sudo sh ./install_dependencies.sh
     cd .. && git clone git://git.baserock.org/baserock/baserock/definitions
     cd definitions
+```
+
+or using Vagrant with VirtualBox:
+
+```
+    git clone git://github.com/devcurmudgeon/ybd && cd ybd
+    # checkout latest tag
+    git checkout `git describe --tags $(git rev-list --tags --max-count=1)`
+    vagrant up
+    vagrant ssh
+    sudo -i
+    cd /src/definitions
 ```
 
 once there you can run (as root)
@@ -118,10 +94,14 @@ Some examples to try:
    ../ybd/ybd.py clusters/upgrade-devel.morph x86_64
 ```
 
-currently ybd generates a lot of log output to stdout, which hopefully helps
+ybd generates a lot of log output to stdout, which hopefully helps
 to explain what is happening. if you need a permanent log then try
 
+```
     ../ybd/ybd.py clusters/upgrade-devel.morph x86_64 | tee some-memorable-name.log
+```
+More information about ybd's dependencies is in docs/dependencies.md
+
 
 ## configuration
 
@@ -129,10 +109,12 @@ ybd is designed to be run from the command line and/or as part of an
 automated pipeline. all configuration is taken from conf files and/or
 environment variables, in the following order of precedence:
 
+```
     YBD_* environment variables         # if found
     ./ybd.conf                          # if found
     $path/to/ybd.py/ybd.conf            # if found
     $path/to/ybd.py/ybd/config/ybd.conf # default, as provided in the ybd repo
+```
 
 this means you can set custom config via env vars, or the definitions
 top-level directory, or the ybd top-level directory, without having to modify
@@ -140,17 +122,20 @@ the supplied default ybd.conf file. creating your own ybd.conf file means
 you can merge new/latest ybd using git with no possibility of a conflict,
 and your custom settings will continue to take precedence.
 
-for various reasons so far ybd does not support unix-style commandline --flags. if enough people complain about this, it can be fixed.
-
 to set config via environment variables, each must be prefixed with YBD_ and
 using '_' instead of '-'. ybd will strip the YBD_ prefix and convert '_' to
 '-', for example
 
+```
     export YBD_artifact_version=1     # artifact-version: 1
     export YBD_log_verbose=True       # log-verbose: True
+```
+
+for various reasons so far ybd does not support unix-style commandline --flags. if enough people complain about this, it can be fixed.
 
 Config values you may want to override include:
 
+```
     aliases: # shortnames for commonly used online git resources
       'baserock:': 'git://git.baserock.org/baserock/'
       'freedesktop:': 'git://anongit.freedesktop.org/'
@@ -180,6 +165,7 @@ Config values you may want to override include:
     tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
     riemann-server: '127.0.0.1' # address of a riemann server to optionally send events to
     riemann-port: 5555 # associated port of riemann server
+```
 
 ## interesting features
 
@@ -199,14 +185,15 @@ other machines, and also receive uploaded artifacts.
 
 by default ybd is configured to look for artifacts at
 
+```
     http://artifacts1.baserock.org:8000/
+```
 
 ## comparison with morph
 
-- morph does lots of things ybd can't do, and has more config options
+- morph does lots of things ybd can't/won't do, and has more config options
 - ybd has core functionality only - parse definitions, build, cache artifacts
 - no branch|checkout|edit|merge (use git and be done)
-- no need for workspaces
 - no need to be in a Baserock vm or a Baserock chroot - ybd runs on
 other Linux operating systems (eg Ubuntu, Fedora, Debian) and maybe even
 non-Linux operating systems (eg BSD, MacOS). However it may be have differently and current Baserock definitions are Linux-specific.
