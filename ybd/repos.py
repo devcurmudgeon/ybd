@@ -85,11 +85,9 @@ def get_tree(this):
 
     if not os.path.exists(gitdir):
         try:
-            url = (app.config['tree-server'] + 'repo=' +
-                   get_repo_url(this['repo']) + '&ref=' + ref)
-            response = requests.get(url=url)
-            tree = response.json()['tree']
-            return tree
+            params = {'repo': get_repo_url(this['repo']), 'ref': ref}
+            r = requests.get(url=app.config['tree-server'], params=params)
+            return r.json()['tree']
         except:
             if app.config.get('tree-server'):
                 app.log(this, 'WARNING: no tree from tree-server for', ref)
