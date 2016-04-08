@@ -11,6 +11,7 @@ script:
 - cd definitions
 - git checkout baserock-14.40
 - export YBD_mode=keys-only
+- export YBD_artifact_version=1
 - ../ybd/ybd.py ci x86_64
 - echo ci.b9de86669ce182e60e3f9445e6394b478b67a2c73b4c0764491c158c5f2569e9 > result
 - diff result ybd.result

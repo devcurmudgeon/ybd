@@ -4,11 +4,11 @@ before_script:
 - sh ./install_dependencies.sh
 
 variables:
-  NO_BUILD: "True"
-  BASE: "/src"
+  YBD_mode: "keys-only"
+  YBD_artifact_version: "1"
 
 cache:
-  path: "$BASE"
+  path: "$YBD_base"
 
 stages:
 - pep8
@@ -29,8 +29,11 @@ check_installation:
 check_cache_keys:
   stage: cache_keys
   script:
+  - env
   - cd ..
   - git clone git://git.baserock.org/baserock/baserock/definitions
   - cd definitions
-  - export YBD_mode=keys-only
+  - git checkout baserock-14.40
   - ../ybd/ybd.py ci x86_64
+  - echo ci.b9de86669ce182e60e3f9445e6394b478b67a2c73b4c0764491c158c5f2569e9 > result
+  - diff result ybd.result
