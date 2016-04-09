@@ -58,10 +58,19 @@ def setup(this):
 
     try:
         yield
+    except app.RetryException as e:
+        raise e
+    except:
+        import traceback
+        app.log(this, 'ERROR: a surprise exception happened', '')
+        traceback.print_exc()
+        app.exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
     finally:
-        if app.config.get('log-verbose'):
-            app.log(this, "Removing sandbox dir", this['sandbox'])
-        app.remove_dir(this['sandbox'])
+        pass
+
+    if app.config.get('log-verbose'):
+        app.log(this, "Removing sandbox dir", this['sandbox'])
+    app.remove_dir(this['sandbox'])
 
 
 def install(defs, this, component):
