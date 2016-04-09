@@ -170,7 +170,8 @@ def setup(args):
             config['kbas-url'] += '/'
 
     config['total'] = config['tasks'] = config['counter'] = 0
-    config['reproduced'] = config['keys'] = []
+    config['reproduced'] = []
+    config['keys'] = []
     config['pid'] = os.getpid()
     config['def-version'] = get_version('.')
 
