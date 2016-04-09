@@ -120,10 +120,8 @@ def run_build(defs, this):
         if this.get(build_step):
             log(this, 'Running', build_step)
         for command in this.get(build_step, []):
-            if command is False:
-                command = "false"
-            elif command is True:
-                command = "true"
+            command = 'false' if command is False else command
+            command = 'true' if command is True else command
             sandbox.run_sandboxed(
                 this, command, env=env_vars,
                 allow_parallel=('build' in build_step))
