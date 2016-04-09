@@ -71,7 +71,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
-                split_metadata = {'ref': metadata['ref'],
+                split_metadata = {'cache': metadata['cache'],
+                                  'ref': metadata['ref'],
                                   'repo': metadata['repo'],
                                   'products': []}
                 for element in metadata['products']:
@@ -193,7 +194,8 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk)
-        split_metadata = {'ref': metadata['ref'],
+        split_metadata = {'cache': metadata['cache'],
+                          'ref': metadata['ref'],
                           'repo': metadata['repo'],
                           'products': []}
 
@@ -218,13 +220,15 @@ def write_stratum_metafiles(defs, stratum):
 
 
 def write_metafile(rules, splits, component):
-    metadata = {'products': [{'artifact': a,
+    metadata = {'cache': component.get('cache'),
+                'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
                              for a, r in rules]}
 
     if component.get('kind', 'chunk') == 'chunk':
         unique_artifacts = sorted(set([a for a, r in rules]))
-        metadata = {'repo': component.get('repo'),
+        metadata = {'cache': component.get('cache'),
+                    'repo': component.get('repo'),
                     'ref': component.get('ref'),
                     'products': [{'artifact': a, 'files': sorted(splits[a])}
                                  for a in unique_artifacts]}
