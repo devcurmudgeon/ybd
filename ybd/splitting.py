@@ -71,9 +71,9 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
-                split_metadata = {'cache': metadata['cache'],
-                                  'ref': metadata['ref'],
-                                  'repo': metadata['repo'],
+                split_metadata = {'cache': metadata.get('cache'),
+                                  'ref': metadata.get('ref'),
+                                  'repo': metadata.get('repo'),
                                   'products': []}
                 for element in metadata['products']:
                     if element['artifact'] in components:
@@ -194,9 +194,9 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk)
-        split_metadata = {'cache': metadata['cache'],
-                          'ref': metadata['ref'],
-                          'repo': metadata['repo'],
+        split_metadata = {'cache': metadata.get('cache'),
+                          'ref': metadata.get('ref'),
+                          'repo': metadata.get('repo'),
                           'products': []}
 
         chunk_artifacts = defs.get(chunk).get('artifacts', {})
