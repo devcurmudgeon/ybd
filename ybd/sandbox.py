@@ -255,7 +255,7 @@ def env_vars_for_build(defs, this):
     env = {}
     extra_path = []
     arch_dict = {
-        'i686': "x86_32",
+        "x86_32": 'i686',
         'armv8l64': "aarch64",
         'armv8b64': "aarch64_be",
         'mips64b': 'mips64',
