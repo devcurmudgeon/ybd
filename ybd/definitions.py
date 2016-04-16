@@ -20,7 +20,7 @@ import app
 import cache
 from subprocess import check_output, PIPE
 import hashlib
-import defaults
+from defaults import Defaults
 import jsonschema
 
 
@@ -30,6 +30,8 @@ class Definitions(object):
         '''Load all definitions from a directory tree.'''
         self._definitions = {}
         self._trees = {}
+        self.defaults = Defaults()
+        app.config['cpu'] = self.defaults.cpus.get('arch', app.config['arch'])
 
         schemas = self.load_schemas()
         with app.chdir(directory):
@@ -47,8 +49,6 @@ class Definitions(object):
                             data['path'] = path[2:]
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
-
-        self.defaults = defaults.Defaults()
 
         caches_are_valid = self._check_trees()
         for path in self._definitions:

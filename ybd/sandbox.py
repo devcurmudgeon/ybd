@@ -254,15 +254,6 @@ def ccache_mounts(this, ccache_target):
 def env_vars_for_build(defs, this):
     env = {}
     extra_path = []
-    arch_dict = {
-        "x86_32": 'i686',
-        'armv8l64': "aarch64",
-        'armv8b64': "aarch64_be",
-        'mips64b': 'mips64',
-        'mips64l': 'mips64el',
-        'mips32b': 'mips',
-        'mips32l': 'mipsel',
-    }
 
     if app.config['no-ccache']:
         ccache_path = []
@@ -309,7 +300,7 @@ def env_vars_for_build(defs, this):
     env['TZ'] = 'UTC'
 
     arch = app.config['arch']
-    cpu = arch_dict.get(arch, arch)
+    cpu = app.config['cpu']
     abi = ''
     if arch.startswith(('armv7', 'armv5')):
         abi = 'eabi'

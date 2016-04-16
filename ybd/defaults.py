@@ -36,6 +36,7 @@ class Defaults(object):
         self.build_steps = defaults.get('build-steps', {})
         self.build_systems = defaults.get('build-systems', {})
         self.split_rules = defaults.get('split-rules', {})
+        self.cpus = defaults.get('cpus', {})
 
     def _load_defaults(self, defaults_file='./DEFAULTS'):
         '''Get defaults, either from a DEFAULTS file, or built-in defaults.'''
