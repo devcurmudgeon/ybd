@@ -31,18 +31,18 @@ def deploy(defs, target):
                 deploy_system(defs, system)
 
 
-def deploy_system(defs, system_spec, parent_location=''):
+def deploy_system(defs, system, parent_location=''):
     '''Deploy a system and subsystems recursively.
 
-    Takes a system spec (i.e. an entry in the "systems" list in a cluster
+    Takes a system (i.e. an entry in the "systems" list in a cluster
     definition), and optionally a path to a parent system tree. If
     `parent_location` is given then the `location` given in the cluster
     definition for the subsystem is appended to `parent_location`, with
     the result being used as the location for the deployment extensions.
 
     '''
-    system = defs.get(system_spec['path'])
-    deploy_defaults = system_spec.get('deploy-defaults')
+    system = defs.get(system['path'])
+    deploy_defaults = system.get('deploy-defaults')
 
     with sandbox.setup(system):
         app.log(system, 'Extracting system artifact into', system['sandbox'])
@@ -50,12 +50,12 @@ def deploy_system(defs, system_spec, parent_location=''):
             call(['tar', 'x', '--directory', system['sandbox']],
                  stdin=artifact)
 
-        for subsystem in system_spec.get('subsystems', []):
+        for subsystem in system.get('subsystems', []):
             if deploy_defaults:
                 subsystem = dict(deploy_defaults.items() + subsystem.items())
             deploy_system(defs, subsystem, parent_location=system['sandbox'])
 
-        for name, deployment in system_spec.get('deploy', {}).iteritems():
+        for name, deployment in system.get('deploy', {}).iteritems():
             method = deployment.get('type') or deployment.get('upgrade-type')
             method = os.path.basename(method)
             if deploy_defaults:
