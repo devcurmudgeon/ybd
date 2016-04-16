@@ -118,9 +118,11 @@ environment variables, in the following order of precedence:
 
 this means you can set custom config via env vars, or the definitions
 top-level directory, or the ybd top-level directory, without having to modify
-the supplied default ybd.conf file. creating your own ybd.conf file means
-you can merge new/latest ybd using git with no possibility of a conflict,
-and your custom settings will continue to take precedence.
+the supplied default [ybd.conf](ybd/config/ybd.conf).
+
+NOTE we recommend you create your own ybd.conf file. that way you can git
+merge new versions of ybd + definitions, and your custom settings will always
+take precedence, with no possibility of a merge conflict.
 
 to set config via environment variables, each must be prefixed with ```YBD_```
 and using ```_``` instead of ```-```. ybd will strip the YBD_ prefix and
@@ -129,55 +131,25 @@ convert ```_``` to ```-```, for example
 ```
     export YBD_artifact_version=1     # artifact-version: 1
     export YBD_log_verbose=True       # log-verbose: True
+    export YBD_instances=2            # instances: 2
 ```
 
-ybd does not support unix-style --flags so far. if enough people complain about this, it can be fixed.
+ybd does not support unix-style --flags so far. if enough people complain about that, it can be fixed.
 
-Config values you may want to override include:
-
-```
-    aliases: # shortnames for commonly used online git resources
-      'baserock:': 'git://git.baserock.org/baserock/'
-      'freedesktop:': 'git://anongit.freedesktop.org/'
-      'github:': 'git://github.com/'
-      'gnome:': 'git://git.gnome.org/'
-      'upstream:': 'git://git.baserock.org/delta/'
-    artifact-version: 1 # new in 16.06, allows versioning of artifact key
-    base-path: ['/usr/bin', '/bin', '/usr/sbin', '/sbin'] # default build path
-    defaults: 'config/defaults.conf' # definitions defaults if not found elsewhere
-    directories:
-      'artifacts': # where ybd saves/finds built artifacts
-      'base': ybd # where ybd works by default if directories are not specified
-      'ccache_dir': # where ccache results are saved
-      'deployment': # working directory for deployments
-      'gits': # where local copies of git repos are saved
-      'tmp': # where sandboxes and other tmp directories are created
-    kbas-url: 'http://foo.bar/' # kbas location to find pre-built artifacts
-    kbas-password: 'insecure' # password if you want to push artifacts to kbas
-    log-elapsed: True # log elapsed times since start, or actual time
-    log-verbose: False # log extra info including all sandbox installation steps
-    min-gigabytes: 10 # space required by ybd. artifacts are culled to free this
-    mode: ['keys-only', 'no-build', 'normal'] # for testing/debugging ybd
-    reproduce: False # if True, build and compare against artifacts on server
-    schemas: # files defining schemas for definitions (currently schemas/*)
-    schema-validation: False # set to True to warn, 'strict' to exit on error
-    tar-url: 'http://git.baserock.org/tarballs'  # trove service for faster clones
-    tree-server: 'http://git.baserock.org:8080/1.0/sha1s?' # another trove service
-    riemann-server: '127.0.0.1' # address of a riemann server to optionally send events to
-    riemann-port: 5555 # associated port of riemann server
-```
+For details about the config options themselves, see
+[ybd.conf](ybd/config/ybd.conf).
 
 ## interesting features
 
 ### run ybd in parallel
 ybd can fork several instances of itself to parallelise its work. there is no
-intelligence in the scheduling at this point - all of the forks just randomise
+intelligence in the scheduling - all of the forks just randomise
 their build-order and try to build everything. for building a set of overlapping systems in parallel on a many core machine this proves to be quite
 effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
 of ybd can build all of the x86_64 systems in definitions/clusters/ci.morph
 much faster than a single instance.
 
-to try this, just set `instances`, for example
+to try it, just set the `instances` config variable, for example
 
 ```
     # as an environment variable...
@@ -187,8 +159,9 @@ to try this, just set `instances`, for example
     instances: 8
 ```
 
-depending on your workloads and the machine you're using, it may make sense
-to set both `max-jobs` and `instances`.
+you should probably think about setting `max-jobs` too, taking into account
+your workloads and host machine(s). if `max-jobs` is not set, ybd will default
+it to `number-of-cores/instances`.
 
 
 ### kbas cache server
