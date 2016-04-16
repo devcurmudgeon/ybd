@@ -203,37 +203,6 @@ by default ybd is configured to look for artifacts at
     http://artifacts1.baserock.org:8000/
 ```
 
-## comparison with morph
-
-- morph does lots of things ybd can't/won't do, and has more config options
-- ybd has core functionality only - parse definitions, build, cache artifacts
-- no branch|checkout|edit|merge (use git and be done)
-- no need to be in a Baserock vm or a Baserock chroot - ybd runs on
-other Linux operating systems (eg Ubuntu, Fedora, Debian) and maybe even
-non-Linux operating systems (eg BSD, MacOS). However it may be have differently and current Baserock definitions are Linux-specific.
-- ybd has an order of magnitude less code, so
-  - easier to try things, easier to change things, easier to debug things
-  - less to break, less to maintain, less to audit
-- ybd aims to have less dependencies
-- ybd has faster, simpler calculation of cache-keys, and faster resolution of
-  build-order
-- ybd aims to drop the words morphology, stratum, chunk from the Baserock
-  vocabulary
-- ybd recognises generic 'definitions'
-  - a definition can contain definitions, nested
-  - definitions can be stored in one file or many, one directory or many
-  - a definition can have contents and build-dependencies
-  - contents are just a list of definitions
-  - build-dependencies are just a list of definitions too
-- ybd can build any level of component (apparently morph can do this too now?)
-  - an individual software component - what we've called a chunk until now
-  - a logically-coupled set of components - what we've called a stratum
-  - a bootable collection of sets of components - what we've called a system
-  - a cluster
-- some opinionated tweaks to the presentation of logged info, including
-  - eg [flex] Upstream version upstream:flex de10f98e (flex-2-5-35 + 34 commits)
-  - Elapsed time for each component, and group of components, and overall build
-  - log the actual configure/build/install commands being run
 
 ## todo
 
