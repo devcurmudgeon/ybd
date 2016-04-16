@@ -7,7 +7,7 @@ ybd is a tool for building integrated software stacks. it does four things:
 - parse yaml files which describe integrated collections of software components
 - gather source code (from git repos) for a user-specified target collection
 - build the collection
-- deploy the collection (if the yaml files describe where/how to deploy)
+- optionally deploy the collection (if the yaml files describe where/how to deploy)
 
 currently ybd understands the semantics of yaml
 [definitions](http://git.baserock.org/cgi-bin/cgit.cgi/baserock/baserock/definitions.git/tree/)
@@ -131,7 +131,7 @@ convert ```_``` to ```-```, for example
     export YBD_log_verbose=True       # log-verbose: True
 ```
 
-for various reasons so far ybd does not support unix-style commandline --flags. if enough people complain about this, it can be fixed.
+ybd does not support unix-style --flags so far. if enough people complain about this, it can be fixed.
 
 Config values you may want to override include:
 
@@ -176,6 +176,20 @@ their build-order and try to build everything. for building a set of overlapping
 effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
 of ybd can build all of the x86_64 systems in definitions/clusters/ci.morph
 much faster than a single instance.
+
+to try this, just set `instances`, for example
+
+```
+    # as an environment variable...
+    export YBD_instances=4
+
+    # or in a ybd.conf file...
+    instances: 8
+```
+
+depending on your workloads and the machine you're using, it may make sense
+to set both `max-jobs` and `instances`.
+
 
 ### kbas cache server
 there's a basic server which can be used to allow other users to access
