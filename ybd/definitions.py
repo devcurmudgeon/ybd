@@ -31,7 +31,8 @@ class Definitions(object):
         self._definitions = {}
         self._trees = {}
         self.defaults = Defaults()
-        app.config['cpu'] = self.defaults.cpus.get('arch', app.config['arch'])
+        app.config['cpu'] = self.defaults.cpus.get(app.config['arch'],
+                                                   app.config['arch'])
 
         schemas = self.load_schemas()
         with app.chdir(directory):
