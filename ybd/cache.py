@@ -103,7 +103,15 @@ def hash_factors(defs, definition):
 
     if app.config.get('artifact-version', False):
         hash_factors['artifact-version'] = app.config.get('artifact-version')
-        hash_factors['default-build-systems'] = defs.defaults.build_systems
+
+        if app.config.get('artifact-version', 0) in [0, 1, 2]:
+            # this way, any change to any build-system invalidates all caches
+            hash_factors['default-build-systems'] = defs.defaults.build_systems
+        else:
+            # this way is better - only affected components get a new key
+            hash_factors['default-build-systems'] = \
+                defs.defaults.build_systems.get(definition.get('build-system',
+                                                               'manual'))
 
     return hash_factors
 
