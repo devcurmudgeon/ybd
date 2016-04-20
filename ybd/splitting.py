@@ -99,6 +99,7 @@ def check_overlaps(defs, component):
         app.config['new-overlaps'] = []
         return
 
+    overlaps_found = False
     app.config['new-overlaps'] = list(set(app.config['new-overlaps']))
     for path in app.config['new-overlaps']:
         app.log(component, 'WARNING: overlapping path', path)
@@ -107,8 +108,11 @@ def check_overlaps(defs, component):
                 for line in f:
                     if path[1:] in line:
                         app.log(filename, 'WARNING: overlap at', path[1:])
+                        overlaps_found = True
                         break
-
+        if app.config.get('check-overlaps') == 'exit':
+            app.exit(component, 'ERRROR: overlaps found',
+                    app.config['new-overlaps'])
     app.config['overlaps'] = list(set(app.config['new-overlaps'] +
                                       app.config['overlaps']))
     app.config['new-overlaps'] = []
@@ -120,7 +124,8 @@ def write_metadata(defs, component):
         write_chunk_metafile(defs, component)
     elif kind == 'stratum':
         write_stratum_metafiles(defs, component)
-    check_overlaps(defs, component)
+    if app.config.get('check-overlaps', 'ignore') != 'ignore':
+        check_overlaps(defs, component)
 
 
 def compile_rules(defs, component):
