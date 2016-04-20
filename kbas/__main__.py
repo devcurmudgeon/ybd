@@ -140,9 +140,10 @@ class KeyedBinaryArtifactServer(object):
         try:
             upload = request.files.get('file')
             artifact = os.path.join(tmpdir, cache_id)
-            upload.save(artifact)
+            with open(artifact, "w") as f:
+                f.write(upload.value)
             if call(['tar', 'tf', artifact]):
-                app.log(this, 'ERROR: not a valid tarfile:', artifact)
+                app.log('UPLOAD', 'ERROR: not a valid tarfile:', artifact)
                 raise
             checksum = cache.md5(artifact)
             with open(artifact + '.md5', "a") as f:
@@ -154,11 +155,13 @@ class KeyedBinaryArtifactServer(object):
             return
         except:
             # something went wrong, clean up
+            import traceback
+            traceback.print_exc()
             try:
                 shutil.rmtree(tmpdir)
             except:
                 pass
-            response.status = 999
+            response.status = 500
 
         return
 
