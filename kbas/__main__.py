@@ -146,8 +146,15 @@ class KeyedBinaryArtifactServer(object):
         try:
             upload = request.files.get('file')
             artifact = os.path.join(tmpdir, cache_id)
-            with open(artifact, "w") as f:
-                f.write(upload.value)
+
+            try:
+                upload.save(artifact)
+            except:
+                # upload.save is only available in recent versions of bottle
+                # troves (for example) have an older version... hence:
+                with open(artifact, "w") as f:
+                    f.write(upload.value)
+
             if call(['tar', 'tf', artifact]):
                 app.log('UPLOAD', 'ERROR: not a valid tarfile:', artifact)
                 raise
