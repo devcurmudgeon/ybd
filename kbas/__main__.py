@@ -17,6 +17,7 @@
 
 import logging
 import os
+import re
 import glob
 import shutil
 from time import strftime, gmtime
@@ -127,12 +128,17 @@ class KeyedBinaryArtifactServer(object):
                 datetime.now().strftime('%y-%m-%d %H:%M:%S')
             response.status = 401  # unauthorized
             return
+
         cache_id = request.forms.get('filename')
+        if re.match('^[a-zA-Z0-9\.\-\_]*$', cache_id) is None:
+            response.status = 400  # bad request, cache_id contains bad things
+            return
+
         if os.path.isdir(os.path.join(app.config['artifact-dir'], cache_id)):
             if cache.check(cache_id) == request.forms.get('checksum', 'XYZ'):
                 response.status = 777  # this is the same binary we have
                 return
-            response.status = 405  # method not allowed, this artifact exists
+            response.status = 405  # not allowed, this artifact exists
             return
 
         tempfile.tempdir = app.config['artifact-dir']
