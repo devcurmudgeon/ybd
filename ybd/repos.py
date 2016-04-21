@@ -53,7 +53,10 @@ def get_repo_name(repo):
         return x if x in valid_chars else '_'
 
     valid_chars = string.digits + string.ascii_letters + '%_'
-    return ''.join([transl(x) for x in get_repo_url(repo)])
+    url = get_repo_url(repo)
+    if url.endswith('.git'):
+        url = url[:-4]
+    return ''.join([transl(x) for x in url])
 
 
 def get_version(gitdir, ref='HEAD'):

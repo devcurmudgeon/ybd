@@ -242,7 +242,8 @@ def ccache_mounts(this, ccache_target):
         mounts = []
     else:
         name = os.path.basename(get_repo_url(this['repo']))
-
+        if name.endswith('.git'):
+            name = name[:-4]
         ccache_dir = os.path.join(app.config['ccache_dir'], name)
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
