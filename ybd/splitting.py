@@ -111,8 +111,8 @@ def check_overlaps(defs, component):
                         overlaps_found = True
                         break
         if app.config.get('check-overlaps') == 'exit':
-            app.exit(component, 'ERRROR: overlaps found',
-                    app.config['new-overlaps'])
+            app.exit(component, 'ERROR: overlaps found',
+                     app.config['new-overlaps'])
     app.config['overlaps'] = list(set(app.config['new-overlaps'] +
                                       app.config['overlaps']))
     app.config['new-overlaps'] = []
