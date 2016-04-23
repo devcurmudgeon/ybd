@@ -14,13 +14,19 @@ currently ybd understands the semantics of yaml
 from the [Baserock](http://wiki.baserock.org) project.
 
 the total codebase for ybd is only ~ 2200 lines of Python. even so ybd can
-repeatably build all systems in Baserock's definitions.git, i.e. all of the
-FOSS components required for Linux appliances up to and including, for example
+reliably build all systems in Baserock's definitions.git, i.e. all of the
+FOSS components required for Linux appliances up to and including:
 
-- self-hosting Linux development systems
+- minimal Linux systems
+- self-hosting development systems
 - GENIVI Baseline and GENIVI Demo Platform systems for x86 and ARMv7
 - OpenStack appliances
 - OpenWRT appliances
+
+there are Concourse pipelines using ybd to integrate various examples at
+concourse.baserock.org...
+
+[<img src="http://i.imgur.com/N193G9C.png" height="400" width="600">](http://concourse.baserock.org)
 
 ybd is a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
@@ -34,7 +40,7 @@ MacOS) using Vagrant and VirtualBox.
 
 ## quick start
 
-on Fedora, Ubuntu, Debian:
+on Fedora, Ubuntu, Debian (as root... hoping to fix this for non-root soon):
 
 ```
     git clone git://github.com/devcurmudgeon/ybd && cd ybd
@@ -134,7 +140,8 @@ convert ```_``` to ```-```, for example
     export YBD_instances=2            # instances: 2
 ```
 
-ybd does not support unix-style --flags so far. if enough people complain about that, it can be fixed.
+ybd does not support unix-style --flags so far. if enough people complain about
+that, it can be fixed.
 
 For details about the config options themselves, see
 [ybd.conf](ybd/config/ybd.conf).
@@ -144,7 +151,8 @@ For details about the config options themselves, see
 ### run ybd in parallel
 ybd can fork several instances of itself to parallelise its work. there is no
 intelligence in the scheduling - all of the forks just randomise
-their build-order and try to build everything. for building a set of overlapping systems in parallel on a many core machine this proves to be quite
+their build-order and try to build everything. for building a set of overlapping
+systems in parallel on a many core machine this proves to be quite
 effective. For example on a 36-core AWS c4.8xlarge machine, 4 racing instances
 of ybd can build all of the x86_64 systems in definitions/clusters/ci.morph
 much faster than a single instance.
