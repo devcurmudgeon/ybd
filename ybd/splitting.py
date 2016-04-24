@@ -91,7 +91,15 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                     path = os.path.join(cachepath, cachedir + '.unpacked')
                     utils.copy_file_list(path, component['sandbox'], filelist)
         except:
-            app.log(stratum, 'WARNING: problem loading ', metafile)
+            # if we got here, something has gone badly wrong parsing metadata
+            # or copying files into the sandbox...
+            if app.config.get('artifact-version', 0) not in [0, 1]:
+                import traceback
+                traceback.print_exc()
+                app.exit(stratum, 'ERROR: failed copying files from', metafile)
+            # FIXME... test on old artifacts... how can continuing ever work?
+            app.log(stratum, 'WARNING: problem loading', metafile)
+            app.log(stratum, 'WARNING: files were not copied')
 
 
 def check_overlaps(defs, component):
