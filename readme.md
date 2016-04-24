@@ -173,17 +173,39 @@ it to `number-of-cores/instances`.
 
 
 ### kbas cache server
-there's a basic server which can be used to allow other users to access
-pre-built artifacts from previous or current runs of ybd. See kbas.py for the
-code. with minimal configuration it can serve artifacts to instances of ybd on
-other machines, and also receive uploaded artifacts.
+kbas is a basic server which can be used to allow other users to access
+pre-built artifacts from previous or current runs of ybd. See kbas/kbas.py for
+the code. with minimal configuration it can serve artifacts to instances of
+ybd on other machines, and also receive uploaded artifacts.
 
-by default ybd is configured to look for artifacts at
+to launch kbas, just do
+
+```
+    cd kbas && ./kbas.py
+```
+
+by default ybd is configured to check for artifacts from a kbas server at
 
 ```
     http://artifacts1.baserock.org:8000/
 ```
 
+
+### concourse pipelines
+[WORK IN PROGRESS] ybd can generate concourse pipelines - see the code at
+ybd/concourse.py
+
+to start a local concourse instance:
+```
+    # in your definitions directory
+    vagrant init concourse/lite
+    vagrant up
+    # generate pipeline, run concourse.py (same arguments as ybd.py)
+    ../ybd/ybd/concourse.py <target> <arch>
+    fly set-pipeline -p foo -c pipeline.yml
+```
+
+you can view the local pipelines at http://192.168.100.4:8080
 
 ## todo
 

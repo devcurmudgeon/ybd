@@ -14,55 +14,28 @@
 #
 # =*= License: GPL-2 =*=
 
+import sys
 import yaml
 import os
 import app
-import repos
-
-
-def write_pipeline(defs, target):
-    target = defs.get(target)
-    build = {}
-    build['path'] = 'ybd'
-    build['args'] = []
-    config = {}
-    config['run'] = build
-    config['platform'] = 'linux'
-    config['image'] = "docker:///devcurmudgeon/foo"
-
-    pipeline = {}
-    pipeline['resources'] = inputs(defs, target)
-
-    aggregate = []
-    for it in target.get('contents', []) + target.get('build-depends', []):
-        component = defs.get(it)
-        aggregate += [dict(get=component['name'])]
-
-    plan = [dict(task='build', config=config), dict(aggregate=aggregate)]
-    job = dict(name=os.path.basename(app.config['target']), plan=plan)
-    pipeline['jobs'] = [job]
-
-    output = './pipeline.yml'
-    with open(output, 'w') as f:
-        f.write(yaml.dump(pipeline,
-                default_flow_style=False))
-
-    app.exit('CONCOURSE', 'pipeline is at', output)
+from definitions import Definitions
+import cache
+from repos import get_repo_url
 
 
 def inputs(defs, target):
-    resources = []
     target = defs.get(target)
+    resources = []
     for it in target.get('contents', []) + target.get('build-depends', []):
-        resource = {}
         component = defs.get(it)
-        resource['name'] = component['name']
         if component.get('repo'):
-            resource['type'] = 'git'
-            uri = repos.get_repo_url(component['repo'])
-            source = dict(uri=uri, branch=component['ref'])
-            source = dict(uri=uri, branch='master')
-            resource['source'] = source
+            resource = {'name': component['name'],
+                        'type': 'git',
+                        'source': {'uri': get_repo_url(component['repo']),
+                                   'branch': component['ref']}}
+        else:
+            resource = {'name': component['name'], 'type': 'foo'}
+
         resources += [resource]
     return resources
 
@@ -74,3 +47,44 @@ def plan(defs, target):
 def job(defs, target):
     component = defs.get(target)
     return
+
+
+def write_pipeline(defs, target):
+    target = defs.get(target)
+    config = {'run': {'path': 'ybd', 'args': []},
+              'platform': 'linux',
+              'image': 'docker:///devcurmudgeon/foo'}
+
+    aggregate = []
+    passed = []
+    for it in target.get('contents', []) + target.get('build-depends', []):
+        component = defs.get(it)
+        if component.get('repo'):
+            app.log('AGGREGATE', 'Adding aggregate for', component['name'])
+            aggregate += [{'get': component['name']}]
+        else:
+            app.log('PASSED', 'Adding passed for', component['name'])
+            aggregate += [{'get': component['name']}]
+            passed += [component['name']]
+
+    plan = [{'task': 'Build', 'config': config}, {'aggregate': aggregate}]
+    job = {'name': target['name'], 'plan': plan, 'passed': passed}
+    pipeline = {'resources': inputs(defs, target), 'jobs': [job]}
+
+    output = './pipeline.yml'
+    with open(output, 'w') as f:
+        f.write(yaml.dump(pipeline, default_flow_style=False))
+
+    app.exit('CONCOURSE', 'pipeline is at', output)
+
+
+app.setup(sys.argv)
+
+with app.timer('TOTAL'):
+    target = os.path.join(app.config['defdir'], app.config['target'])
+    app.log('TARGET', 'Target is %s' % target, app.config['arch'])
+    with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
+        defs = Definitions()
+    with app.timer('CACHE-KEYS', 'cache-key calculations'):
+        cache.cache_key(defs, app.config['target'])
+    write_pipeline(defs, app.config['target'])
