@@ -48,14 +48,14 @@ def cache_key(defs, this):
 
     definition['cache'] = 'calculating'
 
-    if definition.get('repo') and not definition.get('tree'):
-        definition['tree'] = repos.get_tree(definition)
-
-    factors = hash_factors(defs, definition)
-    factors = json.dumps(factors, sort_keys=True).encode('utf-8')
-    key = hashlib.sha256(factors).hexdigest()
     if app.config.get('mode', 'normal') == 'no-build':
         key = 'no-build'
+    else:
+        if definition.get('repo') and not definition.get('tree'):
+            definition['tree'] = repos.get_tree(definition)
+        factors = hash_factors(defs, definition)
+        factors = json.dumps(factors, sort_keys=True).encode('utf-8')
+        key = hashlib.sha256(factors).hexdigest()
 
     definition['cache'] = definition['name'] + "." + key
 
