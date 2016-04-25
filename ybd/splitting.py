@@ -62,6 +62,9 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
 
     for path in stratum['contents']:
         chunk = defs.get(path)
+        if not get_cache(defs, chunk):
+            app.exit(stratum, 'ERROR: no cache-key for', chunk.get('name'))
+
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
@@ -91,7 +94,16 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                     path = os.path.join(cachepath, cachedir + '.unpacked')
                     utils.copy_file_list(path, component['sandbox'], filelist)
         except:
-            app.log(stratum, 'WARNING: problem loading ', metafile)
+            # if we got here, something has gone badly wrong parsing metadata
+            # or copying files into the sandbox...
+            if app.config.get('artifact-version', 0) not in [0, 1]:
+                import traceback
+                traceback.print_exc()
+                app.log(stratum, 'ERROR: failed copying files from', metafile)
+                app.exit(stratum, 'ERROR: sandbox debris at', this['sandbox'])
+            # FIXME... test on old artifacts... how can continuing ever work?
+            app.log(stratum, 'WARNING: problem loading', metafile)
+            app.log(stratum, 'WARNING: files were not copied')
 
 
 def check_overlaps(defs, component):
@@ -155,7 +167,7 @@ def write_chunk_metafile(defs, chunk):
     into artifacts in the 'products' list
 
     '''
-    app.log(chunk['name'], 'splitting chunk')
+    app.log(chunk['name'], 'Splitting chunk')
     rules, splits = compile_rules(defs, chunk)
 
     install_dir = chunk['install']
@@ -190,7 +202,7 @@ def write_stratum_metafiles(defs, stratum):
 
     '''
 
-    app.log(stratum['name'], 'splitting stratum')
+    app.log(stratum['name'], 'Splitting stratum')
     rules, splits = compile_rules(defs, stratum)
 
     for item in stratum['contents']:

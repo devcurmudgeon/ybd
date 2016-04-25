@@ -23,10 +23,10 @@ FOSS components required for Linux appliances up to and including:
 - OpenStack appliances
 - OpenWRT appliances
 
-there are Concourse pipelines using ybd to build some of these examples at
-concourse.baserock.org
+there are Concourse pipelines using ybd to integrate various examples at
+concourse.baserock.org...
 
-[<center><img src="http://i.imgur.com/N193G9C.png" height="300" width="400"></center>](http://concourse.baserock.org)
+[<img src="http://i.imgur.com/N193G9C.png" height="400" width="600">](http://concourse.baserock.org)
 
 ybd is a simple start-point for building, deploying, learning and
 experimenting with definitions, algorithms and functionality on Baserock
@@ -40,7 +40,7 @@ MacOS) using Vagrant and VirtualBox.
 
 ## quick start
 
-on Fedora, Ubuntu, Debian:
+on Fedora, Ubuntu, Debian (as root... hoping to fix this for non-root soon):
 
 ```
     git clone git://github.com/devcurmudgeon/ybd && cd ybd
@@ -173,17 +173,39 @@ it to `number-of-cores/instances`.
 
 
 ### kbas cache server
-there's a basic server which can be used to allow other users to access
-pre-built artifacts from previous or current runs of ybd. See kbas.py for the
-code. with minimal configuration it can serve artifacts to instances of ybd on
-other machines, and also receive uploaded artifacts.
+kbas is a basic server which can be used to allow other users to access
+pre-built artifacts from previous or current runs of ybd. See kbas/kbas.py for
+the code. with minimal configuration it can serve artifacts to instances of
+ybd on other machines, and also receive uploaded artifacts.
 
-by default ybd is configured to look for artifacts at
+to launch kbas, just do
+
+```
+    cd kbas && ./kbas.py
+```
+
+by default ybd is configured to check for artifacts from a kbas server at
 
 ```
     http://artifacts1.baserock.org:8000/
 ```
 
+
+### concourse pipelines
+[WORK IN PROGRESS] ybd can generate concourse pipelines - see the code at
+ybd/concourse.py
+
+to start a local concourse instance:
+```
+    # in your definitions directory
+    vagrant init concourse/lite
+    vagrant up
+    # generate pipeline, run concourse.py (same arguments as ybd.py)
+    ../ybd/ybd/concourse.py <target> <arch>
+    fly set-pipeline -p foo -c pipeline.yml
+```
+
+you can view the local pipelines at http://192.168.100.4:8080
 
 ## todo
 
