@@ -62,6 +62,9 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
 
     for path in stratum['contents']:
         chunk = defs.get(path)
+        if not get_cache(defs, chunk):
+            app.exit(stratum, 'No cache-key for', chunk.get('name', chunk))
+
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
