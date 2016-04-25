@@ -100,7 +100,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                 import traceback
                 traceback.print_exc()
                 app.log(stratum, 'ERROR: failed copying files from', metafile)
-                app.exit(stratum, 'ERROR: sandbox debris at', this['sandbox'])
+                app.exit(stratum, 'ERROR: sandbox debris is at',
+                         component['sandbox'])
             # FIXME... test on old artifacts... how can continuing ever work?
             app.log(stratum, 'WARNING: problem loading', metafile)
             app.log(stratum, 'WARNING: files were not copied')
