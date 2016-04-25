@@ -172,7 +172,7 @@ def _copy_directories(srcdir, destdir, target):
             dir_stat = os.lstat(old_dir)
             mode = dir_stat.st_mode
 
-            if stat.S_ISDIR(mode):
+            if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
                 os.makedirs(new_dir)
                 shutil.copystat(old_dir, new_dir)
             else:
