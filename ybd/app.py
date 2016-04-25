@@ -133,10 +133,9 @@ def setup(args):
     config['start-time'] = datetime.datetime.now()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))
+    log('SETUP', '%s version is' % config['program'], config['my-version'])
     if len(args) != 3:
-        sys.stdout.write("%s version is %s\n\n" % (config['program'],
-                         config['my-version']))
-        sys.stdout.write("Usage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
+        sys.stdout.write("\nUsage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
         sys.exit(0)
 
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
@@ -204,7 +203,6 @@ def setup(args):
 
     config['pid'] = os.getpid()
     config['counter'] = Counter(config['pid'])
-    log('SETUP', '%s version is' % config['program'], config['my-version'])
     log('SETUP', 'Max-jobs is set to', config['max-jobs'])
 
 
