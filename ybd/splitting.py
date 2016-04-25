@@ -63,7 +63,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
     for path in stratum['contents']:
         chunk = defs.get(path)
         if not get_cache(defs, chunk):
-            app.exit(stratum, 'No cache-key for', chunk.get('name', chunk))
+            app.exit(stratum, 'ERROR: no cache-key for', chunk.get('name'))
 
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
@@ -99,7 +99,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             if app.config.get('artifact-version', 0) not in [0, 1]:
                 import traceback
                 traceback.print_exc()
-                app.exit(stratum, 'ERROR: failed copying files from', metafile)
+                app.log(stratum, 'ERROR: failed copying files from', metafile)
+                app.exit(stratum, 'ERROR: sandbox debris at', this['sandbox'])
             # FIXME... test on old artifacts... how can continuing ever work?
             app.log(stratum, 'WARNING: problem loading', metafile)
             app.log(stratum, 'WARNING: files were not copied')
