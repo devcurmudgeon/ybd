@@ -220,8 +220,8 @@ def load_configs(config_files):
             for key, value in yaml.safe_load(text).items():
                 config[key.replace('_', '-')] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
-                log('SETUP', '  %s=%s' % (key.replace('_', '-'), msg))
-
+                print '   %s=%s' % (key.replace('_', '-'), msg)
+        print
 
 def cleanup(tmpdir):
     try:
