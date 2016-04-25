@@ -191,9 +191,9 @@ def upload(defs, this):
             if response.status_code == 405:
                 # server has different md5 for this artifact
                 if this['kind'] == 'stratum' and app.config['reproduce']:
-                    app.exit('BIT-FOR-BIT',
-                             'ERROR: stratum reproduction failed for',
-                             this['cache'])
+                    app.log('BIT-FOR-BIT',
+                            'WARNING: reproduction failed for',
+                            this['cache'])
                 app.log(this, 'Artifact server already has', this['cache'])
                 return
             app.log(this, 'Artifact server problem:', response.status_code)
