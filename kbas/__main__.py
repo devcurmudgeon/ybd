@@ -71,7 +71,7 @@ class KeyedBinaryArtifactServer(object):
         names = glob.glob(os.path.join(app.config['artifact-dir'],
                           '*' + name + '*'))
         try:
-            content = [[strftime('%y-%m-%d', gmtime(os.path.getctime(x))),
+            content = [[strftime('%y-%m-%d', gmtime(os.stat(x).st_atime)),
                        cache.check(os.path.basename(x)),
                        os.path.basename(x)] for x in names]
         except:
@@ -88,16 +88,12 @@ class KeyedBinaryArtifactServer(object):
     def get_morph_artifact():
         f = request.query.filename
         path = os.path.join(app.config['artifact-dir'], f)
-        if os.path.exists(path):
-            call(['touch', path])
         return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
         path = os.path.join(app.config['artifact-dir'], f)
-        if os.path.exists(path):
-            call(['touch', os.path.dirname(path)])
         return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/')
