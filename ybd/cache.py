@@ -24,7 +24,7 @@ import sys
 from subprocess import call
 
 import app
-import repos
+from repos import get_repo_url, get_tree
 import utils
 import tempfile
 import yaml
@@ -52,7 +52,7 @@ def cache_key(defs, this):
         key = 'no-build'
     else:
         if definition.get('repo') and not definition.get('tree'):
-            definition['tree'] = repos.get_tree(definition)
+            definition['tree'] = get_tree(definition)
         factors = hash_factors(defs, definition)
         factors = json.dumps(factors, sort_keys=True).encode('utf-8')
         key = hashlib.sha256(factors).hexdigest()
@@ -64,6 +64,8 @@ def cache_key(defs, this):
         app.config['tasks'] += 1
 
     app.log(definition, 'Cache_key is', definition['cache'])
+    if app.config.get('manifest', False):
+        update_manifest(defs, this, app.config['manifest'])
 
     # If you want to catalog the artifacts for a system, do so
     if app.config.get('cache-log'):
@@ -136,13 +138,36 @@ def cache(defs, this):
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     app.config['counter'].increment()
-    unpack(defs, this, cachefile)
 
+    unpack(defs, this, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
         if this.get('kind', 'chunk') in ['chunk', 'stratum']:
             with app.timer(this, 'upload'):
                 upload(defs, this)
+
+
+def update_manifest(defs, this, manifest):
+    this = defs.get(this)
+    with open(manifest, "a") as m:
+        if app.config.get('manifest', False) == 'text':
+            format = '%s %s %s %s %s %s\n'
+            m.write(format % (this['name'], this['cache'],
+                              get_repo_url(this.get('repo', 'None')),
+                              this.get('ref', 'None'),
+                              this.get('unpetrify-ref', 'None'),
+                              md5(get_cache(defs, this))))
+            m.flush()
+            return
+
+        text = {'name': this['name'],
+                'summary': {'artifact': this['cache'],
+                            'repo': get_repo_url(this.get('repo', None)),
+                            'sha': this.get('ref', None),
+                            'ref': this.get('unpetrify-ref', None),
+                            'md5': md5(get_cache(defs, this))}}
+        m.write(yaml.dump(text, default_flow_style=True))
+        m.flush()
 
 
 def unpack(defs, this, tmpfile):
@@ -350,7 +375,10 @@ def md5(filename):
     # From http://stackoverflow.com/questions/3431825
     # answer by http://stackoverflow.com/users/370483/quantumsoup
     hash = hashlib.md5()
-    with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash.update(chunk)
-    return hash.hexdigest()
+    try:
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash.update(chunk)
+        return hash.hexdigest()
+    except:
+        return None

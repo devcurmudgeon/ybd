@@ -176,6 +176,14 @@ def setup(args):
 
     config['defdir'] = os.getcwd()
     config['extsdir'] = os.path.join(config['defdir'], 'extensions')
+    config['manifest'] = os.path.join(config['defdir'],
+                                      os.path.basename(config['target']) +
+                                      '.manifest')
+    try:
+        os.remove(config['manifest'])
+    except OSError:
+        pass
+
     base_dir = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~')
     config.setdefault('base',
                       os.path.join(base_dir, config['directories']['base']))
@@ -220,6 +228,7 @@ def load_configs(config_files):
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
                 print '   %s=%s' % (key.replace('_', '-'), msg)
         print
+
 
 def cleanup(tmpdir):
     try:
