@@ -38,8 +38,9 @@ else:
 
 
 def get_repo_url(repo):
-    for alias, url in app.config.get('aliases', {}).items():
-        repo = repo.replace(alias, url)
+    if repo:
+        for alias, url in app.config.get('aliases', {}).items():
+            repo = repo.replace(alias, url)
     return repo
 
 
