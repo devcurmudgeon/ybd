@@ -14,6 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
+import json
 import yaml
 import os
 import app
@@ -61,6 +62,12 @@ class Definitions(object):
             except:
                 app.log('DEFINITIONS', 'WARNING: problem with .trees file')
                 pass
+
+        if app.config.get('mode') == 'parse-only':
+            with open('./ybd.result', 'w') as f:
+                f.write(json.dumps(self._definitions, indent=4,
+                                   sort_keys=True))
+            os._exit(0)
 
     def load_schemas(self):
         app.log('SCHEMAS', 'Validation is',

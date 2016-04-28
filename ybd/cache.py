@@ -48,7 +48,7 @@ def cache_key(defs, this):
 
     definition['cache'] = 'calculating'
 
-    if app.config.get('mode', 'normal') == 'no-build':
+    if app.config.get('mode', 'normal') in ['parse-only', 'no-build']:
         key = 'no-build'
     else:
         if definition.get('repo') and not definition.get('tree'):

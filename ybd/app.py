@@ -93,8 +93,10 @@ def log(component, message='', data=''):
     name = component['name'] if type(component) is dict else component
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
-    if config.get('log-elapsed'):
+    if config.get('log-timings') == 'elapsed':
         timestamp = timestamp[:9] + elapsed(config['start-time'])
+    if config.get('log-timings', 'omit') == 'omit':
+        timestamp = ''
     progress = ''
     if config.get('counter'):
         count = config['counter'].get()
