@@ -64,10 +64,13 @@ class Definitions(object):
                 pass
 
         if app.config.get('mode') == 'parse-only':
+            noalias_dumper = yaml.dumper.SafeDumper
+            noalias_dumper.ignore_aliases = lambda self, data: True
             with open(app.config['result-file'], 'w') as f:
-                f.write(json.dumps(self._definitions, indent=4,
-                                   sort_keys=True))
-            app.log('RESULT', 'Parsed definitions data in json format is at',
+                f.write(yaml.dump(self._definitions,
+                        default_flow_style=False,
+                        Dumper=noalias_dumper))
+            app.log('RESULT', 'Parsed definitions data in yaml format is at',
                     app.config['result-file'])
             os._exit(0)
 
