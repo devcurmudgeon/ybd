@@ -14,12 +14,8 @@
 #
 # =*= License: GPL-2 =*=
 
-import yaml
 import os
 import app
-import cache
-from subprocess import check_output
-import hashlib
 import shutil
 from fs.osfs import OSFS
 
@@ -58,6 +54,6 @@ def wrangle(source, output):
         wrangle_morphs(source, output)
     elif format == 'cida-definitions':
         app.log('WRANGLER', 'cida files found in', source)
-        wrangle_cida(source, output)
+        wrangle_cidas(source, output)
     else:
         app.exit('WRANGLER', 'ERROR: no definitions|recipes found in', source)

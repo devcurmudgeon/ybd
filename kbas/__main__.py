@@ -15,7 +15,6 @@
 #
 # =*= License: GPL-2 =*=
 
-import logging
 import os
 import re
 import glob
@@ -23,7 +22,6 @@ import shutil
 from time import strftime, gmtime
 from datetime import datetime
 import tempfile
-import yaml
 from bottle import Bottle, request, response, template, static_file
 from subprocess import call
 
@@ -87,13 +85,11 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
         f = request.query.filename
-        path = os.path.join(app.config['artifact-dir'], f)
         return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
-        path = os.path.join(app.config['artifact-dir'], f)
         return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/')
