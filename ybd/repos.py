@@ -41,6 +41,8 @@ def get_repo_url(repo):
     if repo:
         for alias, url in app.config.get('aliases', {}).items():
             repo = repo.replace(alias, url)
+        if repo[:4] == "http" and not repo.endswith('.git'):
+            repo = repo + '.git'
     return repo
 
 
