@@ -47,11 +47,10 @@ of splitting. The proposed test case is from Richard Dale's original commit
 of the split functionality...
 
 ```
-    FIXME: when Richard's splitting was introduced, it seems YBD could not
-           build minimal system!!!
-    definitions version: baserock-16.13
-    artifact-version: 3
-    ybd version: 16.01-29-gb7c9206 (16.01 + 29 commits)
+    artifact-version: omitted
+    definitions version: baserock-15.47.1
+    ybd version: rdale/150-master-splitting
+    command: cat baserock/* | grep \/ | sort  | wc -l
+      output: 559
     command: cat baserock/* | grep \/ | sort  | md5sum
-    expected output: e5fb0693b618213e3d9bf43ea6877a43
-```
+      output: 6c3c9ad75990b93e1927012928444b83
