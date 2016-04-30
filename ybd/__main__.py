@@ -72,7 +72,7 @@ with app.timer('TOTAL'):
         app.log(app.config['target'], 'WARNING: using chroot is less safe ' +
                 'than using linux-user-chroot')
 
-    if app.config.get('instances'):
+    if 'instances' in app.config:
         app.spawn()
 
     while True:

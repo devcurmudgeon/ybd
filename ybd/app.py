@@ -208,15 +208,17 @@ def setup(args):
     # the right flag in an environment variable.
     os.environ['GIT_NO_REPLACE_OBJECTS'] = '1'
 
+    if 'max-jobs' not in config:
+        config['max-jobs'] = cpu_count()
+
     if 'instances' not in config:
         # based on some testing (mainly on AWS), maximum effective
         # max-jobs value seems to be around 8-10 if we have enough cores
         # users should set values based on workload and build infrastructure
         # FIXME: more testing :)
-        config['instances'] = 1 + (cpu_count() % 10)
-
-    if 'max-jobs' not in config:
-        config['max-jobs'] = cpu_count() / config['instances']
+        if cpu_count() >= 10:
+            config['instances'] = 1 + (cpu_count() / 10)
+            config['max-jobs'] = cpu_count() / config['instances']
 
     config['pid'] = os.getpid()
     config['counter'] = Counter(config['pid'])
