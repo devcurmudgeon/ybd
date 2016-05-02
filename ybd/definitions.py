@@ -29,7 +29,7 @@ class Definitions(object):
 
     def __init__(self, directory='.'):
         '''Load all definitions from a directory tree.'''
-        self._definitions = {}
+        self._data = {}
         self._trees = {}
         self.defaults = Defaults()
         app.config['cpu'] = self.defaults.cpus.get(app.config['arch'],
@@ -53,9 +53,9 @@ class Definitions(object):
                             self._tidy_and_insert_recursively(data)
 
         caches_are_valid = self._check_trees()
-        for path in self._definitions:
+        for path in self._data:
             try:
-                this = self._definitions[path]
+                this = self._data[path]
                 if this.get('ref') and self._trees.get(path):
                     if this['ref'] == self._trees.get(path)[0]:
                         this['tree'] = self._trees.get(path)[1]
@@ -65,7 +65,7 @@ class Definitions(object):
 
         if app.config.get('mode') == 'parse-only':
             with open(app.config['result-file'], 'w') as f:
-                f.write(json.dumps(self._definitions, indent=4,
+                f.write(json.dumps(self._data, indent=4,
                                    sort_keys=True))
             app.log('RESULT', 'Parsed definitions data in json format is at',
                     app.config['result-file'])
@@ -91,12 +91,12 @@ class Definitions(object):
             print e
 
     def write(self, output):
-        for path in self._definitions:
+        for path in self._data:
             print path
-        for path in self._definitions:
-            filename = self._definitions[path]['name'] + '.cida'
+        for path in self._data:
+            filename = self._data[path]['name'] + '.cida'
             with open(os.path.join(output, filename), 'w') as f:
-                f.write(yaml.dump(self._definitions[path],
+                f.write(yaml.dump(self._data[path],
                         default_flow_style=False))
 
     def _load(self, path):
@@ -205,7 +205,7 @@ class Definitions(object):
         duplicated in the existing definition, output a warning.
 
         '''
-        definition = self._definitions.get(new_def['path'])
+        definition = self._data.get(new_def['path'])
         if definition:
             if (definition.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
@@ -214,10 +214,10 @@ class Definitions(object):
             for key in new_def:
                 if definition.get(key) != new_def[key]:
                     app.log(new_def, 'WARNING: multiple definitions of', key)
-                    app.log(new_def,
-                            '%s | %s' % (definition.get(key), new_def[key]))
+                    app.log(new_def, '%s | %s' % (definition.get(key),
+                                                  new_def[key]))
         else:
-            self._definitions[new_def['path']] = new_def
+            self._data[new_def['path']] = new_def
 
         return new_def['path']
 
@@ -231,9 +231,9 @@ class Definitions(object):
 
         '''
         if type(definition) is str:
-            return self._definitions.get(definition)
+            return self._data.get(definition)
 
-        return self._definitions.get(definition['path'])
+        return self._data.get(definition['path'])
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories
@@ -271,11 +271,11 @@ class Definitions(object):
                 checksum = check_output('ls -lRA .', shell=True)
         checksum = hashlib.md5(checksum).hexdigest()
         self._trees = {'.checksum': checksum}
-        for name in self._definitions:
-            if self._definitions[name].get('tree') is not None:
-                self._trees[name] = [self._definitions[name]['ref'],
-                                     self._definitions[name]['tree'],
-                                     self._definitions[name].get('cache')]
+        for name in self._data:
+            if self._data[name].get('tree') is not None:
+                self._trees[name] = [self._data[name]['ref'],
+                                     self._data[name]['tree'],
+                                     self._data[name].get('cache')]
 
         with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
