@@ -123,7 +123,7 @@ class Definitions(object):
             return None
         return contents
 
-    def _tidy_and_insert_recursively(self, definition):
+    def _tidy_and_insert_recursively(self, item):
         '''Insert a definition and its contents into the dictionary.
 
         Takes a dict containing the content of a definition file.
@@ -135,38 +135,37 @@ class Definitions(object):
 
         '''
         # handle morph syntax oddities...
-        for index, component in enumerate(definition.get('build-depends', [])):
+        for index, component in enumerate(item.get('build-depends', [])):
             self._fix_keys(component)
-            definition['build-depends'][index] = self._insert(component)
+            item['build-depends'][index] = self._insert(component)
 
         # The 'contents' field in the internal data model corresponds to the
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
-        definition['contents'] = definition.get('contents', [])
+        item['contents'] = item.get('contents', [])
         for subset in ['chunks', 'strata']:
-            for component in definition.get(subset, []):
-                definition['contents'] += [component]
+            for component in item.get(subset, []):
+                item['contents'] += [component]
 
         lookup = {}
-        for index, component in enumerate(definition.get('contents', [])):
+        for index, component in enumerate(item.get('contents', [])):
             self._fix_keys(component)
             lookup[component['name']] = component['path']
-            if component['name'] == definition['name']:
-                app.log(definition,
-                        'WARNING: %s contains' % definition['path'],
+            if component['name'] == item['name']:
+                app.log(item, 'WARNING: %s contains' % item['path'],
                         component['name'])
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
             component['build-depends'] = (
-                definition.get('build-depends', []) +
+                item.get('build-depends', []) +
                 component.get('build-depends', [])
             )
-            definition['contents'][index] = self._insert(component)
+            item['contents'][index] = self._insert(component)
 
-        return self._insert(definition)
+        return self._insert(item)
 
-    def _fix_keys(self, definition, name='ERROR'):
+    def _fix_keys(self, item, name='ERROR'):
         '''Normalizes keys for a definition dict and its contents
 
         Some definitions have a 'morph' field which is a relative path. Others
@@ -177,18 +176,15 @@ class Definitions(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        definition.setdefault('path',
-                              definition.pop('morph', definition.get('name',
-                                                                     name)))
-        if definition['path'] == 'ERROR':
-            app.exit(definition, 'ERROR: no path, no name?')
-        definition.setdefault('name', definition['path'])
-        definition['name'] = definition['name'].replace('/', '-')
-        if definition['name'] == app.config['target']:
-            app.config['target'] = definition['path']
+        item.setdefault('path', item.pop('morph', item.get('name', name)))
+        if item['path'] == 'ERROR':
+            app.exit(item, 'ERROR: no path, no name?')
+        item.setdefault('name', item['path'])
+        item['name'] = item['name'].replace('/', '-')
+        if item['name'] == app.config['target']:
+            app.config['target'] = item['path']
 
-        for system in (definition.get('systems', []) +
-                       definition.get('subsystems', [])):
+        for system in (item.get('systems', []) + item.get('subsystems', [])):
             self._fix_keys(system)
 
     def _insert(self, new_def):
@@ -205,35 +201,34 @@ class Definitions(object):
         duplicated in the existing definition, output a warning.
 
         '''
-        definition = self._data.get(new_def['path'])
-        if definition:
-            if (definition.get('ref') is None or new_def.get('ref') is None):
+        item = self._data.get(new_def['path'])
+        if item:
+            if (item.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
-                    definition[key] = new_def[key]
+                    item[key] = new_def[key]
 
             for key in new_def:
-                if definition.get(key) != new_def[key]:
+                if item.get(key) != new_def[key]:
                     app.log(new_def, 'WARNING: multiple definitions of', key)
-                    app.log(new_def, '%s | %s' % (definition.get(key),
-                                                  new_def[key]))
+                    app.log(new_def, '%s | %s' % (item.get(key), new_def[key]))
         else:
             self._data[new_def['path']] = new_def
 
         return new_def['path']
 
-    def get(self, definition):
+    def get(self, item):
         '''Return a definition from the dictionary.
 
-        If `definition` is a string, return the definition with that key.
+        If `item` is a string, return the definition with that key.
 
-        If `definition` is a dict, return the definition with key equal
+        If `item` is a dict, return the definition with key equal
         to the 'path' value in the given dict.
 
         '''
-        if type(definition) is str:
-            return self._data.get(definition)
+        if type(item) is str:
+            return self._data.get(item)
 
-        return self._data.get(definition['path'])
+        return self._data.get(item['path'])
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories
