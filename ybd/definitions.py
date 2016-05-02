@@ -34,7 +34,20 @@ class Definitions(object):
         self.defaults = Defaults()
         app.config['cpu'] = self.defaults.cpus.get(app.config['arch'],
                                                    app.config['arch'])
+        self.parse_files(directory)
+        self._check_trees()
 
+        for path in self._data:
+            try:
+                this = self._data[path]
+                if this.get('ref') and self._trees.get(path):
+                    if this['ref'] == self._trees.get(path)[0]:
+                        this['tree'] = self._trees.get(path)[1]
+            except:
+                app.log('DEFINITIONS', 'WARNING: problem with .trees file')
+                pass
+
+    def parse_files(self, directory):
         schemas = self.load_schemas()
         with app.chdir(directory):
             for dirname, dirnames, filenames in os.walk('.'):
@@ -52,21 +65,9 @@ class Definitions(object):
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
 
-        caches_are_valid = self._check_trees()
-        for path in self._data:
-            try:
-                this = self._data[path]
-                if this.get('ref') and self._trees.get(path):
-                    if this['ref'] == self._trees.get(path)[0]:
-                        this['tree'] = self._trees.get(path)[1]
-            except:
-                app.log('DEFINITIONS', 'WARNING: problem with .trees file')
-                pass
-
         if app.config.get('mode') == 'parse-only':
             with open(app.config['result-file'], 'w') as f:
-                f.write(json.dumps(self._data, indent=4,
-                                   sort_keys=True))
+                f.write(json.dumps(self._data, indent=4, sort_keys=True))
             app.log('RESULT', 'Parsed definitions data in json format is at',
                     app.config['result-file'])
             os._exit(0)
@@ -89,15 +90,6 @@ class Definitions(object):
 
             app.log(data, 'WARNING: schema validation failed:')
             print e
-
-    def write(self, output):
-        for path in self._data:
-            print path
-        for path in self._data:
-            filename = self._data[path]['name'] + '.cida'
-            with open(os.path.join(output, filename), 'w') as f:
-                f.write(yaml.dump(self._data[path],
-                        default_flow_style=False))
 
     def _load(self, path):
         '''Load a single definition file as a dict.
@@ -143,9 +135,8 @@ class Definitions(object):
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
         item['contents'] = item.get('contents', [])
-        for subset in ['chunks', 'strata']:
-            for component in item.get(subset, []):
-                item['contents'] += [component]
+        for component in item.get('chunks', []) + item.get('strata', []):
+            item['contents'] += [component]
 
         lookup = {}
         for index, component in enumerate(item.get('contents', [])):
@@ -165,7 +156,7 @@ class Definitions(object):
 
         return self._insert(item)
 
-    def _fix_keys(self, item, name='ERROR'):
+    def _fix_keys(self, item):
         '''Normalizes keys for a definition dict and its contents
 
         Some definitions have a 'morph' field which is a relative path. Others
@@ -176,8 +167,8 @@ class Definitions(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        item.setdefault('path', item.pop('morph', item.get('name', name)))
-        if item['path'] == 'ERROR':
+        item.setdefault('path', item.pop('morph', item.get('name', None)))
+        if item['path'] is None:
             app.exit(item, 'ERROR: no path, no name?')
         item.setdefault('name', item['path'])
         item['name'] = item['name'].replace('/', '-')
