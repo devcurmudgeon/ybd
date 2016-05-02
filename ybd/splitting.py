@@ -68,9 +68,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metafile = os.path.join(get_cache(defs, chunk) + '.unpacked',
-                                'baserock', chunk['name'] + '.meta')
         try:
+            metafile = get_metafile(defs, chunk)
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
@@ -131,7 +130,7 @@ def check_overlaps(defs, component):
     app.config['new-overlaps'] = []
 
 
-def get_metadata(defs, this):
+def get_metadata(defs, component):
     '''Load an individual .meta file
 
     The .meta file is expected to be in the .unpacked/baserock directory of the
@@ -139,32 +138,21 @@ def get_metadata(defs, this):
 
     '''
     try:
-        with open(get_metafile(defs, this), "r") as f:
+        with open(get_metafile(defs, component), "r") as f:
             metadata = yaml.safe_load(f)
         if app.config.get('log-verbose'):
-            app.log(this, 'Loaded metadata for', this['path'])
+            app.log(component, 'Loaded metadata for', component['path'])
         return metadata
     except:
-        app.log(this, 'WARNING: problem loading metadata', this)
+        app.log(component, 'WARNING: problem loading metadata', component)
         return None
 
 
-def write_metadata(defs, component):
-    kind = component.get('kind', 'chunk')
-    if kind == 'chunk':
-        write_chunk_metafile(defs, component)
-    elif kind == 'stratum':
-        write_stratum_metafiles(defs, component)
-    if app.config.get('check-overlaps', 'ignore') != 'ignore':
-        check_overlaps(defs, component)
+def get_metafile(defs, component):
+    ''' Return the path to metadata file for component. '''
 
-
-def get_metafile(defs, this):
-    ''' Return the path to metadata file for this. '''
-
-    this = defs.get(this)
-    return os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
-                        this['name'] + '.meta')
+    return os.path.join(get_cache(defs, component) + '.unpacked', 'baserock',
+                        component['name'] + '.meta')
 
 
 def compile_rules(defs, component):
@@ -185,6 +173,15 @@ def compile_rules(defs, component):
             splits[artifact] = []
 
     return regexps, splits
+
+
+def write_metadata(defs, component):
+    if component.get('kind', 'chunk') == 'chunk':
+        write_chunk_metafile(defs, component)
+    elif component.get('kind', 'chunk') == 'stratum':
+        write_stratum_metafiles(defs, component)
+    if app.config.get('check-overlaps', 'ignore') != 'ignore':
+        check_overlaps(defs, component)
 
 
 def write_chunk_metafile(defs, chunk):
