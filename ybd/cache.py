@@ -256,32 +256,6 @@ def get_cache(defs, this):
     return False
 
 
-def get_metadata(defs, this):
-    '''Load an individual .meta file
-
-    The .meta file is expected to be in the .unpacked/baserock directory of the
-    built artifact
-
-    '''
-    try:
-        with open(get_metafile(defs, this), "r") as f:
-            metadata = yaml.safe_load(f)
-        if app.config.get('log-verbose'):
-            app.log(this, 'Loaded metadata for', this['path'])
-        return metadata
-    except:
-        app.log(this, 'WARNING: problem loading metadata', this)
-        return None
-
-
-def get_metafile(defs, this):
-    ''' Return the path to metadata file for this. '''
-
-    this = defs.get(this)
-    return os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
-                        this['name'] + '.meta')
-
-
 def get_remote(defs, this):
     ''' If a remote cached artifact exists for this, retrieve it '''
     if app.config.get('last-retry-component') == this or this.get('tried'):

@@ -15,7 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import app
-from cache import get_cache, get_metadata, get_metafile
+from cache import get_cache
 import os
 import glob
 import re
@@ -131,6 +131,24 @@ def check_overlaps(defs, component):
     app.config['new-overlaps'] = []
 
 
+def get_metadata(defs, this):
+    '''Load an individual .meta file
+
+    The .meta file is expected to be in the .unpacked/baserock directory of the
+    built artifact
+
+    '''
+    try:
+        with open(get_metafile(defs, this), "r") as f:
+            metadata = yaml.safe_load(f)
+        if app.config.get('log-verbose'):
+            app.log(this, 'Loaded metadata for', this['path'])
+        return metadata
+    except:
+        app.log(this, 'WARNING: problem loading metadata', this)
+        return None
+
+
 def write_metadata(defs, component):
     kind = component.get('kind', 'chunk')
     if kind == 'chunk':
@@ -139,6 +157,14 @@ def write_metadata(defs, component):
         write_stratum_metafiles(defs, component)
     if app.config.get('check-overlaps', 'ignore') != 'ignore':
         check_overlaps(defs, component)
+
+
+def get_metafile(defs, this):
+    ''' Return the path to metadata file for this. '''
+
+    this = defs.get(this)
+    return os.path.join(get_cache(defs, this) + '.unpacked', 'baserock',
+                        this['name'] + '.meta')
 
 
 def compile_rules(defs, component):
