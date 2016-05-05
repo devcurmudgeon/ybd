@@ -50,7 +50,31 @@ of the split functionality...
     artifact-version: omitted
     definitions version: baserock-15.47.1
     ybd version: rdale/150-master-splitting
+    cache-key: minimal-system-x86_64-generic.5315fd18ea98cd105d8b2890fcfff2faab6a8961800442a29643110c460dd810
     command: cat baserock/* | grep \/ | sort  | wc -l
-      output: 559
+      result: 559
     command: cat baserock/* | grep \/ | sort  | md5sum
-      output: 6c3c9ad75990b93e1927012928444b83
+      result: 6c3c9ad75990b93e1927012928444b83
+    find . -type f | sort | wc -l
+      result: 155
+```
+
+But we should also test (say) devel-system...
+
+```
+    artifact-version: omitted
+    definitions version: baserock-15.47.1
+    ybd version: rdale/150-master-splitting
+    cache-key:  devel-system-x86_64-generic.be1eadec42172b8ddf41b7cfffc75e796f5642a3e7c43bdcbf161977d3995050
+    command: cat baserock/* | grep \/ | sort  | wc -l
+      result: 78818
+    command: cat baserock/* | grep \/ | sort  | md5sum
+      result: 9d5c8a7f1b6926b81ef1c8f94f3e194d
+    find . -type f | sort | wc -l
+      result: 75953
+    find . -type f | sort | md5sum
+      result: 5c6e4561557d319059986c161565f4bf
+
+```
+
+The above was achieved on AWS
