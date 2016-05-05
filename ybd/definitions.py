@@ -148,10 +148,8 @@ class Definitions(object):
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
-            component['build-depends'] = (
-                item.get('build-depends', []) +
-                component.get('build-depends', [])
-            )
+            component['build-depends'] = (item.get('build-depends', []) +
+                                          component.get('build-depends', []))
             item['contents'][index] = self._insert(component)
 
         return self._insert(item)
