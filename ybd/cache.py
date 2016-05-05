@@ -76,7 +76,8 @@ def cache_key(defs, this):
             app.log('cache-log', 'cache logged to',
                     app.config.get('cache-log'))
 
-    app.config['keys'] += [definition['cache']]
+    if 'keys' in app.config:
+        app.config['keys'] += [definition['cache']]
     return definition['cache']
 
 
