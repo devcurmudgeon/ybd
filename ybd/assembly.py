@@ -30,7 +30,7 @@ import sandbox
 from shutil import copyfile
 import time
 import datetime
-import splitting
+from splitting import write_metadata, install_stratum_artifacts
 
 
 def compose(defs, target):
@@ -91,7 +91,7 @@ def build(defs, component):
             run_build(defs, component)
 
         with timer(component, 'artifact creation'):
-            splitting.write_metadata(defs, component)
+            write_metadata(defs, component)
             cache(defs, component)
 
 
@@ -185,7 +185,7 @@ def install_contents(defs, component):
 
                 if artifacts:
                     compose(defs, content)
-                    splitting.install_stratum_artifacts(defs, component,
+                    install_stratum_artifacts(defs, component,
                                                         content, artifacts)
                     continue
 
