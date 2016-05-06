@@ -92,16 +92,16 @@ def log(component, message='', data=''):
 
     name = component['name'] if type(component) is dict else component
 
-    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
     if config.get('log-timings') == 'elapsed':
-        timestamp = timestamp[:9] + elapsed(config['start-time'])
+        timestamp = timestamp[:9] + elapsed(config['start-time']) + ' '
     if config.get('log-timings', 'omit') == 'omit':
         timestamp = ''
     progress = ''
     if config.get('counter'):
         count = config['counter'].get()
         progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
-    entry = '%s %s[%s] %s %s\n' % (timestamp, progress, name, message, data)
+    entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
     if config.get('instances'):
         entry = str(config.get('fork', 0)) + ' ' + entry
 
