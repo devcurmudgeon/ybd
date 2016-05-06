@@ -17,7 +17,7 @@
 import json
 import yaml
 import os
-import app
+from app import chdir, config, log, exit
 import cache
 from subprocess import check_output, PIPE
 import hashlib
@@ -32,8 +32,7 @@ class Definitions(object):
         self._data = {}
         self._trees = {}
         self.defaults = Defaults()
-        app.config['cpu'] = self.defaults.cpus.get(app.config['arch'],
-                                                   app.config['arch'])
+        config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)
         self._check_trees()
 
@@ -44,12 +43,12 @@ class Definitions(object):
                     if this['ref'] == self._trees.get(path)[0]:
                         this['tree'] = self._trees.get(path)[1]
             except:
-                app.log('DEFINITIONS', 'WARNING: problem with .trees file')
+                log('DEFINITIONS', 'WARNING: problem with .trees file')
                 pass
 
     def parse_files(self, directory):
         schemas = self.load_schemas()
-        with app.chdir(directory):
+        with chdir(directory):
             for dirname, dirnames, filenames in os.walk('.'):
                 filenames.sort()
                 dirnames.sort()
@@ -65,30 +64,29 @@ class Definitions(object):
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
 
-        if app.config.get('mode') == 'parse-only':
-            with open(app.config['result-file'], 'w') as f:
+        if config.get('mode') == 'parse-only':
+            with open(config['result-file'], 'w') as f:
                 f.write(json.dumps(self._data, indent=4, sort_keys=True))
-            app.log('RESULT', 'Parsed definitions data in json format is at',
-                    app.config['result-file'])
+            log('RESULT', 'Parsed definitions data in json format is at',
+                config['result-file'])
             os._exit(0)
 
     def load_schemas(self):
-        app.log('SCHEMAS', 'Validation is',
-                app.config.get('schema-validation', 'off'))
-        return {x: self._load(app.config['schemas'][x])
-                for x in app.config.get('schemas')}
+        log('SCHEMAS', 'Validation is', config.get('schema-validation', 'off'))
+        return {x: self._load(config['schemas'][x])
+                for x in config.get('schemas')}
 
     def validate_schema(self, schemas, data):
         if schemas == {} or \
-                app.config.get('schema-validation', False) is False:
+                config.get('schema-validation', False) is False:
             return
         try:
             jsonschema.validate(data, schemas[data.get('kind', None)])
         except jsonschema.exceptions.ValidationError as e:
-            if app.config.get('schema-validation') == 'strict':
-                app.exit(data, 'ERROR: schema validation failed:\n', e)
+            if config.get('schema-validation') == 'strict':
+                exit(data, 'ERROR: schema validation failed:\n', e)
 
-            app.log(data, 'WARNING: schema validation failed:')
+            log(data, 'WARNING: schema validation failed:')
             print e
 
     def _load(self, path):
@@ -103,15 +101,15 @@ class Definitions(object):
                 text = f.read()
             contents = yaml.safe_load(text)
         except yaml.YAMLError, exc:
-            app.log('DEFINITIONS', 'WARNING: Error parsing %s' % path, exc)
+            log('DEFINITIONS', 'WARNING: Error parsing %s' % path, exc)
             return None
         except:
-            app.log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
+            log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
             return None
 
         if type(contents) is not dict:
-            app.log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,
-                    str(contents)[0:50])
+            log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,
+                str(contents)[0:50])
             return None
         return contents
 
@@ -143,8 +141,8 @@ class Definitions(object):
             self._fix_keys(component)
             lookup[component['name']] = component['path']
             if component['name'] == item['name']:
-                app.log(item, 'WARNING: %s contains' % item['path'],
-                        component['name'])
+                log(item, 'WARNING: %s contains' % item['path'],
+                    component['name'])
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
@@ -167,11 +165,11 @@ class Definitions(object):
         '''
         item.setdefault('path', item.pop('morph', item.get('name', None)))
         if item['path'] is None:
-            app.exit(item, 'ERROR: no path, no name?')
+            exit(item, 'ERROR: no path, no name?')
         item.setdefault('name', item['path'])
         item['name'] = item['name'].replace('/', '-')
-        if item['name'] == app.config['target']:
-            app.config['target'] = item['path']
+        if item['name'] == config['target']:
+            config['target'] = item['path']
 
         for system in (item.get('systems', []) + item.get('subsystems', [])):
             self._fix_keys(system)
@@ -198,8 +196,8 @@ class Definitions(object):
 
             for key in new_def:
                 if item.get(key) != new_def[key]:
-                    app.log(new_def, 'WARNING: multiple definitions of', key)
-                    app.log(new_def, '%s | %s' % (item.get(key), new_def[key]))
+                    log(new_def, 'WARNING: multiple definitions of', key)
+                    log(new_def, '%s | %s' % (item.get(key), new_def[key]))
         else:
             self._data[new_def['path']] = new_def
 
@@ -229,7 +227,7 @@ class Definitions(object):
 
         '''
         try:
-            with app.chdir(app.config['defdir']):
+            with chdir(config['defdir']):
                 checksum = check_output('ls -lRA */', shell=True)
             checksum = hashlib.md5(checksum).hexdigest()
             with open('.trees') as f:
@@ -248,7 +246,7 @@ class Definitions(object):
         .trees contains a list of git trees for all the definitions, and a
         checksum for the state of the working subdirectories
         '''
-        with app.chdir(app.config['defdir']):
+        with chdir(config['defdir']):
             try:
                 checksum = check_output('ls -lRA */', shell=True)
             except:
