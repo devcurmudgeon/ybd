@@ -29,8 +29,6 @@ import utils
 import tempfile
 import yaml
 
-cache_list = {}
-
 
 def cache_key(defs, this):
     definition = defs.get(this)
@@ -66,15 +64,6 @@ def cache_key(defs, this):
     app.log(definition, 'Cache_key is', definition['cache'])
     if app.config.get('manifest', False):
         update_manifest(defs, this, app.config['manifest'])
-
-    # If you want to catalog the artifacts for a system, do so
-    if app.config.get('cache-log'):
-        cache_list[definition.get('name')] = definition.get('cache')
-        if definition.get('kind') == 'system':
-            with open(app.config.get('cache-log'), 'w') as f:
-                f.write(json.dumps(cache_list, indent=4))
-            app.log('cache-log', 'cache logged to',
-                    app.config.get('cache-log'))
 
     if 'keys' in app.config:
         app.config['keys'] += [definition['cache']]
@@ -151,7 +140,7 @@ def cache(defs, this):
 def update_manifest(defs, this, manifest):
     this = defs.get(this)
     with open(manifest, "a") as m:
-        if app.config.get('manifest', False) == 'text':
+        if manifest.endswith('text'):
             format = '%s %s %s %s %s %s\n'
             m.write(format % (this['name'], this['cache'],
                               get_repo_url(this.get('repo', 'None')),

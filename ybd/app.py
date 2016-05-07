@@ -179,13 +179,14 @@ def setup(args):
 
     config['defdir'] = os.getcwd()
     config['extsdir'] = os.path.join(config['defdir'], 'extensions')
-    config['manifest'] = os.path.join(config['defdir'],
-                                      os.path.basename(config['target']) +
-                                      '.manifest')
-    try:
-        os.remove(config['manifest'])
-    except OSError:
-        pass
+    if  config.get('manifest') is True:
+        config['manifest'] = os.path.join(config['defdir'],
+                                          os.path.basename(config['target']) +
+                                          '.manifest')
+        try:
+            os.remove(config['manifest'])
+        except OSError:
+            pass
 
     base_dir = os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~')
     config.setdefault('base',
