@@ -67,8 +67,7 @@ def setup(this):
     finally:
         pass
 
-    if app.config.get('log-verbose'):
-        app.log(this, "Removing sandbox dir", this['sandbox'])
+    app.log(this, "Removing sandbox dir", this['sandbox'], verbose=True)
     app.remove_dir(this['sandbox'])
 
 
@@ -77,8 +76,7 @@ def install(defs, this, component):
     if os.path.exists(os.path.join(this['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
-    if app.config.get('log-verbose'):
-        app.log(this, 'Sandbox: installing %s' % component['cache'])
+    app.log(this, 'Sandbox: installing %s' % component['cache'], verbose=True)
     if cache.get_cache(defs, component) is False:
         app.exit(this, 'ERROR: unable to get cache for', component['name'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'

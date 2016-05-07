@@ -42,17 +42,15 @@ config = {}
 
 class RetryException(Exception):
     def __init__(self, defs, component):
-        if config.get('log-verbose') and \
-                config.get('last-retry-component') != component:
-            log(component, 'Already downloading/building, so wait/retry')
+        if config.get('last-retry-component') != component:
+            log(component, 'Already assembling, so wait/retry', verbose=True)
         if config.get('last-retry-time'):
             wait = datetime.datetime.now() - config.get('last-retry-time')
             if wait.seconds < 1:
                 with open(lockfile(defs, component), 'r') as l:
                     call(['flock', '--shared', '--timeout',
                           config.get('timeout', '60'), str(l.fileno())])
-                if config['log-verbose']:
-                    log(component, 'Finished wait loop')
+                log(component, 'Finished wait loop', verbose=True)
         config['last-retry-time'] = datetime.datetime.now()
         config['last-retry-component'] = component
         for dirname in config['sandboxes']:
@@ -87,8 +85,11 @@ def lockfile(defs, this):
     return os.path.join(config['tmp'], cache_key(defs, this) + '.lock')
 
 
-def log(component, message='', data=''):
+def log(component, message='', data='', verbose=False):
     ''' Print a timestamped log. '''
+
+    if verbose is True and config.get('log-verbose', False) is False:
+        return
 
     name = component['name'] if type(component) is dict else component
 

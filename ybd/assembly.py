@@ -46,8 +46,7 @@ def compose(defs, target):
     if get_cache(defs, component):
         return cache_key(defs, component)
 
-    if config.get('log-verbose'):
-        log(target, "Composing", component['name'])
+    log(target, "Composing", component['name'], verbose=True)
 
     # if we have a kbas, look there to see if this component exists
     if config.get('kbas-url') and not config.get('reproduce'):
@@ -171,8 +170,7 @@ def install_contents(defs, component):
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):
                 # content has already been installed
-                if config.get('log-verbose'):
-                    log(component, 'Already installed', content['name'])
+                log(component, 'Already did', content['name'], verbose=True)
                 continue
 
             if component.get('kind', 'chunk') == 'system':
@@ -196,8 +194,7 @@ def install_contents(defs, component):
 
     component = defs.get(component)
     contents = component.get('contents', [])
-    if config.get('log-verbose'):
-        log(component, 'Installing contents\n', contents)
+    log(component, 'Installing contents\n', contents, verbose=True)
     install(defs, component, contents)
     if config.get('log-verbose'):
         sandbox.list_files(component)
@@ -213,8 +210,7 @@ def install_dependencies(defs, component):
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            dependency['name'] + '.meta')):
                 # dependency has already been installed
-                if config.get('log-verbose'):
-                    log(component, 'Already installed', dependency['name'])
+                log(component, 'Already did', dependency['name'], verbose=True)
                 continue
 
             install(defs, component, dependency.get('build-depends', []))
@@ -228,8 +224,7 @@ def install_dependencies(defs, component):
 
     component = defs.get(component)
     dependencies = component.get('build-depends', [])
-    if config.get('log-verbose'):
-        log(component, 'Installing dependencies\n', dependencies)
+    log(component, 'Installing dependencies\n', dependencies, verbose=True)
     install(defs, component, dependencies)
     if config.get('log-verbose'):
         sandbox.list_files(component)

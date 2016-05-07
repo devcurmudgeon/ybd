@@ -48,9 +48,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                 components += product['components']
                 split_stratum_metadata['products'].append(product)
 
-    if app.config.get('log-verbose'):
-        app.log(component, 'Installing artifacts: ' + str(artifacts) +
-                ' components: ' + str(components))
+    app.log(component, 'Installing artifacts:', artifacts, verbose=True)
+    app.log(component, 'Installing components:', components, verbose=True)
 
     baserockpath = os.path.join(component['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):
@@ -140,8 +139,7 @@ def get_metadata(defs, component):
     try:
         with open(get_metafile(defs, component), "r") as f:
             metadata = yaml.safe_load(f)
-        if app.config.get('log-verbose'):
-            app.log(component, 'Loaded metadata for', component['path'])
+        app.log(component, 'Loaded metadata for', component['path'], verbose=True)
         return metadata
     except:
         app.log(component, 'WARNING: problem loading metadata', component)
