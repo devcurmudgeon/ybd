@@ -55,26 +55,23 @@ def compose(defs, target):
                 config['counter'].increment()
                 return cache_key(defs, component)
 
+    # we only work with user-specified arch
     if component.get('arch') and component['arch'] != config['arch']:
         return None
 
     with sandbox.setup(component):
-        assemble(defs, component)  # bring in 'contents' recursively
+        # Create composite components (strata, systems, clusters)
+        systems = component.get('systems', [])
+        shuffle(systems)
+        for system in systems:
+            compose(defs, system['path'])
+            for subsystem in system.get('subsystems', []):
+                compose(defs, subsystem)
+
+        install_contents(defs, component)
         build(defs, component)     # bring in 'build-depends', and run make
 
     return cache_key(defs, component)
-
-
-def assemble(defs, component):
-    '''Handle creation of composite components (strata, systems, clusters)'''
-    systems = component.get('systems', [])
-    shuffle(systems)
-    for system in systems:
-        compose(defs, system['path'])
-        for subsystem in system.get('subsystems', []):
-            compose(defs, subsystem)
-
-    install_contents(defs, component)
 
 
 def build(defs, component):
