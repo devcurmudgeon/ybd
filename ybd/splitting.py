@@ -139,7 +139,7 @@ def get_metadata(defs, component):
     try:
         with open(get_metafile(defs, component), "r") as f:
             metadata = yaml.safe_load(f)
-        app.log(component, 'Loaded metadata for', component['path'], verbose=True)
+        app.log(component, 'Loaded metadata', component['path'], verbose=True)
         return metadata
     except:
         app.log(component, 'WARNING: problem loading metadata', component)

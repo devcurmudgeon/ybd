@@ -183,8 +183,8 @@ def install_contents(defs, component):
 
                 if artifacts:
                     compose(defs, content)
-                    install_stratum_artifacts(defs, component,
-                                                        content, artifacts)
+                    install_stratum_artifacts(defs, component, content,
+                                              artifacts)
                     continue
 
             install(defs, component, content.get('contents', []))

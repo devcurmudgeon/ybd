@@ -179,7 +179,7 @@ def setup(args):
 
     config['defdir'] = os.getcwd()
     config['extsdir'] = os.path.join(config['defdir'], 'extensions')
-    if  config.get('manifest') is True:
+    if config.get('manifest') is True:
         config['manifest'] = os.path.join(config['defdir'],
                                           os.path.basename(config['target']) +
                                           '.manifest')
