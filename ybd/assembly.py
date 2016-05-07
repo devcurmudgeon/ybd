@@ -68,10 +68,54 @@ def compose(defs, target):
             for subsystem in system.get('subsystems', []):
                 compose(defs, subsystem)
 
-        install_contents(defs, component)
+        add_contents(defs, component)
         build(defs, component)     # bring in 'build-depends', and run make
 
     return cache_key(defs, component)
+
+
+def add_contents(defs, component, contents=[]):
+    ''' Add contents (recursively) into component['sandbox'] '''
+    component = defs.get(component)
+    if contents == [] and 'contents' in component:
+        contents = component.get('contents', [])
+
+    log(component, 'Adding contents', contents)
+
+    shuffle(contents)
+    for it in contents:
+        this = defs.get(it)
+        if os.path.exists(os.path.join(component['sandbox'],
+                                       'baserock', this['name'] + '.meta')):
+            # content has already been installed
+            log(component, 'Already added', this['name'], verbose=True)
+            continue
+
+        if component.get('kind', 'chunk') == 'system':
+            artifacts = None
+
+            for stratum in component['strata']:
+                if stratum['path'] == this['path']:
+                    artifacts = stratum.get('artifacts')
+
+                    break
+
+            if artifacts:
+                compose(defs, this)
+                install_stratum_artifacts(defs, component, this, artifacts)
+                continue
+
+        for i in this.get('contents', []):
+            add_contents(defs, component, [i])
+
+        if this.get('build-mode', 'staging') != 'bootstrap':
+            if not get_cache(defs, this):
+                compose(defs, this)
+            sandbox.install(defs, component, this)
+
+    if config.get('log-verbose'):
+        log(component, 'Added contents\n', contents)
+        sandbox.list_files(component)
 
 
 def build(defs, component):
@@ -167,7 +211,7 @@ def install_contents(defs, component):
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):
                 # content has already been installed
-                log(component, 'Already did', content['name'], verbose=True)
+                # log(component, 'Already did', content['name'], verbose=True)
                 continue
 
             if component.get('kind', 'chunk') == 'system':
