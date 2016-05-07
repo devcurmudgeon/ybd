@@ -201,46 +201,6 @@ def claim(defs, this):
                 os.remove(lockfile(defs, this))
 
 
-def install_contents(defs, component):
-    '''Install recursed contents of component into component's sandbox.'''
-
-    def install(defs, component, contents):
-        shuffle(contents)
-        for it in contents:
-            content = defs.get(it)
-            if os.path.exists(os.path.join(component['sandbox'], 'baserock',
-                                           content['name'] + '.meta')):
-                # content has already been installed
-                # log(component, 'Already did', content['name'], verbose=True)
-                continue
-
-            if component.get('kind', 'chunk') == 'system':
-                artifacts = None
-
-                for stratum in component['strata']:
-                    if stratum['path'] == content['path']:
-                        artifacts = stratum.get('artifacts')
-                        break
-
-                if artifacts:
-                    compose(defs, content)
-                    install_stratum_artifacts(defs, component, content,
-                                              artifacts)
-                    continue
-
-            install(defs, component, content.get('contents', []))
-            compose(defs, content)
-            if content.get('build-mode', 'staging') != 'bootstrap':
-                sandbox.install(defs, component, content)
-
-    component = defs.get(component)
-    contents = component.get('contents', [])
-    log(component, 'Installing contents\n', contents, verbose=True)
-    install(defs, component, contents)
-    if config.get('log-verbose'):
-        sandbox.list_files(component)
-
-
 def install_dependencies(defs, component):
     '''Install recursed dependencies of component into component's sandbox.'''
 
