@@ -68,7 +68,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
             continue
 
         try:
-            metafile = get_metafile(defs, chunk)
+            metafile = path_to_metafile(defs, chunk)
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
@@ -137,7 +137,7 @@ def get_metadata(defs, component):
 
     '''
     try:
-        with open(get_metafile(defs, component), "r") as f:
+        with open(path_to_metafile(defs, component), "r") as f:
             metadata = yaml.safe_load(f)
         app.log(component, 'Loaded metadata', component['path'], verbose=True)
         return metadata
@@ -146,7 +146,7 @@ def get_metadata(defs, component):
         return None
 
 
-def get_metafile(defs, component):
+def path_to_metafile(defs, component):
     ''' Return the path to metadata file for component. '''
 
     return os.path.join(get_cache(defs, component) + '.unpacked', 'baserock',
@@ -161,9 +161,7 @@ def compile_rules(defs, component):
                                                                 'chunk'))
     for rules in split_rules, default_rules:
         for rule in rules:
-            regexp = re.compile('^(?:' +
-                                '|'.join(rule.get('include')) +
-                                ')$')
+            regexp = re.compile('^(?:' + '|'.join(rule.get('include')) + ')$')
             artifact = rule.get('artifact')
             if artifact.startswith('-'):
                 artifact = component['name'] + artifact
