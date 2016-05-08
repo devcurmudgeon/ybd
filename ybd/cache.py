@@ -58,10 +58,12 @@ def cache_key(defs, this):
     definition['cache'] = definition['name'] + "." + key
 
     app.config['total'] += 1
+    x = 'x'
     if not get_cache(defs, this):
+        x = ' '
         app.config['tasks'] += 1
 
-    app.log(definition, 'Cache_key is', definition['cache'])
+    app.log(definition,'Cache_key is %s' % definition['cache'], '[' + x + ']')
     if app.config.get('manifest', False):
         update_manifest(defs, this, app.config['manifest'])
 
