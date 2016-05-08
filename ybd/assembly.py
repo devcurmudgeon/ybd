@@ -117,6 +117,35 @@ def install_contents(defs, component, contents=None):
         sandbox.list_files(component)
 
 
+def install_dependencies(defs, component, dependencies=None):
+    '''Install recursed dependencies of component into component's sandbox.'''
+
+    component = defs.get(component)
+    if dependencies is None:
+        dependencies = component.get('build-depends', [])
+
+    log(component, 'Installing dependencies\n', dependencies, verbose=True)
+    shuffle(dependencies)
+    for it in dependencies:
+        dependency = defs.get(it)
+        if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+                                       dependency['name'] + '.meta')):
+            # dependency has already been installed
+            log(component, 'Already did', dependency['name'], verbose=True)
+            continue
+
+        install_dependencies(defs, component, dependency.get('build-depends', []))
+        if (it in component['build-depends']) or \
+            (dependency.get('build-mode', 'staging') ==
+                component.get('build-mode', 'staging')):
+            compose(defs, dependency)
+            if dependency.get('contents'):
+                install_dependencies(defs, component, dependency.get('contents'))
+            sandbox.install(defs, component, dependency)
+    if config.get('log-verbose'):
+        sandbox.list_files(component)
+
+
 def build(defs, component):
     '''Create an artifact for a single component and add it to the cache'''
 
@@ -198,36 +227,6 @@ def claim(defs, this):
         finally:
             if os.path.isfile(lockfile(defs, this)):
                 os.remove(lockfile(defs, this))
-
-
-def install_dependencies(defs, component):
-    '''Install recursed dependencies of component into component's sandbox.'''
-
-    def install(defs, component, dependencies):
-        shuffle(dependencies)
-        for it in dependencies:
-            dependency = defs.get(it)
-            if os.path.exists(os.path.join(component['sandbox'], 'baserock',
-                                           dependency['name'] + '.meta')):
-                # dependency has already been installed
-                log(component, 'Already did', dependency['name'], verbose=True)
-                continue
-
-            install(defs, component, dependency.get('build-depends', []))
-            if (it in component['build-depends']) or \
-                (dependency.get('build-mode', 'staging') ==
-                    component.get('build-mode', 'staging')):
-                compose(defs, dependency)
-                if dependency.get('contents'):
-                    install(defs, component, dependency.get('contents'))
-                sandbox.install(defs, component, dependency)
-
-    component = defs.get(component)
-    dependencies = component.get('build-depends', [])
-    log(component, 'Installing dependencies\n', dependencies, verbose=True)
-    install(defs, component, dependencies)
-    if config.get('log-verbose'):
-        sandbox.list_files(component)
 
 
 def get_build_commands(defs, this):
