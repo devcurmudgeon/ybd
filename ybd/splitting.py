@@ -26,7 +26,7 @@ from collections import OrderedDict
 from fs.osfs import OSFS
 
 
-def install_stratum_artifacts(defs, component, stratum, artifacts):
+def install_split_artifacts(defs, component, stratum, artifacts):
     '''Create the .meta files for a split stratum
 
     Given a stratum and a list of artifacts to split, writes new .meta files to
@@ -38,6 +38,7 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                                    stratum['name'] + '.meta')):
         return
 
+    app.log(component, 'Installing %s splits' % stratum['name'], artifacts)
     stratum_metadata = get_metadata(defs, stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
@@ -48,8 +49,8 @@ def install_stratum_artifacts(defs, component, stratum, artifacts):
                 components += product['components']
                 split_stratum_metadata['products'].append(product)
 
-    app.log(component, 'Installing artifacts:', artifacts, verbose=True)
-    app.log(component, 'Installing components:', components, verbose=True)
+    app.log(component, 'Splitting artifacts:', artifacts, verbose=True)
+    app.log(component, 'Splitting components:', components, verbose=True)
 
     baserockpath = os.path.join(component['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):

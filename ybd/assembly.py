@@ -30,7 +30,7 @@ import sandbox
 from shutil import copyfile
 import time
 import datetime
-from splitting import write_metadata, install_stratum_artifacts
+from splitting import write_metadata, install_split_artifacts
 
 
 def compose(defs, target):
@@ -68,19 +68,20 @@ def compose(defs, target):
             for subsystem in system.get('subsystems', []):
                 compose(defs, subsystem)
 
-        add_contents(defs, component)
+        install_contents(defs, component)
         build(defs, component)     # bring in 'build-depends', and run make
 
     return cache_key(defs, component)
 
 
-def add_contents(defs, component, contents=[]):
-    ''' Add contents (recursively) into component['sandbox'] '''
+def install_contents(defs, component, contents=None):
+    ''' Install contents (recursively) into component['sandbox'] '''
+
     component = defs.get(component)
-    if contents == [] and 'contents' in component:
+    if contents is None:
         contents = component.get('contents', [])
 
-    log(component, 'Adding contents', contents)
+    log(component, 'Installing contents\n', contents, verbose=True)
 
     shuffle(contents)
     for it in contents:
@@ -88,25 +89,23 @@ def add_contents(defs, component, contents=[]):
         if os.path.exists(os.path.join(component['sandbox'],
                                        'baserock', this['name'] + '.meta')):
             # content has already been installed
-            log(component, 'Already added', this['name'], verbose=True)
+            log(component, 'Already installed', this['name'], verbose=True)
             continue
 
         if component.get('kind', 'chunk') == 'system':
             artifacts = None
-
-            for stratum in component['strata']:
-                if stratum['path'] == this['path']:
-                    artifacts = stratum.get('artifacts')
-
+            for index, path in enumerate(component['contents']):
+                if path == this['path']:
+                    artifacts = component['splits'][index]
                     break
 
             if artifacts:
                 compose(defs, this)
-                install_stratum_artifacts(defs, component, this, artifacts)
+                install_split_artifacts(defs, component, this, artifacts)
                 continue
 
         for i in this.get('contents', []):
-            add_contents(defs, component, [i])
+            install_contents(defs, component, [i])
 
         if this.get('build-mode', 'staging') != 'bootstrap':
             if not get_cache(defs, this):

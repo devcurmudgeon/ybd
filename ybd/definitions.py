@@ -133,21 +133,24 @@ class Definitions(object):
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
         item['contents'] = item.get('contents', [])
-        for component in item.get('chunks', []) + item.get('strata', []):
-            item['contents'] += [component]
+        item['contents'] += item.pop('chunks', []) + item.pop('strata', [])
+        item['splits'] = []
 
         lookup = {}
-        for index, component in enumerate(item.get('contents', [])):
+        for index, component in enumerate(item['contents']):
+            item['splits'] += [None]
             self._fix_keys(component)
             lookup[component['name']] = component['path']
             if component['name'] == item['name']:
-                log(item, 'WARNING: %s contains' % item['path'],
-                    component['name'])
+                log(item, 'WARNING: %s contains' % item['path'], item['name'])
+
             for x, it in enumerate(component.get('build-depends', [])):
                 component['build-depends'][x] = lookup.get(it, it)
 
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
+
+            item['splits'][index] = component.get('artifacts', None)
             item['contents'][index] = self._insert(component)
 
         return self._insert(item)
