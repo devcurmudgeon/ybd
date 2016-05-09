@@ -166,6 +166,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         app.log_env(this['log'], env, argv_to_string(argv))
 
         with open(this['log'], "a") as logfile:
+            exit_code = 99
             try:
                 exit_code = executor.run_sandbox_with_redirection(
                     argv, stdout=logfile, stderr=sandboxlib.STDOUT,
@@ -173,8 +174,8 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
             except:
                 import traceback
                 traceback.print_exc()
-                app.exit('SANDBOX',
-                         'ERROR: failed on run_sandbox_with_redirection', '')
+                app.log('SANDBOX','ERROR: in run_sandbox_with_redirection',
+                        exit_code)
 
         if exit_code != 0:
             app.log(this, 'ERROR: command failed in directory %s:\n\n' %
