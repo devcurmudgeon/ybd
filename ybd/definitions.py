@@ -166,6 +166,8 @@ class Definitions(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
+        if item.get('morph') and not os.path.isfile(item['morph']):
+            log('DEFINITIONS', 'WARNING: missing definition', item['morph'])
         item.setdefault('path', item.pop('morph', item.get('name', None)))
         if item['path'] is None:
             exit(item, 'ERROR: no path, no name?')
