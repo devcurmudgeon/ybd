@@ -99,10 +99,9 @@ def install_contents(defs, component, contents=None):
                     artifacts = component['splits'][index]
                     break
 
-            if artifacts:
-                compose(defs, this)
-                install_split_artifacts(defs, component, this, artifacts)
-                continue
+            compose(defs, this)
+            install_split_artifacts(defs, component, this, artifacts)
+            continue
 
         for i in this.get('contents', []):
             install_contents(defs, component, [i])
