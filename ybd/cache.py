@@ -106,9 +106,9 @@ def hash_factors(defs, definition):
             hash_factors['default-build-systems'] = \
                 defs.defaults.build_systems.get(definition.get('build-system',
                                                                'manual'))
-
-    if app.config.get('default-splits') and definition.get('kind') == 'system':
-        hash_factors['default-splits'] = app.config['default-splits']
+            if (app.config.get('default-splits') and
+                    definition.get('kind') == 'system'):
+                hash_factors['default-splits'] = app.config['default-splits']
 
     return hash_factors
 
