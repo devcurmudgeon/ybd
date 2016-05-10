@@ -259,7 +259,10 @@ def get_build_commands(defs, this):
     else:
         files = os.listdir(this['build'])
         bs = defs.defaults.detect_build_system(files)
-        log(this, 'WARNING: Autodetected build system is', bs)
+        if bs == 'NOT FOUND':
+            exit(this, 'ERROR: no build-system detected,',
+                 'and missing %s' % this['path'])
+        log(this, 'WARNING: Autodetected build system', bs)
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:
