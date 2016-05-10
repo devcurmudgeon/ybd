@@ -63,7 +63,7 @@ def cache_key(defs, this):
         x = ' '
         app.config['tasks'] += 1
 
-    app.log(definition,'Cache_key is %s' % definition['cache'], '[' + x + ']')
+    app.log('CACHE-KEYS', '[%s] Cache key is' % x, definition['cache'])
     if app.config.get('manifest', False):
         update_manifest(defs, this, app.config['manifest'])
 
