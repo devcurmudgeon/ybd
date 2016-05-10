@@ -133,13 +133,15 @@ def install_dependencies(defs, component, dependencies=None):
             log(component, 'Already did', dependency['name'], verbose=True)
             continue
 
-        install_dependencies(defs, component, dependency.get('build-depends', []))
+        install_dependencies(defs, component,
+                             dependency.get('build-depends', []))
         if (it in component['build-depends']) or \
             (dependency.get('build-mode', 'staging') ==
                 component.get('build-mode', 'staging')):
             compose(defs, dependency)
             if dependency.get('contents'):
-                install_dependencies(defs, component, dependency.get('contents'))
+                install_dependencies(defs, component,
+                                     dependency.get('contents'))
             sandbox.install(defs, component, dependency)
     if config.get('log-verbose'):
         sandbox.list_files(component)

@@ -174,7 +174,7 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
             except:
                 import traceback
                 traceback.print_exc()
-                app.log('SANDBOX','ERROR: in run_sandbox_with_redirection',
+                app.log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
                         exit_code)
 
         if exit_code != 0:
