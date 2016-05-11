@@ -61,7 +61,7 @@ def setup(this):
         raise e
     except:
         import traceback
-        app.log(this, 'ERROR: a surprise exception happened', '')
+        app.log(this, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
         app.exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
     finally:

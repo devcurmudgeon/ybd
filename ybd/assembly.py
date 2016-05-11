@@ -220,9 +220,10 @@ def claim(defs, this):
                 # flock() will report EACCESS or EAGAIN when the lock fails.
                 raise RetryException(defs, this)
             else:
+                log(this, 'ERROR: surprise exception in assembly', '')
                 import traceback
                 traceback.print_exc()
-                exit(this, 'ERROR: a surprise exception happened', '')
+                exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
         try:
             yield
         finally:
