@@ -68,11 +68,11 @@ def install_split_artifacts(defs, component, stratum, artifacts):
 
     for path in stratum['contents']:
         chunk = defs.get(path)
-        if not get_cache(defs, chunk):
-            app.exit(stratum, 'ERROR: no cache-key for', chunk.get('name'))
-
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
+
+        if not get_cache(defs, chunk):
+            app.exit(stratum, 'ERROR: artifact not found', chunk.get('name'))
 
         try:
             metafile = path_to_metafile(defs, chunk)
