@@ -22,20 +22,33 @@
 # echo what we're doing
 set -x
 
+installed=false
 # install dependencies for debian, ubuntu
 which apt-get 2>&1 > /dev/null
 if [ $? -eq 0 ]; then
     sudo apt-get -qq update
     sudo apt-get -qq install build-essential gawk git m4 wget
+    installed=true
 fi
 
 # install for fedora
 which dnf 2>&1 > /dev/null
-if [ $? -eq 0 ]; then
+if [ $? -eq 0 ] && [ $installed = false ]; then
     sudo dnf install -y which make automake gcc gcc-c++ gawk git m4 wget
+    installed=true
 fi
 
-# FIXME: check the above installs worked?
+# install for aws
+which yum 2>&1 > /dev/null
+if [ $? -eq 0 ] && [ $installed = false ]; then
+    sudo yum install -y which  make automake gcc gcc-c++ gawk git m4 wget
+    installed=true
+fi
+
+if [ $installed = false ]; then
+    echo "No way to install dependencies: [apt|dnf|yum] not found"
+    exit 1
+fi
 
 pip --version 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
