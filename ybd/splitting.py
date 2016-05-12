@@ -41,7 +41,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
     if artifacts is None:
         artifacts = []
         default_artifacts = defs.defaults.get_split_rules('stratum')
-        for split in app.config['default-splits']:
+        for split in app.config.get('default-splits', []):
             artifacts += [stratum['name'] + split]
 
     app.log(component, 'Installing %s splits' % stratum['name'], artifacts)
