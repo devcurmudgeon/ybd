@@ -101,8 +101,7 @@ class Definitions(object):
                 text = f.read()
             contents = yaml.safe_load(text)
         except yaml.YAMLError, exc:
-            log('DEFINITIONS', 'WARNING: Error parsing %s' % path, exc)
-            return None
+            exit('DEFINITIONS', 'ERROR: could not parse %s' % path, exc)
         except:
             log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
             return None
