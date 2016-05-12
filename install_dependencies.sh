@@ -28,6 +28,10 @@ which apt-get 2>&1 > /dev/null
 if [ $? -eq 0 ]; then
     sudo apt-get -qq update
     sudo apt-get -qq install build-essential gawk git m4 wget
+    if [ $? -ne 0 ]; then
+        echo "Install failed"
+        exit 1
+    fi
     installed=true
 fi
 
@@ -35,13 +39,21 @@ fi
 which dnf 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
     sudo dnf install -y which make automake gcc gcc-c++ gawk git m4 wget
+    if [ $? -ne 0 ]; then
+        echo "Install failed"
+        exit 1
+    fi
     installed=true
 fi
 
 # install for aws
 which yum 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    sudo yum install -y which  make automake gcc gcc-c++ gawk git m4 wget
+    sudo yum install -y which make automake gcc gcc-c++ gawk git m4 wget
+    if [ $? -ne 0 ]; then
+        echo "Install failed"
+        exit 1
+    fi
     installed=true
 fi
 
