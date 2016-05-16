@@ -57,8 +57,19 @@ if [ $? -eq 0 ] && [ $installed = false ]; then
     installed=true
 fi
 
+# install for Arch
+which pacman 2>&1 > /dev/null
+if [ $? -eq 0 ] && [ $installed = false ]; then
+    sudo pacman -S --noconfirm which make automake gcc gawk git m4 wget
+    if [ $? -ne 0 ]; then
+        echo "Install failed"
+        exit 1
+    fi
+    installed=true
+fi
+
 if [ $installed = false ]; then
-    echo "No way to install dependencies: [apt|dnf|yum] not found"
+    echo "No way to install dependencies: [apt|dnf|yum|pacman] not found"
     exit 1
 fi
 
