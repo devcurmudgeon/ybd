@@ -139,7 +139,7 @@ def setup(args):
     log('SETUP', '%s version is' % config['program'], config['my-version'])
     if len(args) != 3:
         sys.stdout.write("\nUsage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
-        sys.exit(0)
+        sys.exit(1)
 
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])

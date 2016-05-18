@@ -24,7 +24,7 @@ check_pep8:
 
 check_installation:
   stage: installation
-  script: "./ybd.py"
+  script: "./ybd.py | grep SETUP | grep version"
 
 check_cache_keys:
   stage: cache_keys

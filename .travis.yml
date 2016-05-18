@@ -3,7 +3,7 @@ before_install:
 
 install:
 - sudo python setup.py install
-- ./ybd.py
+- ./ybd.py | grep SETUP | grep version
 
 script:
 - cd ..
