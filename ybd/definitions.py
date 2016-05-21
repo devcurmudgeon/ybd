@@ -66,8 +66,8 @@ class Definitions(object):
 
         if config.get('mode') == 'parse-only':
             with open(config['result-file'], 'w') as f:
-                f.write(json.dumps(self._data, indent=4, sort_keys=True))
-            log('RESULT', 'Parsed definitions data in json format is at',
+                f.write(yaml.dump(self._data, default_flow_style=False))
+            log('RESULT', 'Parsed definitions data in yaml format is at',
                 config['result-file'])
             os._exit(0)
 
