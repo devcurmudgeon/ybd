@@ -341,9 +341,9 @@ def create_devices(this):
 
 
 def list_files(component):
+    app.log(component, 'Sandbox %s contains\n' % component['sandbox'],
+            os.listdir(component['sandbox']))
     try:
-        app.log(component, 'Sandbox %s contains\n' % component['sandbox'],
-                os.listdir(component['sandbox']))
         files = os.listdir(os.path.join(component['sandbox'], 'baserock'))
         app.log(component,
                 'Baserock directory contains %s items\n' % len(files),
