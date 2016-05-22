@@ -87,7 +87,10 @@ def install_split_artifacts(defs, component, stratum, artifacts):
 
                 for product in metadata['products']:
                     if product['artifact'] in components:
+                        filelist += product.get('components', [])
+                        # handle old artifacts still containing 'files'
                         filelist += product.get('files', [])
+
                         split_metadata['products'].append(product)
 
                 if split_metadata['products'] != []:
@@ -272,11 +275,8 @@ def write_metafile(rules, splits, component):
                              for a, r in rules]}
 
     if component.get('kind', 'chunk') == 'chunk':
-        unique_artifacts = sorted(set([a for a, r in rules]))
-        metadata = {'repo': component.get('repo'),
-                    'ref': component.get('ref'),
-                    'products': [{'artifact': a, 'files': sorted(splits[a])}
-                                 for a in unique_artifacts]}
+        metadata['repo'] = component.get('repo')
+        metadata['ref'] = component.get('ref')
 
     if app.config.get('artifact-version', 0) not in [0, 1]:
         metadata['cache'] = component.get('cache')
