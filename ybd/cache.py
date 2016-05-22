@@ -86,6 +86,10 @@ def hash_factors(defs, definition):
         if definition.get(factor):
             hash_factors[factor] = definition[factor]
 
+    if definition.get('kind') == 'system':
+        if app.config.get('default-splits', []) != []:
+            hash_factors['splits'] = app.config.get('default-splits')
+
     def hash_system_recursively(system):
         factor = system.get('path', 'BROKEN')
         hash_factors[factor] = cache_key(defs, factor)
