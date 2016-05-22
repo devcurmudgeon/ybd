@@ -254,10 +254,9 @@ def write_stratum_metafiles(defs, stratum):
                     splits[artifact].append(product['artifact'])
                     break
 
-        split_metafile = os.path.join(stratum['baserockdir'],
-                                      chunk['name'] + '.meta')
+        meta = os.path.join(stratum['baserockdir'], chunk['name'] + '.meta')
 
-        with open(split_metafile, "w") as f:
+        with open(meta, "w") as f:
             yaml.safe_dump(split_metadata, f, default_flow_style=False)
 
     write_metafile(rules, splits, stratum)
@@ -277,8 +276,7 @@ def write_metafile(rules, splits, component):
                     'products': [{'artifact': a, 'files': sorted(splits[a])}
                                  for a in unique_artifacts]}
 
-    metafile = os.path.join(component['baserockdir'],
-                            component['name'] + '.meta')
+    meta = os.path.join(component['baserockdir'], component['name'] + '.meta')
 
-    with open(metafile, "w") as f:
+    with open(meta, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)
