@@ -83,10 +83,10 @@ def install_split_artifacts(defs, component, stratum, artifacts):
                                   'ref': metadata.get('ref'),
                                   'repo': metadata.get('repo'),
                                   'products': []}
-                for element in metadata['products']:
-                    if element['artifact'] in components:
-                        filelist += element.get('files', [])
-                        split_metadata['products'].append(element)
+                for product in metadata['products']:
+                    if product['artifact'] in components:
+                        filelist += product.get('files', [])
+                        split_metadata['products'].append(product)
 
                 if split_metadata['products'] != []:
                     split_metafile = os.path.join(baserockpath,
@@ -247,11 +247,11 @@ def write_stratum_metafiles(defs, stratum):
         for artifact, target in chunk_artifacts.items():
             splits[target].append(artifact)
 
-        for element in metadata['products']:
+        for product in metadata['products']:
             for artifact, rule in rules:
-                if rule.match(element['artifact']):
-                    split_metadata['products'].append(element)
-                    splits[artifact].append(element['artifact'])
+                if rule.match(product['artifact']):
+                    split_metadata['products'].append(product)
+                    splits[artifact].append(product['artifact'])
                     break
 
         split_metafile = os.path.join(stratum['baserockdir'],
