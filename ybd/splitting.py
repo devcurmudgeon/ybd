@@ -194,7 +194,7 @@ def write_chunk_metafile(defs, chunk):
     into artifacts in the 'products' list
 
     '''
-    app.log(chunk['name'], 'Splitting chunk')
+    app.log(chunk['name'], 'Splitting', chunk.get('kind'))
     rules, splits = compile_rules(defs, chunk)
 
     install_dir = chunk['install']
@@ -229,7 +229,7 @@ def write_stratum_metafiles(defs, stratum):
 
     '''
 
-    app.log(stratum['name'], 'Splitting stratum')
+    app.log(stratum['name'], 'Splitting', stratum.get('kind'))
     rules, splits = compile_rules(defs, stratum)
 
     for item in stratum['contents']:
