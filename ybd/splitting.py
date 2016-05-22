@@ -79,10 +79,12 @@ def install_split_artifacts(defs, component, stratum, artifacts):
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
-                split_metadata = {'cache': metadata.get('cache'),
-                                  'ref': metadata.get('ref'),
+                split_metadata = {'ref': metadata.get('ref'),
                                   'repo': metadata.get('repo'),
                                   'products': []}
+                if app.config.get('artifact-version', 0) not in [0, 1]:
+                    metadata['cache'] = component.get('cache')
+
                 for product in metadata['products']:
                     if product['artifact'] in components:
                         filelist += product.get('files', [])
@@ -238,10 +240,12 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk)
-        split_metadata = {'cache': metadata.get('cache'),
-                          'ref': metadata.get('ref'),
+        split_metadata = {'ref': metadata.get('ref'),
                           'repo': metadata.get('repo'),
                           'products': []}
+
+        if app.config.get('artifact-version', 0) not in [0, 1]:
+            split_metadata['cache'] = metadata.get('cache')
 
         chunk_artifacts = defs.get(chunk).get('artifacts', {})
         for artifact, target in chunk_artifacts.items():
@@ -263,18 +267,19 @@ def write_stratum_metafiles(defs, stratum):
 
 
 def write_metafile(rules, splits, component):
-    metadata = {'cache': component.get('cache'),
-                'products': [{'artifact': a,
+    metadata = {'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
                              for a, r in rules]}
 
     if component.get('kind', 'chunk') == 'chunk':
         unique_artifacts = sorted(set([a for a, r in rules]))
-        metadata = {'cache': component.get('cache'),
-                    'repo': component.get('repo'),
+        metadata = {'repo': component.get('repo'),
                     'ref': component.get('ref'),
                     'products': [{'artifact': a, 'files': sorted(splits[a])}
                                  for a in unique_artifacts]}
+
+    if app.config.get('artifact-version', 0) not in [0, 1]:
+        metadata['cache'] = component.get('cache')
 
     meta = os.path.join(component['baserockdir'], component['name'] + '.meta')
 
