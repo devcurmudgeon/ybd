@@ -269,6 +269,10 @@ def write_metafile(rules, splits, component):
     if component.get('kind', 'chunk') == 'chunk':
         metadata['repo'] = component.get('repo')
         metadata['ref'] = component.get('ref')
+    else:
+        if config.get('artifact-version', 0) > 3:
+            metadata['repo'] = config['defdir']
+            metadata['ref'] = config['def-version']
 
     if config.get('artifact-version', 0) not in [0, 1]:
         metadata['cache'] = component.get('cache')
