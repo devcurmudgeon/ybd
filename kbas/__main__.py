@@ -80,7 +80,7 @@ class KeyedBinaryArtifactServer(object):
         return template('kbas',
                         title='Available Artifacts:',
                         content=reversed(sorted(content)),
-                        css='/static/style.css')
+                        css='static/style.css')
 
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
