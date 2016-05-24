@@ -109,7 +109,7 @@ class KeyedBinaryArtifactServer(object):
         return template('kbas',
                         title='KBAS status',
                         content=content,
-                        css='/static/style.css')
+                        css='static/style.css')
 
     @bottle.post('/upload')
     def post_artifact():
