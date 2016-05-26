@@ -94,9 +94,9 @@ def install_contents(defs, component, contents=None):
 
         if component.get('kind', 'chunk') == 'system':
             artifacts = None
-            for index, path in enumerate(component['contents']):
-                if path == this['path']:
-                    artifacts = component['splits'][index]
+            for content in component['contents']:
+                if content.keys()[0] == this['path']:
+                    artifacts = content[this['path']]
                     break
 
             if config.get('default-splits', []) != []:

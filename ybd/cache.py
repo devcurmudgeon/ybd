@@ -80,7 +80,7 @@ def hash_factors(defs, definition):
         hash_factors[factor] = cache_key(defs, factor)
 
     for factor in definition.get('contents', []):
-        hash_factors[factor] = cache_key(defs, factor)
+        hash_factors[factor.keys()[0]] = cache_key(defs, factor.keys()[0])
 
     for factor in ['tree', 'submodules'] + defs.defaults.build_steps:
         if definition.get(factor):

@@ -34,6 +34,7 @@ class ExplicitDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
+
 class Definitions(object):
 
     def __init__(self, directory='.'):
@@ -143,11 +144,9 @@ class Definitions(object):
         # system .morph file.
         item['contents'] = item.get('contents', [])
         item['contents'] += item.pop('chunks', []) + item.pop('strata', [])
-        item['splits'] = []
 
         lookup = {}
         for index, component in enumerate(item['contents']):
-            item['splits'] += [None]
             self._fix_keys(component)
             lookup[component['name']] = component['path']
             if component['name'] == item['name']:
@@ -159,8 +158,8 @@ class Definitions(object):
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
 
-            item['splits'][index] = component.get('artifacts', None)
-            item['contents'][index] = self._insert(component)
+            splits = component.get('artifacts', [])
+            item['contents'][index] = {self._insert(component): splits}
 
         return self._insert(item)
 
@@ -229,7 +228,7 @@ class Definitions(object):
         if type(item) is str:
             return self._data.get(item)
 
-        return self._data.get(item['path'])
+        return self._data.get(item.get('path', item.keys()[0]))
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories
