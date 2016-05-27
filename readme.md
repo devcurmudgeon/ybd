@@ -201,7 +201,7 @@ to start a local concourse instance:
     vagrant init concourse/lite
     vagrant up
     # generate pipeline, run concourse.py (same arguments as ybd.py)
-    ../ybd/ybd/concourse.py <target> <arch>
+    python ../ybd/ybd/concourse.py <target> <arch>
     fly set-pipeline -p foo -c pipeline.yml
 ```
 

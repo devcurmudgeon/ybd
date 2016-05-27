@@ -17,7 +17,7 @@
 import sys
 import yaml
 import os
-import app
+from app import config, exit, log, setup, timer
 from definitions import Definitions
 import cache
 from repos import get_repo_url
@@ -60,10 +60,10 @@ def write_pipeline(defs, target):
     for it in target.get('contents', []) + target.get('build-depends', []):
         component = defs.get(it)
         if component.get('repo'):
-            app.log('AGGREGATE', 'Adding aggregate for', component['name'])
+            log('AGGREGATE', 'Adding aggregate for', component['name'])
             aggregate += [{'get': component['name']}]
         else:
-            app.log('PASSED', 'Adding passed for', component['name'])
+            log('PASSED', 'Adding passed for', component['name'])
             aggregate += [{'get': component['name']}]
             passed += [component['name']]
 
@@ -75,16 +75,16 @@ def write_pipeline(defs, target):
     with open(output, 'w') as f:
         f.write(yaml.dump(pipeline, default_flow_style=False))
 
-    app.exit('CONCOURSE', 'pipeline is at', output)
+    exit('CONCOURSE', 'pipeline is at', output)
 
 
-app.setup(sys.argv)
+setup(sys.argv)
 
-with app.timer('TOTAL'):
-    target = os.path.join(app.config['defdir'], app.config['target'])
-    app.log('TARGET', 'Target is %s' % target, app.config['arch'])
-    with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
+with timer('TOTAL'):
+    target = os.path.join(config['defdir'], config['target'])
+    log('TARGET', 'Target is %s' % target, config['arch'])
+    with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
         defs = Definitions()
-    with app.timer('CACHE-KEYS', 'cache-key calculations'):
-        cache.cache_key(defs, app.config['target'])
-    write_pipeline(defs, app.config['target'])
+    with timer('CACHE-KEYS', 'cache-key calculations'):
+        cache.cache_key(defs, config['target'])
+    write_pipeline(defs, config['target'])
