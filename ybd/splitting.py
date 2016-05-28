@@ -23,6 +23,7 @@ import assembly
 import yaml
 import utils
 from collections import OrderedDict
+from fs.osfs import OSFS
 
 
 def install_split_artifacts(defs, component, stratum, artifacts):
@@ -197,22 +198,24 @@ def write_chunk_metafile(defs, chunk):
     rules, splits = compile_rules(defs, chunk)
 
     install_dir = chunk['install']
-    for root, dirs, files in os.walk(install_dir, topdown=False):
+    fs = OSFS(install_dir)
+    files = fs.walkfiles('.', search='depth')
+    dirs = fs.walkdirs('.', search='depth')
 
-        for path in files:
+    for path in files:
+        for artifact, rule in rules:
+            if rule.match(path):
+                splits[artifact].append(path)
+                break
+
+    all_files = [a for x in splits.values() for a in x]
+    for path in dirs:
+        if not any(map(lambda y: y.startswith(path),
+                   all_files)) and path != '':
             for artifact, rule in rules:
-                if rule.match(path):
+                if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
                     break
-
-        all_files = [a for x in splits.values() for a in x]
-        for path in dirs:
-            if not any(map(lambda y: y.startswith(path),
-                       all_files)) and path != '':
-                for artifact, rule in rules:
-                    if rule.match(path) or rule.match(path + '/'):
-                        splits[artifact].append(path)
-                        break
 
     write_metafile(rules, splits, chunk)
 
