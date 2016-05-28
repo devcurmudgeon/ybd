@@ -14,7 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
-import app
+from app import config, exit, log
 from cache import get_cache
 import os
 import glob
@@ -41,10 +41,10 @@ def install_split_artifacts(defs, component, stratum, artifacts):
     if artifacts is None:
         artifacts = []
         default_artifacts = defs.defaults.get_split_rules('stratum')
-        for split in app.config.get('default-splits', []):
+        for split in config.get('default-splits', []):
             artifacts += [stratum['name'] + split]
 
-    app.log(component, 'Installing %s splits' % stratum['name'], artifacts)
+    log(component, 'Installing %s splits' % stratum['name'], artifacts)
     stratum_metadata = get_metadata(defs, stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
@@ -55,8 +55,8 @@ def install_split_artifacts(defs, component, stratum, artifacts):
                 components += product['components']
                 split_stratum_metadata['products'].append(product)
 
-    app.log(component, 'Splitting artifacts:', artifacts, verbose=True)
-    app.log(component, 'Splitting components:', components, verbose=True)
+    log(component, 'Splitting artifacts:', artifacts, verbose=True)
+    log(component, 'Splitting components:', components, verbose=True)
 
     baserockpath = os.path.join(component['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):
@@ -72,7 +72,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
             continue
 
         if not get_cache(defs, chunk):
-            app.exit(stratum, 'ERROR: artifact not found', chunk.get('name'))
+            exit(stratum, 'ERROR: artifact not found', chunk.get('name'))
 
         try:
             metafile = path_to_metafile(defs, chunk)
@@ -82,7 +82,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
                 split_metadata = {'ref': metadata.get('ref'),
                                   'repo': metadata.get('repo'),
                                   'products': []}
-                if app.config.get('artifact-version', 0) not in [0, 1]:
+                if config.get('artifact-version', 0) not in [0, 1]:
                     metadata['cache'] = component.get('cache')
 
                 for product in metadata['products']:
@@ -106,39 +106,37 @@ def install_split_artifacts(defs, component, stratum, artifacts):
         except:
             # if we got here, something has gone badly wrong parsing metadata
             # or copying files into the sandbox...
-            if app.config.get('artifact-version', 0) not in [0, 1]:
+            if config.get('artifact-version', 0) not in [0, 1]:
                 import traceback
                 traceback.print_exc()
-                app.log(stratum, 'ERROR: failed copying files from', metafile)
-                app.exit(stratum, 'ERROR: sandbox debris is at',
-                         component['sandbox'])
+                log(stratum, 'ERROR: failed copying files from', metafile)
+                exit(stratum, 'ERROR: sandbox debris is at',
+                     component['sandbox'])
             # FIXME... test on old artifacts... how can continuing ever work?
-            app.log(stratum, 'WARNING: problem loading', metafile)
-            app.log(stratum, 'WARNING: files were not copied')
+            log(stratum, 'WARNING: problem loading', metafile)
+            log(stratum, 'WARNING: files were not copied')
 
 
 def check_overlaps(defs, component):
-    if set(app.config['new-overlaps']) <= set(app.config['overlaps']):
-        app.config['new-overlaps'] = []
+    if set(config['new-overlaps']) <= set(config['overlaps']):
+        config['new-overlaps'] = []
         return
 
     overlaps_found = False
-    app.config['new-overlaps'] = list(set(app.config['new-overlaps']))
-    for path in app.config['new-overlaps']:
-        app.log(component, 'WARNING: overlapping path', path)
+    config['new-overlaps'] = list(set(config['new-overlaps']))
+    for path in config['new-overlaps']:
+        log(component, 'WARNING: overlapping path', path)
         for filename in os.listdir(component['baserockdir']):
             with open(os.path.join(component['baserockdir'], filename)) as f:
                 for line in f:
                     if path[1:] in line:
-                        app.log(filename, 'WARNING: overlap at', path[1:])
+                        log(filename, 'WARNING: overlap at', path[1:])
                         overlaps_found = True
                         break
-        if app.config.get('check-overlaps') == 'exit':
-            app.exit(component, 'ERROR: overlaps found',
-                     app.config['new-overlaps'])
-    app.config['overlaps'] = list(set(app.config['new-overlaps'] +
-                                      app.config['overlaps']))
-    app.config['new-overlaps'] = []
+        if config.get('check-overlaps') == 'exit':
+            exit(component, 'ERROR: overlaps found', config['new-overlaps'])
+    config['overlaps'] = list(set(config['new-overlaps'] + config['overlaps']))
+    config['new-overlaps'] = []
 
 
 def get_metadata(defs, component):
@@ -151,10 +149,10 @@ def get_metadata(defs, component):
     try:
         with open(path_to_metafile(defs, component), "r") as f:
             metadata = yaml.safe_load(f)
-        app.log(component, 'Loaded metadata', component['path'], verbose=True)
+        log(component, 'Loaded metadata', component['path'], verbose=True)
         return metadata
     except:
-        app.log(component, 'WARNING: problem loading metadata', component)
+        log(component, 'WARNING: problem loading metadata', component)
         return None
 
 
@@ -188,7 +186,7 @@ def write_metadata(defs, component):
         write_chunk_metafile(defs, component)
     elif component.get('kind', 'chunk') == 'stratum':
         write_stratum_metafiles(defs, component)
-    if app.config.get('check-overlaps', 'ignore') != 'ignore':
+    if config.get('check-overlaps', 'ignore') != 'ignore':
         check_overlaps(defs, component)
 
 
@@ -199,7 +197,7 @@ def write_chunk_metafile(defs, chunk):
     into artifacts in the 'products' list
 
     '''
-    app.log(chunk['name'], 'Splitting', chunk.get('kind'))
+    log(chunk['name'], 'Splitting', chunk.get('kind'))
     rules, splits = compile_rules(defs, chunk)
 
     install_dir = chunk['install']
@@ -234,7 +232,7 @@ def write_stratum_metafiles(defs, stratum):
 
     '''
 
-    app.log(stratum['name'], 'Splitting', stratum.get('kind'))
+    log(stratum['name'], 'Splitting', stratum.get('kind'))
     rules, splits = compile_rules(defs, stratum)
 
     for item in stratum['contents']:
@@ -247,7 +245,7 @@ def write_stratum_metafiles(defs, stratum):
                           'repo': metadata.get('repo'),
                           'products': []}
 
-        if app.config.get('artifact-version', 0) not in [0, 1]:
+        if config.get('artifact-version', 0) not in [0, 1]:
             split_metadata['cache'] = metadata.get('cache')
 
         chunk_artifacts = defs.get(chunk).get('artifacts', {})
@@ -278,7 +276,7 @@ def write_metafile(rules, splits, component):
         metadata['repo'] = component.get('repo')
         metadata['ref'] = component.get('ref')
 
-    if app.config.get('artifact-version', 0) not in [0, 1]:
+    if config.get('artifact-version', 0) not in [0, 1]:
         metadata['cache'] = component.get('cache')
 
     meta = os.path.join(component['baserockdir'], component['name'] + '.meta')
