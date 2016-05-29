@@ -47,9 +47,8 @@ def cache_key(defs, this):
 
     definition['cache'] = 'calculating'
 
-    if app.config.get('mode', 'normal') in ['parse-only', 'no-build']:
-        key = 'no-build'
-    else:
+    key = 'no-build'
+    if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
         if definition.get('repo') and not definition.get('tree'):
             definition['tree'] = get_tree(definition)
         factors = hash_factors(defs, definition)
