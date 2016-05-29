@@ -22,7 +22,7 @@ import shutil
 import sys
 import warnings
 import yaml
-from multiprocessing import cpu_count
+from multiprocessing import cpu_count, Process, Value, Lock
 from subprocess import call, check_output
 import platform
 import hashlib
@@ -58,27 +58,20 @@ class RetryException(Exception):
         config['sandboxes'] = []
 
 
+# Code taken from Eli Bendersky's example at
+# http://eli.thegreenplace.net/2012/01/04/shared-counter-with-pythons-multiprocessing
 class Counter(object):
-    def __init__(self, pid):
-        self._counter_file = os.path.join(config['tmp'], str(pid))
-        with open(self._counter_file, 'w') as f:
-            f.write(str(0))
+    def __init__(self, initval=0):
+        self.val = Value('i', initval)
+        self.lock = Lock()
 
     def increment(self):
-        with open(self._counter_file, 'r') as f:
-            count = f.read()
-        with open(self._counter_file, 'w') as f:
-            try:
-                count = int(count) + 1
-                f.write(str(count))
-            except:
-                # FIXME work out how we can ever get here...
-                pass
+        with self.lock:
+            self.val.value += 1
 
     def get(self):
-        with open(self._counter_file, 'r') as f:
-            count = f.read()
-        return count
+        with self.lock:
+            return self.val.value
 
 
 def lockfile(defs, this):
@@ -223,7 +216,7 @@ def setup(args):
             config['max-jobs'] = cpu_count() / config['instances']
 
     config['pid'] = os.getpid()
-    config['counter'] = Counter(config['pid'])
+    config['counter'] = Counter()
     log('SETUP', 'Max-jobs is set to', config['max-jobs'])
 
 
