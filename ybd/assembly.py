@@ -56,7 +56,7 @@ def compose(defs, target):
                 return cache_key(defs, component)
 
     # we only work with user-specified arch
-    if component.get('arch') and component['arch'] != config['arch']:
+    if 'arch' in component and component['arch'] != config['arch']:
         return None
 
     with sandbox.setup(component):
@@ -141,8 +141,7 @@ def install_dependencies(defs, component, dependencies=None):
                 component.get('build-mode', 'staging')):
             compose(defs, dependency)
             if dependency.get('contents'):
-                install_dependencies(defs, component,
-                                     dependency.get('contents'))
+                install_dependencies(defs, component, dependency['contents'])
             sandbox.install(defs, component, dependency)
     if config.get('log-verbose'):
         sandbox.list_files(component)
@@ -192,10 +191,8 @@ def run_build(defs, this):
         for command in this.get(build_step, []):
             command = 'false' if command is False else command
             command = 'true' if command is True else command
-            sandbox.run_sandboxed(
-                this, command, env=env_vars,
-                allow_parallel=('build' in build_step))
-
+            sandbox.run_sandboxed(this, command, env=env_vars,
+                                  allow_parallel=('build' in build_step))
     if this.get('devices'):
         sandbox.create_devices(this)
 
