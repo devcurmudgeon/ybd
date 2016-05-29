@@ -93,13 +93,13 @@ def install_contents(defs, component, contents=None):
             continue
 
         if component.get('kind', 'chunk') == 'system':
-            artifacts = None
+            artifacts = []
             for content in component['contents']:
                 if content.keys()[0] == this['path']:
                     artifacts = content[this['path']]
                     break
 
-            if config.get('default-splits', []) != []:
+            if artifacts != [] or config.get('default-splits', []) != []:
                 compose(defs, this)
                 install_split_artifacts(defs, component, this, artifacts)
                 continue

@@ -106,15 +106,9 @@ def install_split_artifacts(defs, component, stratum, artifacts):
         except:
             # if we got here, something has gone badly wrong parsing metadata
             # or copying files into the sandbox...
-            if config.get('artifact-version', 0) not in [0, 1]:
-                import traceback
-                traceback.print_exc()
-                log(stratum, 'ERROR: failed copying files from', metafile)
-                exit(stratum, 'ERROR: sandbox debris is at',
-                     component['sandbox'])
-            # FIXME... test on old artifacts... how can continuing ever work?
-            log(stratum, 'WARNING: problem loading', metafile)
-            log(stratum, 'WARNING: files were not copied')
+            log(stratum, 'WARNING: failed copying files from', metafile)
+            log(stratum, 'WARNING: copying *all* files')
+            utils.copy_all_files(path, component['sandbox'])
 
 
 def check_overlaps(defs, component):
