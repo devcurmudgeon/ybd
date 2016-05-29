@@ -40,7 +40,9 @@ def compose(defs, target):
 
     # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
-        log(component, 'No cache_key, so skipping compose')
+        if 'tried' not in component:
+            log(component, 'No cache_key, so skipping compose')
+            component['tried'] = True
         return False
 
     # if this component is already cached, we're done
