@@ -60,15 +60,15 @@ def compose(defs, target):
     if 'arch' in component and component['arch'] != config['arch']:
         return None
 
-    with sandbox.setup(component):
-        # Create composite components (strata, systems, clusters)
-        systems = component.get('systems', [])
-        shuffle(systems)
-        for system in systems:
-            compose(defs, system['path'])
-            for subsystem in system.get('subsystems', []):
-                compose(defs, subsystem)
+    # Create composite components (strata, systems, clusters)
+    systems = component.get('systems', [])
+    shuffle(systems)
+    for system in systems:
+        compose(defs, system['path'])
+        for subsystem in system.get('subsystems', []):
+            compose(defs, subsystem)
 
+    with sandbox.setup(component):
         install_contents(defs, component)
         build(defs, component)     # bring in 'build-depends', and run make
 
