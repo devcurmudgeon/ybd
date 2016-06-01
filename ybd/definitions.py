@@ -184,6 +184,20 @@ class Definitions(object):
         if item['name'] == config['target']:
             config['target'] = item['path']
 
+        n = os.path.basename(item['name'])
+        if n.endswith('.morph'):
+            n = n.rpartition('.morph')[0]
+        p = os.path.basename(item['path'])
+        if p.endswith('.morph'):
+            p = p.rpartition('.morph')[0]
+        if p not in n:
+            if config.get('check-definitions') == 'warn':
+                log('DEFINITIONS',
+                    'WARNING: %s has wrong name' % item['path'], item['name'])
+            if config.get('check-definitions') == 'exit':
+                exit('DEFINITIONS',
+                     'ERROR: %s has wrong name' % item['path'], item['name'])
+
         for system in (item.get('systems', []) + item.get('subsystems', [])):
             self._fix_keys(system)
 
