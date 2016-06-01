@@ -237,6 +237,10 @@ def load_configs(config_files):
 
 
 def cleanup(tmpdir):
+    if not config.get('cleanup', True):
+        log('SETUP', 'WARNING: no cleanup for', tmpdir)
+        return
+
     try:
         log('SETUP', 'Trying cleanup for', tmpdir)
         with open(os.path.join(tmpdir, 'lock'), 'w') as tmp_lock:
@@ -249,7 +253,7 @@ def cleanup(tmpdir):
                 log('SETUP', 'Cleanup successful for', tmpdir)
                 sys.exit(0)
     except IOError:
-        log('SETUP', 'No cleanup for', tmpdir)
+        log('SETUP', 'WARNING: no cleanup for', tmpdir)
 
 
 def remove_dir(tmpdir):
