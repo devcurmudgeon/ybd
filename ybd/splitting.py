@@ -38,8 +38,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
                                    stratum['name'] + '.meta')):
         return
 
-    if artifacts is None:
-        artifacts = []
+    if artifacts == []:
         default_artifacts = defs.defaults.get_split_rules('stratum')
         for split in config.get('default-splits', []):
             artifacts += [stratum['name'] + split]
