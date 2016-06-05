@@ -28,7 +28,6 @@ from repos import get_repo_url, get_tree
 import utils
 import tempfile
 import yaml
-from StringIO import StringIO
 
 
 def cache_key(defs, this):
@@ -279,7 +278,7 @@ def get_remote(defs, this):
             tmpdir = tempfile.mkdtemp()
             cachefile = os.path.join(tmpdir, cache_key(defs, this))
             with open(cachefile, 'wb') as f:
-                shutil.copyfileobj(StringIO(response.content), f)
+                f.write(response.content)
 
             return unpack(defs, this, cachefile)
 
