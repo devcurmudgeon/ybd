@@ -140,7 +140,7 @@ def cache(defs, this):
     unpack(defs, this, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
-        if this.get('kind', 'chunk') in ['chunk', 'stratum']:
+        if this.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
             with app.timer(this, 'upload'):
                 upload(defs, this)
 
@@ -259,11 +259,12 @@ def get_remote(defs, this):
     if app.config.get('last-retry-component') == this or this.get('tried'):
         return False
 
-    if this.get('kind', 'chunk') != 'chunk':
+    this['tried'] = True  # let's not keep asking for this artifact
+
+    if this.get('kind', 'chunk') not in app.config.get('kbas-upload', 'chunk'):
         return False
 
     try:
-        this['tried'] = True  # let's not keep asking for this artifact
         app.log(this, 'Try downloading', cache_key(defs, this))
         url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
         response = requests.get(url=url, stream=True)
