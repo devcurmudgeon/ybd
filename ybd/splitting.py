@@ -269,7 +269,7 @@ def write_metafile(rules, splits, component):
         metadata['repo'] = component.get('repo')
         metadata['ref'] = component.get('ref')
     else:
-        if config.get('artifact-version', 0) > 3:
+        if config.get('artifact-version', 0) not in [0, 1, 2]:
             metadata['repo'] = config['defdir']
             metadata['ref'] = config['def-version']
 
