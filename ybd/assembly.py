@@ -255,16 +255,18 @@ def get_build_commands(defs, this):
         this['install-commands'] = gather_integration_commands(defs, this)
         return
 
-    if this.get('build-system') or os.path.exists(this['path']):
-        bs = this.get('build-system', 'manual')
+    bs = this.get('build-system', 'manual')
+    if this.get('build-system', False):
         log(this, 'Defined build system is', bs)
     else:
-        files = os.listdir(this['build'])
-        bs = defs.defaults.detect_build_system(files)
-        if bs == 'NOT FOUND':
-            exit(this, 'ERROR: no build-system detected,',
-                 'and missing %s' % this['path'])
-        log(this, 'WARNING: Autodetected build system', bs)
+        if this.get('kind', 'chunk') == 'chunk':
+            if 'install-commands' not in this:
+                files = os.listdir(this['build'])
+                bs = defs.defaults.detect_build_system(files)
+                if bs == 'NOT FOUND':
+                    exit(this, 'ERROR: no build-system detected,',
+                         'and missing %s' % this['path'])
+        log(this, 'WARNING: Assumed build system is', bs)
 
     for build_step in defs.defaults.build_steps:
         if this.get(build_step, None) is None:

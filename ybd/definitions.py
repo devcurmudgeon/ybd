@@ -70,7 +70,7 @@ class Definitions(object):
                         data = self._load(path)
                         if data is not None:
                             self.validate_schema(schemas, data)
-                            data['path'] = path[2:]
+                            data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
 
@@ -147,7 +147,7 @@ class Definitions(object):
 
         lookup = {}
         for index, component in enumerate(item['contents']):
-            self._fix_keys(component)
+            self._fix_keys(component, item['path'])
             lookup[component['name']] = component['path']
             if component['name'] == item['name']:
                 log(item, 'WARNING: %s contains' % item['path'], item['name'])
@@ -163,7 +163,7 @@ class Definitions(object):
 
         return self._insert(item)
 
-    def _fix_keys(self, item):
+    def _fix_keys(self, item, basepath=None):
         '''Normalizes keys for a definition dict and its contents
 
         Some definitions have a 'morph' field which is a relative path. Others
@@ -174,11 +174,18 @@ class Definitions(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        if item.get('morph') and not os.path.isfile(item['morph']):
-            log('DEFINITIONS', 'WARNING: missing definition', item['morph'])
-        item.setdefault('path', item.pop('morph', item.get('name', None)))
-        if item['path'] is None:
-            exit(item, 'ERROR: no path, no name?')
+        if item.get('morph'):
+            if not os.path.isfile(item.get('morph')):
+                log('DEFINITION', 'WARNING: missing definition', item['morph'])
+            item['path'] = self._demorph(item.pop('morph'))
+        if 'path' not in item:
+            if 'name' not in item:
+                exit(item, 'ERROR: no path, no name?')
+            item['path'] = os.path.join(self._demorph(basepath), item['name'])
+            if config.get('artifact-version') in [0, 1, 2, 3, 4]:
+                item['path'] = item['name']
+
+        item['path'] = self._demorph(item['path'])
         item.setdefault('name', item['path'])
         item['name'] = item['name'].replace('/', '-')
         if item['name'] == config['target']:
@@ -243,6 +250,12 @@ class Definitions(object):
             return self._data.get(item)
 
         return self._data.get(item.get('path', item.keys()[0]))
+
+    def _demorph(self, path):
+        if path.endswith('.morph'):
+            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4]:
+                path = path.rpartition('.morph')[0]
+        return path
 
     def _check_trees(self):
         '''True if the .trees file matches the current working subdirectories
