@@ -71,15 +71,15 @@ def setup(dn):
     app.remove_dir(dn['sandbox'])
 
 
-def install(defs, dn, component):
+def install(dn, component):
     # populate dn['sandbox'] with the artifact files from component
     if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
     app.log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
-    if cache.get_cache(defs, component) is False:
+    if cache.get_cache(component) is False:
         app.exit(dn, 'ERROR: unable to get cache for', component['name'])
-    unpackdir = cache.get_cache(defs, component) + '.unpacked'
+    unpackdir = cache.get_cache(component) + '.unpacked'
     if dn.get('kind') is 'system':
         utils.copy_all_files(unpackdir, dn['sandbox'])
     else:
@@ -253,7 +253,7 @@ def ccache_mounts(dn, ccache_target):
     return mounts
 
 
-def env_vars_for_build(defs, dn):
+def env_vars_for_build(dn):
     env = {}
     extra_path = []
 
@@ -272,7 +272,7 @@ def env_vars_for_build(defs, dn):
     prefixes = []
 
     for name in dn.get('build-depends', []):
-        dependency = defs.get(name)
+        dependency = app.defs.get(name)
         prefixes.append(dependency.get('prefix', '/usr'))
     prefixes = set(prefixes)
     for prefix in prefixes:

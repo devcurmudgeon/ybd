@@ -38,16 +38,17 @@ except ImportError:
 
 
 config = {}
+defs = {}
 
 
 class RetryException(Exception):
-    def __init__(self, defs, component):
+    def __init__(self, component):
         if config.get('last-retry-component') != component:
             log(component, 'Already assembling, so wait/retry', verbose=True)
         if config.get('last-retry-time'):
             wait = datetime.datetime.now() - config.get('last-retry-time')
             if wait.seconds < 1:
-                with open(lockfile(defs, component), 'r') as l:
+                with open(lockfile(component), 'r') as l:
                     call(['flock', '--shared', '--timeout',
                           config.get('timeout', '60'), str(l.fileno())])
                 log(component, 'Finished wait loop', verbose=True)
@@ -74,8 +75,8 @@ class Counter(object):
             return self.val.value
 
 
-def lockfile(defs, dn):
-    return os.path.join(config['tmp'], cache_key(defs, dn) + '.lock')
+def lockfile(dn):
+    return os.path.join(config['tmp'], cache_key(dn) + '.lock')
 
 
 def log(component, message='', data='', verbose=False):

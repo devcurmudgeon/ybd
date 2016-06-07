@@ -14,6 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
+import app
 from app import config, exit, log
 from cache import get_cache
 import os
@@ -26,7 +27,7 @@ from collections import OrderedDict
 from fs.osfs import OSFS
 
 
-def install_split_artifacts(defs, component, stratum, artifacts):
+def install_split_artifacts(component, stratum, artifacts):
     '''Create the .meta files for a split stratum
 
     Given a stratum and a list of artifacts to split, writes new .meta files to
@@ -39,12 +40,12 @@ def install_split_artifacts(defs, component, stratum, artifacts):
         return
 
     if artifacts == []:
-        default_artifacts = defs.defaults.get_split_rules('stratum')
+        default_artifacts = app.defs.defaults.get_split_rules('stratum')
         for split in config.get('default-splits', []):
             artifacts += [stratum['name'] + split]
 
     log(component, 'Installing %s splits' % stratum['name'], artifacts)
-    stratum_metadata = get_metadata(defs, stratum)
+    stratum_metadata = get_metadata(stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
     components = []
@@ -66,15 +67,15 @@ def install_split_artifacts(defs, component, stratum, artifacts):
         yaml.safe_dump(split_stratum_metadata, f, default_flow_style=False)
 
     for path in stratum['contents']:
-        chunk = defs.get(path)
+        chunk = app.defs.get(path)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        if not get_cache(defs, chunk):
+        if not get_cache(chunk):
             exit(stratum, 'ERROR: artifact not found', chunk.get('name'))
 
         try:
-            metafile = path_to_metafile(defs, chunk)
+            metafile = path_to_metafile(chunk)
             with open(metafile, "r") as f:
                 filelist = []
                 metadata = yaml.safe_load(f)
@@ -99,7 +100,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
                         yaml.safe_dump(split_metadata, f,
                                        default_flow_style=False)
 
-                    cachepath, cachedir = os.path.split(get_cache(defs, chunk))
+                    cachepath, cachedir = os.path.split(get_cache(chunk))
                     path = os.path.join(cachepath, cachedir + '.unpacked')
                     utils.copy_file_list(path, component['sandbox'], filelist)
         except:
@@ -110,7 +111,7 @@ def install_split_artifacts(defs, component, stratum, artifacts):
             utils.copy_all_files(path, component['sandbox'])
 
 
-def check_overlaps(defs, component):
+def check_overlaps(component):
     if set(config['new-overlaps']) <= set(config['overlaps']):
         config['new-overlaps'] = []
         return
@@ -132,7 +133,7 @@ def check_overlaps(defs, component):
     config['new-overlaps'] = []
 
 
-def get_metadata(defs, component):
+def get_metadata(component):
     '''Load an individual .meta file
 
     The .meta file is expected to be in the .unpacked/baserock directory of the
@@ -140,7 +141,7 @@ def get_metadata(defs, component):
 
     '''
     try:
-        with open(path_to_metafile(defs, component), "r") as f:
+        with open(path_to_metafile(component), "r") as f:
             metadata = yaml.safe_load(f)
         log(component, 'Loaded metadata', component['path'], verbose=True)
         return metadata
@@ -149,19 +150,19 @@ def get_metadata(defs, component):
         return None
 
 
-def path_to_metafile(defs, component):
+def path_to_metafile(component):
     ''' Return the path to metadata file for component. '''
 
-    return os.path.join(get_cache(defs, component) + '.unpacked', 'baserock',
+    return os.path.join(get_cache(component) + '.unpacked', 'baserock',
                         component['name'] + '.meta')
 
 
-def compile_rules(defs, component):
+def compile_rules(component):
     regexps = []
     splits = {}
     split_rules = component.get('products', [])
-    default_rules = defs.defaults.get_split_rules(component.get('kind',
-                                                                'chunk'))
+    default_rules = app.defs.defaults.get_split_rules(component.get('kind',
+                                                                    'chunk'))
     for rules in split_rules, default_rules:
         for rule in rules:
             regexp = re.compile('^(?:' + '|'.join(rule.get('include')) + ')$')
@@ -174,16 +175,16 @@ def compile_rules(defs, component):
     return regexps, splits
 
 
-def write_metadata(defs, component):
+def write_metadata(component):
     if component.get('kind', 'chunk') == 'chunk':
-        write_chunk_metafile(defs, component)
+        write_chunk_metafile(component)
     elif component.get('kind', 'chunk') == 'stratum':
-        write_stratum_metafiles(defs, component)
+        write_stratum_metafiles(component)
     if config.get('check-overlaps', 'ignore') != 'ignore':
-        check_overlaps(defs, component)
+        check_overlaps(component)
 
 
-def write_chunk_metafile(defs, chunk):
+def write_chunk_metafile(chunk):
     '''Writes a chunk .meta file to the baserock dir of the chunk
 
     The split rules are used to divide up the installed files for the chunk
@@ -191,7 +192,7 @@ def write_chunk_metafile(defs, chunk):
 
     '''
     log(chunk['name'], 'Splitting', chunk.get('kind'))
-    rules, splits = compile_rules(defs, chunk)
+    rules, splits = compile_rules(chunk)
 
     install_dir = chunk['install']
     fs = OSFS(install_dir)
@@ -216,7 +217,7 @@ def write_chunk_metafile(defs, chunk):
     write_metafile(rules, splits, chunk)
 
 
-def write_stratum_metafiles(defs, stratum):
+def write_stratum_metafiles(stratum):
     '''Write the .meta files for a stratum to the baserock dir
 
     The split rules are used to divide up the installed components into
@@ -226,14 +227,14 @@ def write_stratum_metafiles(defs, stratum):
     '''
 
     log(stratum['name'], 'Splitting', stratum.get('kind'))
-    rules, splits = compile_rules(defs, stratum)
+    rules, splits = compile_rules(stratum)
 
     for item in stratum['contents']:
-        chunk = defs.get(item)
+        chunk = app.defs.get(item)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
-        metadata = get_metadata(defs, chunk)
+        metadata = get_metadata(chunk)
         split_metadata = {'ref': metadata.get('ref'),
                           'repo': metadata.get('repo'),
                           'products': []}
@@ -241,7 +242,7 @@ def write_stratum_metafiles(defs, stratum):
         if config.get('artifact-version', 0) not in [0, 1]:
             split_metadata['cache'] = metadata.get('cache')
 
-        chunk_artifacts = defs.get(chunk).get('artifacts', {})
+        chunk_artifacts = app.defs.get(chunk).get('artifacts', {})
         for artifact, target in chunk_artifacts.items():
             splits[target].append(artifact)
 

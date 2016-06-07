@@ -48,17 +48,17 @@ with app.timer('TOTAL'):
     target = os.path.join(app.config['defdir'], app.config['target'])
     app.log('TARGET', 'Target is %s' % target, app.config['arch'])
     with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
-        defs = Definitions()
+        app.defs = Definitions()
+    target = app.defs.get(app.config['target'])
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
-        cache.cache_key(defs, app.config['target'])
+        cache.cache_key(target)
 
     cache.cull(app.config['artifacts'])
-    target = defs.get(app.config['target'])
     if app.config['total'] == 0 or (app.config['total'] == 1 and
                                     target.get('kind') == 'cluster'):
         app.exit('ARCH', 'ERROR: no definitions found for', app.config['arch'])
 
-    defs.save_trees()
+    app.defs.save_trees()
     if app.config.get('mode', 'normal') == 'keys-only':
         with open(app.config['result-file'], 'w') as f:
             f.write(target['cache'] + '\n')
@@ -77,7 +77,7 @@ with app.timer('TOTAL'):
 
     while True:
         try:
-            compose(defs, target)
+            compose(target)
             break
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
@@ -99,4 +99,4 @@ with app.timer('TOTAL'):
 
     if target.get('kind') == 'cluster' and app.config.get('fork') is None:
         with app.timer(target, 'cluster deployment'):
-            deploy(defs, target)
+            deploy(target)

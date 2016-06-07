@@ -30,10 +30,12 @@ import tempfile
 import yaml
 
 
-def cache_key(defs, dn):
-    dn = defs.get(dn)
+def cache_key(dn):
     if dn is None:
         app.exit(dn, 'ERROR: No definition found for', dn)
+
+    if type(dn) is not dict:
+        dn = app.defs.get(dn)
 
     if dn.get('cache') == 'calculating':
         app.exit(dn, 'ERROR: recursion loop for', dn)
@@ -50,7 +52,7 @@ def cache_key(defs, dn):
     if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
         if dn.get('repo') and not dn.get('tree'):
             dn['tree'] = get_tree(dn)
-        factors = hash_factors(defs, dn)
+        factors = hash_factors(dn)
         factors = json.dumps(factors, sort_keys=True).encode('utf-8')
         key = hashlib.sha256(factors).hexdigest()
 
@@ -58,29 +60,29 @@ def cache_key(defs, dn):
 
     app.config['total'] += 1
     x = 'x'
-    if not get_cache(defs, dn):
+    if not get_cache(dn):
         x = ' '
         app.config['tasks'] += 1
 
     app.log('CACHE-KEYS', '[%s]' % x, dn['cache'])
     if app.config.get('manifest', False):
-        update_manifest(defs, dn, app.config['manifest'])
+        update_manifest(dn, app.config['manifest'])
 
     if 'keys' in app.config:
         app.config['keys'] += [dn['cache']]
     return dn['cache']
 
 
-def hash_factors(defs, dn):
+def hash_factors(dn):
     hash_factors = {'arch': app.config['arch']}
 
     for factor in dn.get('build-depends', []):
-        hash_factors[factor] = cache_key(defs, factor)
+        hash_factors[factor] = cache_key(factor)
 
     for factor in dn.get('contents', []):
-        hash_factors[factor.keys()[0]] = cache_key(defs, factor.keys()[0])
+        hash_factors[factor.keys()[0]] = cache_key(factor.keys()[0])
 
-    for factor in ['tree', 'submodules'] + defs.defaults.build_steps:
+    for factor in ['tree', 'submodules'] + app.defs.defaults.build_steps:
         if dn.get(factor):
             hash_factors[factor] = dn[factor]
 
@@ -90,7 +92,7 @@ def hash_factors(defs, dn):
 
     def hash_system_recursively(system):
         factor = system.get('path', 'BROKEN')
-        hash_factors[factor] = cache_key(defs, factor)
+        hash_factors[factor] = cache_key(factor)
         for subsystem in system.get('subsystems', []):
             hash_system_recursively(subsystem)
 
@@ -103,12 +105,13 @@ def hash_factors(defs, dn):
 
         if app.config.get('artifact-version', 0) in [0, 1, 2]:
             # this way, any change to any build-system invalidates all caches
-            hash_factors['default-build-systems'] = defs.defaults.build_systems
+            hash_factors['default-build-systems'] = \
+                app.defs.defaults.build_systems
         else:
             # this way is better - only affected components get a new key
             hash_factors['default-build-systems'] = \
-                defs.defaults.build_systems.get(dn.get('build-system',
-                                                       'manual'))
+                app.defs.defaults.build_systems.get(dn.get('build-system',
+                                                    'manual'))
             if (app.config.get('default-splits', []) != [] and
                     dn.get('kind') == 'system'):
                 hash_factors['default-splits'] = app.config['default-splits']
@@ -116,13 +119,13 @@ def hash_factors(defs, dn):
     return hash_factors
 
 
-def cache(defs, dn):
-    if get_cache(defs, dn):
-        app.log(dn, "Bah! I could have cached", cache_key(defs, dn))
+def cache(dn):
+    if get_cache(dn):
+        app.log(dn, "Bah! I could have cached", cache_key(dn))
         return
     tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
-    cachefile = os.path.join(tmpdir, cache_key(defs, dn))
+    cachefile = os.path.join(tmpdir, cache_key(dn))
     if dn.get('kind') == "system":
         utils.hardlink_all_files(dn['install'], dn['sandbox'])
         shutil.rmtree(dn['install'])
@@ -137,16 +140,15 @@ def cache(defs, dn):
 
     app.config['counter'].increment()
 
-    unpack(defs, dn, cachefile)
+    unpack(dn, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
         if dn.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
             with app.timer(dn, 'upload'):
-                upload(defs, dn)
+                upload(dn)
 
 
-def update_manifest(defs, dn, manifest):
-    dn = defs.get(dn)
+def update_manifest(dn, manifest):
     with open(manifest, "a") as m:
         if manifest.endswith('text'):
             format = '%s %s %s %s %s %s\n'
@@ -154,7 +156,7 @@ def update_manifest(defs, dn, manifest):
                               get_repo_url(dn.get('repo', 'None')),
                               dn.get('ref', 'None'),
                               dn.get('unpetrify-ref', 'None'),
-                              md5(get_cache(defs, dn))))
+                              md5(get_cache(dn))))
             m.flush()
             return
 
@@ -163,12 +165,12 @@ def update_manifest(defs, dn, manifest):
                             'repo': get_repo_url(dn.get('repo', None)),
                             'sha': dn.get('ref', None),
                             'ref': dn.get('unpetrify-ref', None),
-                            'md5': md5(get_cache(defs, dn))}}
+                            'md5': md5(get_cache(dn))}}
         m.write(yaml.dump(text, default_flow_style=True))
         m.flush()
 
 
-def unpack(defs, dn, tmpfile):
+def unpack(dn, tmpfile):
     unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
     if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
@@ -177,24 +179,24 @@ def unpack(defs, dn, tmpfile):
         return False
 
     try:
-        path = os.path.join(app.config['artifacts'], cache_key(defs, dn))
+        path = os.path.join(app.config['artifacts'], cache_key(dn))
         shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
             app.exit(dn, 'ERROR: problem creating cache artifact', path)
 
-        size = os.path.getsize(get_cache(defs, dn))
-        checksum = md5(get_cache(defs, dn))
+        size = os.path.getsize(get_cache(dn))
+        checksum = md5(get_cache(dn))
         app.log(dn, 'Cached %s bytes %s as' % (size, checksum),
-                cache_key(defs, dn))
+                cache_key(dn))
         return path
     except:
-        app.log(dn, 'Bah! I raced on', cache_key(defs, dn))
+        app.log(dn, 'Bah! I raced on', cache_key(dn))
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
 
 
-def upload(defs, dn):
-    cachefile = get_cache(defs, dn)
+def upload(dn):
+    cachefile = get_cache(dn)
     url = app.config['kbas-url'] + 'upload'
     params = {"filename": dn['cache'],
               "password": app.config['kbas-password'],
@@ -222,16 +224,16 @@ def upload(defs, dn):
         app.log(dn, 'Failed to upload', dn['cache'])
 
 
-def get_cache(defs, dn):
+def get_cache(dn):
     ''' Check if a cached artifact exists for the hashed version of d. '''
 
-    if cache_key(defs, dn) is False:
+    if cache_key(dn) is False:
         return False
 
-    cachedir = os.path.join(app.config['artifacts'], cache_key(defs, dn))
+    cachedir = os.path.join(app.config['artifacts'], cache_key(dn))
     if os.path.isdir(cachedir):
         call(['touch', cachedir])
-        artifact = os.path.join(cachedir, cache_key(defs, dn))
+        artifact = os.path.join(cachedir, cache_key(dn))
         unpackdir = artifact + '.unpacked'
         if not os.path.isdir(unpackdir):
             tempfile.tempdir = app.config['tmp']
@@ -246,12 +248,12 @@ def get_cache(defs, dn):
                 # artifact was uploaded from somewhere, and more than one
                 # instance is attempting to unpack. another got there first
                 pass
-        return os.path.join(cachedir, cache_key(defs, dn))
+        return os.path.join(cachedir, cache_key(dn))
 
     return False
 
 
-def get_remote(defs, dn):
+def get_remote(dn):
     ''' If a remote cached artifact exists for d, retrieve it '''
     if app.config.get('last-retry-component') == dn or dn.get('tried'):
         return False
@@ -262,8 +264,8 @@ def get_remote(defs, dn):
         return False
 
     try:
-        app.log(dn, 'Try downloading', cache_key(defs, dn))
-        url = app.config['kbas-url'] + 'get/' + cache_key(defs, dn)
+        app.log(dn, 'Try downloading', cache_key(dn))
+        url = app.config['kbas-url'] + 'get/' + cache_key(dn)
         response = requests.get(url=url, stream=True)
     except:
         app.config.pop('kbas-url')
@@ -274,14 +276,14 @@ def get_remote(defs, dn):
         try:
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
-            cachefile = os.path.join(tmpdir, cache_key(defs, dn))
+            cachefile = os.path.join(tmpdir, cache_key(dn))
             with open(cachefile, 'wb') as f:
                 f.write(response.content)
 
-            return unpack(defs, dn, cachefile)
+            return unpack(dn, cachefile)
 
         except:
-            app.log(dn, 'WARNING: failed downloading', cache_key(defs, dn))
+            app.log(dn, 'WARNING: failed downloading', cache_key(dn))
 
     return False
 

@@ -22,16 +22,16 @@ import cache
 import sandbox
 
 
-def deploy(defs, target):
+def deploy(target):
     '''Deploy a cluster definition.'''
     arch = app.config['arch']
     for system in target.get('systems', []):
-        if defs.get(system).get('arch', arch) == arch:
+        if app.defs.get(system).get('arch', arch) == arch:
             with app.timer(system, 'deployment'):
-                deploy_system(defs, system)
+                deploy_system(system)
 
 
-def deploy_system(defs, system_spec, parent_location=''):
+def deploy_system(system_spec, parent_location=''):
     '''Deploy a system and subsystems recursively.
 
     Takes a system spec (i.e. an entry in the "systems" list in a cluster
@@ -41,19 +41,19 @@ def deploy_system(defs, system_spec, parent_location=''):
     the result being used as the location for the deployment extensions.
 
     '''
-    system = defs.get(system_spec['path'])
+    system = app.defs.get(system_spec['path'])
     deploy_defaults = system_spec.get('deploy-defaults')
 
     with sandbox.setup(system):
         app.log(system, 'Extracting system artifact into', system['sandbox'])
-        with open(cache.get_cache(defs, system), 'r') as artifact:
+        with open(cache.get_cache(system), 'r') as artifact:
             call(['tar', 'x', '--directory', system['sandbox']],
                  stdin=artifact)
 
         for subsystem in system_spec.get('subsystems', []):
             if deploy_defaults:
                 subsystem = dict(deploy_defaults.items() + subsystem.items())
-            deploy_system(defs, subsystem, parent_location=system['sandbox'])
+            deploy_system(subsystem, parent_location=system['sandbox'])
 
         for name, deployment in system_spec.get('deploy', {}).iteritems():
             method = deployment.get('type') or deployment.get('upgrade-type')
