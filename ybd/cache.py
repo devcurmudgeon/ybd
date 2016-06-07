@@ -31,30 +31,30 @@ import yaml
 
 
 def cache_key(defs, dn):
-    definition = defs.get(dn)
-    if definition is None:
+    dn = defs.get(dn)
+    if dn is None:
         app.exit(dn, 'ERROR: No definition found for', dn)
 
-    if definition.get('cache') == 'calculating':
+    if dn.get('cache') == 'calculating':
         app.exit(dn, 'ERROR: recursion loop for', dn)
 
-    if definition.get('cache'):
-        return definition['cache']
+    if dn.get('cache'):
+        return dn['cache']
 
-    if definition.get('arch', app.config['arch']) != app.config['arch']:
+    if dn.get('arch', app.config['arch']) != app.config['arch']:
         return False
 
-    definition['cache'] = 'calculating'
+    dn['cache'] = 'calculating'
 
     key = 'no-build'
     if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
-        if definition.get('repo') and not definition.get('tree'):
-            definition['tree'] = get_tree(definition)
-        factors = hash_factors(defs, definition)
+        if dn.get('repo') and not dn.get('tree'):
+            dn['tree'] = get_tree(dn)
+        factors = hash_factors(defs, dn)
         factors = json.dumps(factors, sort_keys=True).encode('utf-8')
         key = hashlib.sha256(factors).hexdigest()
 
-    definition['cache'] = definition['name'] + "." + key
+    dn['cache'] = dn['name'] + "." + key
 
     app.config['total'] += 1
     x = 'x'
@@ -62,29 +62,29 @@ def cache_key(defs, dn):
         x = ' '
         app.config['tasks'] += 1
 
-    app.log('CACHE-KEYS', '[%s]' % x, definition['cache'])
+    app.log('CACHE-KEYS', '[%s]' % x, dn['cache'])
     if app.config.get('manifest', False):
         update_manifest(defs, dn, app.config['manifest'])
 
     if 'keys' in app.config:
-        app.config['keys'] += [definition['cache']]
-    return definition['cache']
+        app.config['keys'] += [dn['cache']]
+    return dn['cache']
 
 
-def hash_factors(defs, definition):
+def hash_factors(defs, dn):
     hash_factors = {'arch': app.config['arch']}
 
-    for factor in definition.get('build-depends', []):
+    for factor in dn.get('build-depends', []):
         hash_factors[factor] = cache_key(defs, factor)
 
-    for factor in definition.get('contents', []):
+    for factor in dn.get('contents', []):
         hash_factors[factor.keys()[0]] = cache_key(defs, factor.keys()[0])
 
     for factor in ['tree', 'submodules'] + defs.defaults.build_steps:
-        if definition.get(factor):
-            hash_factors[factor] = definition[factor]
+        if dn.get(factor):
+            hash_factors[factor] = dn[factor]
 
-    if definition.get('kind') == 'system':
+    if dn.get('kind') == 'system':
         if app.config.get('default-splits', []) != []:
             hash_factors['splits'] = app.config.get('default-splits')
 
@@ -94,8 +94,8 @@ def hash_factors(defs, definition):
         for subsystem in system.get('subsystems', []):
             hash_system_recursively(subsystem)
 
-    if definition.get('kind') == 'cluster':
-        for system in definition.get('systems', []):
+    if dn.get('kind') == 'cluster':
+        for system in dn.get('systems', []):
             hash_system_recursively(system)
 
     if app.config.get('artifact-version', False):
@@ -107,10 +107,10 @@ def hash_factors(defs, definition):
         else:
             # this way is better - only affected components get a new key
             hash_factors['default-build-systems'] = \
-                defs.defaults.build_systems.get(definition.get('build-system',
-                                                               'manual'))
+                defs.defaults.build_systems.get(dn.get('build-system',
+                                                       'manual'))
             if (app.config.get('default-splits', []) != [] and
-                    definition.get('kind') == 'system'):
+                    dn.get('kind') == 'system'):
                 hash_factors['default-splits'] = app.config['default-splits']
 
     return hash_factors
