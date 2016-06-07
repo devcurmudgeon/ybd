@@ -74,8 +74,8 @@ class Counter(object):
             return self.val.value
 
 
-def lockfile(defs, this):
-    return os.path.join(config['tmp'], cache_key(defs, this) + '.lock')
+def lockfile(defs, dn):
+    return os.path.join(config['tmp'], cache_key(defs, dn) + '.lock')
 
 
 def log(component, message='', data='', verbose=False):
@@ -276,11 +276,11 @@ def chdir(dirname=None):
 
 
 @contextlib.contextmanager
-def timer(this, message=''):
+def timer(dn, message=''):
     starttime = datetime.datetime.now()
-    log(this, 'Starting ' + message)
-    if type(this) is dict:
-        this['start-time'] = starttime
+    log(dn, 'Starting ' + message)
+    if type(dn) is dict:
+        dn['start-time'] = starttime
     do_log = True
     try:
         yield
@@ -288,11 +288,11 @@ def timer(this, message=''):
         raise
     text = '' if message == '' else ' for ' + message
     time_elapsed = elapsed(starttime)
-    log(this, 'Elapsed time' + text, time_elapsed)
-    log_riemann(this, 'Timer', text, time_elapsed)
+    log(dn, 'Elapsed time' + text, time_elapsed)
+    log_riemann(dn, 'Timer', text, time_elapsed)
 
 
-def log_riemann(this, service, text, time_elapsed):
+def log_riemann(dn, service, text, time_elapsed):
     if riemann_available and 'riemann-server' in config:
         time_split = time_elapsed.split(':')
         time_sec = int(time_split[0]) * 3600 \

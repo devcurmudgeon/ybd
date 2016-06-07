@@ -48,10 +48,10 @@ class Definitions(object):
 
         for path in self._data:
             try:
-                this = self._data[path]
-                if this.get('ref') and self._trees.get(path):
-                    if this['ref'] == self._trees.get(path)[0]:
-                        this['tree'] = self._trees.get(path)[1]
+                dn = self._data[path]
+                if dn.get('ref') and self._trees.get(path):
+                    if dn['ref'] == self._trees.get(path)[0]:
+                        dn['tree'] = self._trees.get(path)[1]
             except:
                 log('DEFINITIONS', 'WARNING: problem with .trees file')
                 pass

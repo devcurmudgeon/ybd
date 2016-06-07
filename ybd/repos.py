@@ -79,31 +79,31 @@ def get_version(gitdir, ref='HEAD'):
     return result
 
 
-def get_tree(this):
-    ref = this['ref']
-    gitdir = os.path.join(app.config['gits'], get_repo_name(this['repo']))
-    if this['repo'].startswith('file://') or this['repo'].startswith('/'):
-        gitdir = this['repo'].replace('file://', '')
+def get_tree(dn):
+    ref = dn['ref']
+    gitdir = os.path.join(app.config['gits'], get_repo_name(dn['repo']))
+    if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
+        gitdir = dn['repo'].replace('file://', '')
         if not os.path.isdir(gitdir):
-            app.exit(this, 'ERROR: git repo not found:', this['repo'])
+            app.exit(dn, 'ERROR: git repo not found:', dn['repo'])
 
     if not os.path.exists(gitdir):
         try:
-            params = {'repo': get_repo_url(this['repo']), 'ref': ref}
+            params = {'repo': get_repo_url(dn['repo']), 'ref': ref}
             r = requests.get(url=app.config['tree-server'], params=params)
             return r.json()['tree']
         except:
             if app.config.get('tree-server'):
-                app.log(this, 'WARNING: no tree from tree-server for', ref)
+                app.log(dn, 'WARNING: no tree from tree-server for', ref)
 
-        mirror(this['name'], this['repo'])
+        mirror(dn['name'], dn['repo'])
 
     with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
                 stderr=fnull):
-            # can't resolve this ref. is it upstream?
-            app.log(this, 'Fetching from upstream to resolve %s' % ref)
-            update_mirror(this['name'], this['repo'], gitdir)
+            # can't resolve ref. is it upstream?
+            app.log(dn, 'Fetching from upstream to resolve %s' % ref)
+            update_mirror(dn['name'], dn['repo'], gitdir)
 
         try:
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
@@ -113,7 +113,7 @@ def get_tree(this):
         except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
-            app.exit(this, 'ERROR: could not find tree for ref', (ref, gitdir))
+            app.exit(dn, 'ERROR: could not find tree for ref', (ref, gitdir))
 
 
 def mirror(name, repo):
@@ -167,14 +167,14 @@ def update_mirror(name, repo, gitdir):
             app.exit(name, 'ERROR: git update mirror failed', repo)
 
 
-def checkout(this):
-    _checkout(this['name'], this['repo'], this['ref'], this['build'])
+def checkout(dn):
+    _checkout(dn['name'], dn['repo'], dn['ref'], dn['build'])
 
-    with app.chdir(this['build']):
-        if os.path.exists('.gitmodules') or this.get('submodules'):
-            checkout_submodules(this)
+    with app.chdir(dn['build']):
+        if os.path.exists('.gitmodules') or dn.get('submodules'):
+            checkout_submodules(dn)
 
-    utils.set_mtime_recursively(this['build'])
+    utils.set_mtime_recursively(dn['build'])
 
 
 def _checkout(name, repo, ref, checkout):
@@ -183,7 +183,7 @@ def _checkout(name, repo, ref, checkout):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
         update_mirror(name, repo, gitdir)
-    # checkout the required version of this from git
+    # checkout the required version from git
     with open(os.devnull, "w") as fnull:
         # We need to pass '--no-hardlinks' because right now there's nothing to
         # stop the build from overwriting the files in the .git directory
@@ -236,8 +236,8 @@ def extract_commit(name, repo, ref, target_dir):
     utils.set_mtime_recursively(target_dir)
 
 
-def checkout_submodules(this):
-    app.log(this, 'Checking git submodules')
+def checkout_submodules(dn):
+    app.log(dn, 'Checking git submodules')
     with open('.gitmodules', "r") as gitfile:
         # drop indentation in sections, as RawConfigParser cannot handle it
         content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
@@ -250,16 +250,16 @@ def checkout_submodules(this):
         submodule = re.sub(r'submodule "(.*)"', r'\1', section)
         path = parser.get(section, 'path')
         try:
-            url = this['submodules'][path]['url']
-            app.log(this, 'Processing submodule %s from' % path, url)
+            url = dn['submodules'][path]['url']
+            app.log(dn, 'Processing submodule %s from' % path, url)
         except:
             url = parser.get(section, 'url')
-            app.log(this, 'WARNING: fallback to submodule %s from' % path, url)
+            app.log(dn, 'WARNING: fallback to submodule %s from' % path, url)
 
         try:
             # list objects in the parent repo tree to find the commit
             # object that corresponds to the submodule
-            commit = check_output(['git', 'ls-tree', this['ref'], path])
+            commit = check_output(['git', 'ls-tree', dn['ref'], path])
 
             # read the commit hash from the output
             fields = commit.split()
@@ -271,11 +271,11 @@ def checkout_submodules(this):
                     raise Exception
 
                 fulldir = os.path.join(os.getcwd(), path)
-                _checkout(this['name'], url, submodule_commit, fulldir)
+                _checkout(dn['name'], url, submodule_commit, fulldir)
 
             else:
-                app.log(this, 'Skipping submodule %s, not a commit:' % path,
+                app.log(dn, 'Skipping submodule %s, not a commit:' % path,
                         fields)
 
         except:
-            app.exit(this, "ERROR: git submodules problem", "")
+            app.exit(dn, "ERROR: git submodules problem", "")

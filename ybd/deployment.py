@@ -64,8 +64,8 @@ def deploy_system(defs, system_spec, parent_location=''):
             if parent_location:
                 for l in ['location', 'upgrade-location']:
                     if l in deployment:
-                        d = deployment[l].lstrip('/')
-                        deployment[l] = os.path.join(parent_location, d)
+                        dn = deployment[l].lstrip('/')
+                        deployment[l] = os.path.join(parent_location, dn)
             try:
                 sandbox.run_extension(system, deployment, 'check', method)
             except KeyError:

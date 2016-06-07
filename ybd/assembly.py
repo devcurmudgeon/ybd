@@ -88,32 +88,32 @@ def install_contents(defs, component, contents=None):
 
     shuffle(contents)
     for it in contents:
-        this = defs.get(it)
+        dn = defs.get(it)
         if os.path.exists(os.path.join(component['sandbox'],
-                                       'baserock', this['name'] + '.meta')):
+                                       'baserock', dn['name'] + '.meta')):
             # content has already been installed
-            log(component, 'Already installed', this['name'], verbose=True)
+            log(component, 'Already installed', dn['name'], verbose=True)
             continue
 
         if component.get('kind', 'chunk') == 'system':
             artifacts = []
             for content in component['contents']:
-                if content.keys()[0] == this['path']:
-                    artifacts = content[this['path']]
+                if content.keys()[0] == dn['path']:
+                    artifacts = content[dn['path']]
                     break
 
             if artifacts != [] or config.get('default-splits', []) != []:
-                compose(defs, this)
-                install_split_artifacts(defs, component, this, artifacts)
+                compose(defs, dn)
+                install_split_artifacts(defs, component, dn, artifacts)
                 continue
 
-        for i in this.get('contents', []):
+        for i in dn.get('contents', []):
             install_contents(defs, component, [i])
 
-        if this.get('build-mode', 'staging') != 'bootstrap':
-            if not get_cache(defs, this):
-                compose(defs, this)
-            sandbox.install(defs, component, this)
+        if dn.get('build-mode', 'staging') != 'bootstrap':
+            if not get_cache(defs, dn):
+                compose(defs, dn)
+            sandbox.install(defs, component, dn)
 
     if config.get('log-verbose'):
         log(component, 'Added contents\n', contents)
@@ -167,42 +167,42 @@ def build(defs, component):
             cache(defs, component)
 
 
-def run_build(defs, this):
+def run_build(defs, dn):
     ''' This is where we run ./configure, make, make install (for example).
     By the time we get here, all dependencies for component have already
     been assembled.
     '''
 
     if config.get('mode', 'normal') == 'no-build':
-        log(this, 'SKIPPING BUILD: artifact will be empty')
+        log(dn, 'SKIPPING BUILD: artifact will be empty')
         return
 
-    if this.get('build-mode') != 'bootstrap':
-        sandbox.ldconfig(this)
+    if dn.get('build-mode') != 'bootstrap':
+        sandbox.ldconfig(dn)
 
-    if this.get('repo'):
-        repos.checkout(this)
-        this['SOURCE_DATE_EPOCH'] = repos.source_date_epoch(this['build'])
+    if dn.get('repo'):
+        repos.checkout(dn)
+        dn['SOURCE_DATE_EPOCH'] = repos.source_date_epoch(dn['build'])
 
-    get_build_commands(defs, this)
-    env_vars = sandbox.env_vars_for_build(defs, this)
+    get_build_commands(defs, dn)
+    env_vars = sandbox.env_vars_for_build(defs, dn)
 
-    log(this, 'Logging build commands to %s' % this['log'])
+    log(dn, 'Logging build commands to %s' % dn['log'])
     for build_step in defs.defaults.build_steps:
-        if this.get(build_step):
-            log(this, 'Running', build_step)
-        for command in this.get(build_step, []):
+        if dn.get(build_step):
+            log(dn, 'Running', build_step)
+        for command in dn.get(build_step, []):
             command = 'false' if command is False else command
             command = 'true' if command is True else command
-            sandbox.run_sandboxed(this, command, env=env_vars,
+            sandbox.run_sandboxed(dn, command, env=env_vars,
                                   allow_parallel=('build' in build_step))
-    if this.get('devices'):
-        sandbox.create_devices(this)
+    if dn.get('devices'):
+        sandbox.create_devices(dn)
 
-    with open(this['log'], "a") as logfile:
-        time_elapsed = elapsed(this['start-time'])
+    with open(dn['log'], "a") as logfile:
+        time_elapsed = elapsed(dn['start-time'])
         logfile.write('Elapsed_time: %s\n' % time_elapsed)
-        log_riemann(this, 'Artifact_Timer', this['name'], time_elapsed)
+        log_riemann(dn, 'Artifact_Timer', dn['name'], time_elapsed)
 
 
 def shuffle(contents):
@@ -212,28 +212,28 @@ def shuffle(contents):
 
 
 @contextlib.contextmanager
-def claim(defs, this):
-    with open(lockfile(defs, this), 'a') as l:
+def claim(defs, dn):
+    with open(lockfile(defs, dn), 'a') as l:
         try:
             fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except Exception as e:
             if e.errno in (errno.EACCES, errno.EAGAIN):
                 # flock() will report EACCESS or EAGAIN when the lock fails.
-                raise RetryException(defs, this)
+                raise RetryException(defs, dn)
             else:
-                log(this, 'ERROR: surprise exception in assembly', '')
+                log(dn, 'ERROR: surprise exception in assembly', '')
                 import traceback
                 traceback.print_exc()
-                exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
+                exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
         try:
             yield
         finally:
-            if os.path.isfile(lockfile(defs, this)):
-                os.remove(lockfile(defs, this))
+            if os.path.isfile(lockfile(defs, dn)):
+                os.remove(lockfile(defs, dn))
 
 
-def get_build_commands(defs, this):
-    '''Get commands specified in 'this', plus commands implied by build-system
+def get_build_commands(defs, dn):
+    '''Get commands specified in d, plus commands implied by build-system
 
     The containing definition may point to another definition file (using
     the 'path' field in YBD's internal data model) that contains build
@@ -250,31 +250,31 @@ def get_build_commands(defs, this):
 
     '''
 
-    if this.get('kind', None) == "system":
+    if dn.get('kind', None) == "system":
         # Systems must run their integration scripts as install commands
-        this['install-commands'] = gather_integration_commands(defs, this)
+        dn['install-commands'] = gather_integration_commands(defs, dn)
         return
 
-    bs = this.get('build-system', 'manual')
-    if this.get('build-system', False):
-        log(this, 'Defined build system is', bs)
+    bs = dn.get('build-system', 'manual')
+    if dn.get('build-system', False):
+        log(dn, 'Defined build system is', bs)
     else:
-        if this.get('kind', 'chunk') == 'chunk':
-            if 'install-commands' not in this:
-                files = os.listdir(this['build'])
+        if dn.get('kind', 'chunk') == 'chunk':
+            if 'install-commands' not in dn:
+                files = os.listdir(dn['build'])
                 bs = defs.defaults.detect_build_system(files)
                 if bs == 'NOT FOUND':
-                    exit(this, 'ERROR: no build-system detected,',
-                         'and missing %s' % this['path'])
-        log(this, 'WARNING: Assumed build system is', bs)
+                    exit(dn, 'ERROR: no build-system detected,',
+                         'and missing %s' % dn['path'])
+        log(dn, 'WARNING: Assumed build system is', bs)
 
     for build_step in defs.defaults.build_steps:
-        if this.get(build_step, None) is None:
+        if dn.get(build_step, None) is None:
             commands = defs.defaults.build_systems[bs].get(build_step, [])
-            this[build_step] = commands
+            dn[build_step] = commands
 
 
-def gather_integration_commands(defs, this):
+def gather_integration_commands(defs, dn):
     # 1. iterate all subcomponents (recursively) looking for sys-int commands
     # 2. gather them all up
     # 3. asciibetically sort them
@@ -289,7 +289,7 @@ def gather_integration_commands(defs, this):
             _gather_recursively(defs.get(subcomponent), commands)
 
     all_commands = {}
-    _gather_recursively(this, all_commands)
+    _gather_recursively(dn, all_commands)
     result = []
     for key in sorted(all_commands.keys()):
         result.extend(all_commands[key])

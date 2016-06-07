@@ -30,13 +30,13 @@ import tempfile
 import yaml
 
 
-def cache_key(defs, this):
-    definition = defs.get(this)
+def cache_key(defs, dn):
+    definition = defs.get(dn)
     if definition is None:
-        app.exit(this, 'ERROR: No definition found for', this)
+        app.exit(dn, 'ERROR: No definition found for', dn)
 
     if definition.get('cache') == 'calculating':
-        app.exit(this, 'ERROR: recursion loop for', this)
+        app.exit(dn, 'ERROR: recursion loop for', dn)
 
     if definition.get('cache'):
         return definition['cache']
@@ -58,13 +58,13 @@ def cache_key(defs, this):
 
     app.config['total'] += 1
     x = 'x'
-    if not get_cache(defs, this):
+    if not get_cache(defs, dn):
         x = ' '
         app.config['tasks'] += 1
 
     app.log('CACHE-KEYS', '[%s]' % x, definition['cache'])
     if app.config.get('manifest', False):
-        update_manifest(defs, this, app.config['manifest'])
+        update_manifest(defs, dn, app.config['manifest'])
 
     if 'keys' in app.config:
         app.config['keys'] += [definition['cache']]
@@ -116,131 +116,128 @@ def hash_factors(defs, definition):
     return hash_factors
 
 
-def cache(defs, this):
-    if get_cache(defs, this):
-        app.log(this, "Bah! I could have cached", cache_key(defs, this))
+def cache(defs, dn):
+    if get_cache(defs, dn):
+        app.log(dn, "Bah! I could have cached", cache_key(defs, dn))
         return
     tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
-    cachefile = os.path.join(tmpdir, cache_key(defs, this))
-    if this.get('kind') == "system":
-        utils.hardlink_all_files(this['install'], this['sandbox'])
-        shutil.rmtree(this['install'])
-        shutil.rmtree(this['build'])
-        utils.set_mtime_recursively(this['sandbox'])
-        utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
+    cachefile = os.path.join(tmpdir, cache_key(defs, dn))
+    if dn.get('kind') == "system":
+        utils.hardlink_all_files(dn['install'], dn['sandbox'])
+        shutil.rmtree(dn['install'])
+        shutil.rmtree(dn['build'])
+        utils.set_mtime_recursively(dn['sandbox'])
+        utils.make_deterministic_tar_archive(cachefile, dn['sandbox'])
         shutil.move('%s.tar' % cachefile, cachefile)
     else:
-        utils.set_mtime_recursively(this['install'])
-        utils.make_deterministic_gztar_archive(cachefile, this['install'])
+        utils.set_mtime_recursively(dn['install'])
+        utils.make_deterministic_gztar_archive(cachefile, dn['install'])
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     app.config['counter'].increment()
 
-    unpack(defs, this, cachefile)
+    unpack(defs, dn, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
-        if this.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
-            with app.timer(this, 'upload'):
-                upload(defs, this)
+        if dn.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
+            with app.timer(dn, 'upload'):
+                upload(defs, dn)
 
 
-def update_manifest(defs, this, manifest):
-    this = defs.get(this)
+def update_manifest(defs, dn, manifest):
+    dn = defs.get(dn)
     with open(manifest, "a") as m:
         if manifest.endswith('text'):
             format = '%s %s %s %s %s %s\n'
-            m.write(format % (this['name'], this['cache'],
-                              get_repo_url(this.get('repo', 'None')),
-                              this.get('ref', 'None'),
-                              this.get('unpetrify-ref', 'None'),
-                              md5(get_cache(defs, this))))
+            m.write(format % (dn['name'], dn['cache'],
+                              get_repo_url(dn.get('repo', 'None')),
+                              dn.get('ref', 'None'),
+                              dn.get('unpetrify-ref', 'None'),
+                              md5(get_cache(defs, dn))))
             m.flush()
             return
 
-        text = {'name': this['name'],
-                'summary': {'artifact': this['cache'],
-                            'repo': get_repo_url(this.get('repo', None)),
-                            'sha': this.get('ref', None),
-                            'ref': this.get('unpetrify-ref', None),
-                            'md5': md5(get_cache(defs, this))}}
+        text = {'name': dn['name'],
+                'summary': {'artifact': dn['cache'],
+                            'repo': get_repo_url(dn.get('repo', None)),
+                            'sha': dn.get('ref', None),
+                            'ref': dn.get('unpetrify-ref', None),
+                            'md5': md5(get_cache(defs, dn))}}
         m.write(yaml.dump(text, default_flow_style=True))
         m.flush()
 
 
-def unpack(defs, this, tmpfile):
+def unpack(defs, dn, tmpfile):
     unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
     if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-        app.log(this, 'Problem unpacking', tmpfile)
+        app.log(dn, 'Problem unpacking', tmpfile)
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
 
     try:
-        path = os.path.join(app.config['artifacts'], cache_key(defs, this))
+        path = os.path.join(app.config['artifacts'], cache_key(defs, dn))
         shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
-            app.exit(this, 'ERROR: problem creating cache artifact', path)
+            app.exit(dn, 'ERROR: problem creating cache artifact', path)
 
-        size = os.path.getsize(get_cache(defs, this))
-        checksum = md5(get_cache(defs, this))
-        app.log(this, 'Cached %s bytes %s as' % (size, checksum),
-                cache_key(defs, this))
+        size = os.path.getsize(get_cache(defs, dn))
+        checksum = md5(get_cache(defs, dn))
+        app.log(dn, 'Cached %s bytes %s as' % (size, checksum),
+                cache_key(defs, dn))
         return path
     except:
-        app.log(this, 'Bah! I raced on', cache_key(defs, this))
+        app.log(dn, 'Bah! I raced on', cache_key(defs, dn))
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
 
 
-def upload(defs, this):
-    cachefile = get_cache(defs, this)
+def upload(defs, dn):
+    cachefile = get_cache(defs, dn)
     url = app.config['kbas-url'] + 'upload'
-    params = {"filename": this['cache'],
+    params = {"filename": dn['cache'],
               "password": app.config['kbas-password'],
               "checksum": md5(cachefile)}
     with open(cachefile, 'rb') as f:
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                app.log(this, 'Uploaded %s to' % this['cache'], url)
+                app.log(dn, 'Uploaded %s to' % dn['cache'], url)
                 return
             if response.status_code == 777:
-                app.log(this, 'Reproduced %s at' % md5(cachefile),
-                        this['cache'])
-                app.config['reproduced'].append([md5(cachefile),
-                                                 this['cache']])
+                app.log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
+                app.config['reproduced'].append([md5(cachefile), dn['cache']])
                 return
             if response.status_code == 405:
                 # server has different md5 for this artifact
-                if this['kind'] == 'stratum' and app.config['reproduce']:
+                if dn['kind'] == 'stratum' and app.config['reproduce']:
                     app.log('BIT-FOR-BIT',
-                            'WARNING: reproduction failed for',
-                            this['cache'])
-                app.log(this, 'Artifact server already has', this['cache'])
+                            'WARNING: reproduction failed for', dn['cache'])
+                app.log(dn, 'Artifact server already has', dn['cache'])
                 return
-            app.log(this, 'Artifact server problem:', response.status_code)
+            app.log(dn, 'Artifact server problem:', response.status_code)
         except:
             pass
-        app.log(this, 'Failed to upload', this['cache'])
+        app.log(dn, 'Failed to upload', dn['cache'])
 
 
-def get_cache(defs, this):
-    ''' Check if a cached artifact exists for the hashed version of this. '''
+def get_cache(defs, dn):
+    ''' Check if a cached artifact exists for the hashed version of d. '''
 
-    if cache_key(defs, this) is False:
+    if cache_key(defs, dn) is False:
         return False
 
-    cachedir = os.path.join(app.config['artifacts'], cache_key(defs, this))
+    cachedir = os.path.join(app.config['artifacts'], cache_key(defs, dn))
     if os.path.isdir(cachedir):
         call(['touch', cachedir])
-        artifact = os.path.join(cachedir, cache_key(defs, this))
+        artifact = os.path.join(cachedir, cache_key(defs, dn))
         unpackdir = artifact + '.unpacked'
         if not os.path.isdir(unpackdir):
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             if call(['tar', 'xf', artifact, '--directory', tmpdir]):
-                app.log(this, 'Problem unpacking', artifact)
+                app.log(dn, 'Problem unpacking', artifact)
                 return False
             try:
                 shutil.move(tmpdir, unpackdir)
@@ -249,42 +246,42 @@ def get_cache(defs, this):
                 # artifact was uploaded from somewhere, and more than one
                 # instance is attempting to unpack. another got there first
                 pass
-        return os.path.join(cachedir, cache_key(defs, this))
+        return os.path.join(cachedir, cache_key(defs, dn))
 
     return False
 
 
-def get_remote(defs, this):
-    ''' If a remote cached artifact exists for this, retrieve it '''
-    if app.config.get('last-retry-component') == this or this.get('tried'):
+def get_remote(defs, dn):
+    ''' If a remote cached artifact exists for d, retrieve it '''
+    if app.config.get('last-retry-component') == dn or dn.get('tried'):
         return False
 
-    this['tried'] = True  # let's not keep asking for this artifact
+    dn['tried'] = True  # let's not keep asking for this artifact
 
-    if this.get('kind', 'chunk') not in app.config.get('kbas-upload', 'chunk'):
+    if dn.get('kind', 'chunk') not in app.config.get('kbas-upload', 'chunk'):
         return False
 
     try:
-        app.log(this, 'Try downloading', cache_key(defs, this))
-        url = app.config['kbas-url'] + 'get/' + cache_key(defs, this)
+        app.log(dn, 'Try downloading', cache_key(defs, dn))
+        url = app.config['kbas-url'] + 'get/' + cache_key(defs, dn)
         response = requests.get(url=url, stream=True)
     except:
         app.config.pop('kbas-url')
-        app.log(this, 'WARNING: remote artifact server is not working')
+        app.log(dn, 'WARNING: remote artifact server is not working')
         return False
 
     if response.status_code == 200:
         try:
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
-            cachefile = os.path.join(tmpdir, cache_key(defs, this))
+            cachefile = os.path.join(tmpdir, cache_key(defs, dn))
             with open(cachefile, 'wb') as f:
                 f.write(response.content)
 
-            return unpack(defs, this, cachefile)
+            return unpack(defs, dn, cachefile)
 
         except:
-            app.log(this, 'WARNING: failed downloading', cache_key(defs, this))
+            app.log(dn, 'WARNING: failed downloading', cache_key(defs, dn))
 
     return False
 

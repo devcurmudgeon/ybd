@@ -36,22 +36,22 @@ executor = None
 
 
 @contextlib.contextmanager
-def setup(this):
+def setup(dn):
     tempfile.tempdir = app.config['tmp']
-    this['sandbox'] = tempfile.mkdtemp()
+    dn['sandbox'] = tempfile.mkdtemp()
     os.environ['TMPDIR'] = app.config['tmp']
-    app.config['sandboxes'] += [this['sandbox']]
-    this['build'] = os.path.join(this['sandbox'], this['name'] + '.build')
-    this['install'] = os.path.join(this['sandbox'], this['name'] + '.inst')
-    this['baserockdir'] = os.path.join(this['install'], 'baserock')
-    this['tmp'] = os.path.join(this['sandbox'], 'tmp')
+    app.config['sandboxes'] += [dn['sandbox']]
+    dn['build'] = os.path.join(dn['sandbox'], dn['name'] + '.build')
+    dn['install'] = os.path.join(dn['sandbox'], dn['name'] + '.inst')
+    dn['baserockdir'] = os.path.join(dn['install'], 'baserock')
+    dn['tmp'] = os.path.join(dn['sandbox'], 'tmp')
     for directory in ['build', 'install', 'tmp', 'baserockdir']:
-        os.makedirs(this[directory])
-    this['log'] = os.path.join(app.config['artifacts'],
-                               this['cache'] + '.build-log')
+        os.makedirs(dn[directory])
+    dn['log'] = os.path.join(app.config['artifacts'],
+                             dn['cache'] + '.build-log')
     if app.config.get('instances'):
-        this['log'] += '.' + str(app.config.get('fork', 0))
-    assembly_dir = this['sandbox']
+        dn['log'] += '.' + str(app.config.get('fork', 0))
+    assembly_dir = dn['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
 
@@ -61,65 +61,65 @@ def setup(this):
         raise e
     except:
         import traceback
-        app.log(this, 'ERROR: surprise exception in sandbox', '')
+        app.log(dn, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
-        app.exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
+        app.exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
     finally:
         pass
 
-    app.log(this, "Removing sandbox dir", this['sandbox'], verbose=True)
-    app.remove_dir(this['sandbox'])
+    app.log(dn, "Removing sandbox dir", dn['sandbox'], verbose=True)
+    app.remove_dir(dn['sandbox'])
 
 
-def install(defs, this, component):
-    # populate this['sandbox'] with the artifact files from component
-    if os.path.exists(os.path.join(this['sandbox'], 'baserock',
+def install(defs, dn, component):
+    # populate dn['sandbox'] with the artifact files from component
+    if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
-    app.log(this, 'Sandbox: installing %s' % component['cache'], verbose=True)
+    app.log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
     if cache.get_cache(defs, component) is False:
-        app.exit(this, 'ERROR: unable to get cache for', component['name'])
+        app.exit(dn, 'ERROR: unable to get cache for', component['name'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
-    if this.get('kind') is 'system':
-        utils.copy_all_files(unpackdir, this['sandbox'])
+    if dn.get('kind') is 'system':
+        utils.copy_all_files(unpackdir, dn['sandbox'])
     else:
-        utils.hardlink_all_files(unpackdir, this['sandbox'])
+        utils.hardlink_all_files(unpackdir, dn['sandbox'])
 
 
-def ldconfig(this):
-    conf = os.path.join(this['sandbox'], 'etc', 'ld.so.conf')
+def ldconfig(dn):
+    conf = os.path.join(dn['sandbox'], 'etc', 'ld.so.conf')
     if os.path.exists(conf):
         path = os.environ['PATH']
         os.environ['PATH'] = '%s:/sbin:/usr/sbin:/usr/local/sbin' % path
-        cmd_list = ['ldconfig', '-r', this['sandbox']]
-        run_logged(this, cmd_list)
+        cmd_list = ['ldconfig', '-r', dn['sandbox']]
+        run_logged(dn, cmd_list)
         os.environ['PATH'] = path
     else:
-        app.log(this, 'No %s, not running ldconfig' % conf)
+        app.log(dn, 'No %s, not running ldconfig' % conf)
 
 
 def argv_to_string(argv):
     return ' '.join(map(pipes.quote, argv))
 
 
-def run_sandboxed(this, command, env=None, allow_parallel=False):
+def run_sandboxed(dn, command, env=None, allow_parallel=False):
     global executor
 
-    app.log(this, 'Running command:\n%s' % command)
-    with open(this['log'], "a") as logfile:
+    app.log(dn, 'Running command:\n%s' % command)
+    with open(dn['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
 
-    mounts = ccache_mounts(this, ccache_target=env['CCACHE_DIR'])
+    mounts = ccache_mounts(dn, ccache_target=env['CCACHE_DIR'])
 
-    if this.get('build-mode') == 'bootstrap':
+    if dn.get('build-mode') == 'bootstrap':
         # bootstrap mode: builds have some access to the host system, so they
         # can use the compilers etc.
         tmpdir = app.config.get("TMPDIR", "/tmp")
 
-        writable_paths = [this['build'], this['install'], tmpdir, ]
+        writable_paths = [dn['build'], dn['install'], tmpdir, ]
 
         config = dict(
-            cwd=this['build'],
+            cwd=dn['build'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
             mounts='isolated',
@@ -133,18 +133,15 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         mounts.extend([('tmpfs', '/dev/shm', 'tmpfs'),
                        ('proc', '/proc', 'proc'), ])
 
-        if this.get('kind') == 'system':
+        if dn.get('kind') == 'system':
             writable_paths = 'all'
         else:
-            writable_paths = [
-                this['name'] + '.build',
-                this['name'] + '.inst',
-                '/dev', '/proc', '/tmp',
-            ]
+            writable_paths = [dn['name'] + '.build', dn['name'] + '.inst',
+                              '/dev', '/proc', '/tmp', ]
 
         config = dict(
-            cwd=this['name'] + '.build',
-            filesystem_root=this['sandbox'],
+            cwd=dn['name'] + '.build',
+            filesystem_root=dn['sandbox'],
             filesystem_writable_paths=writable_paths,
             mounts='isolated',
             extra_mounts=mounts,
@@ -163,9 +160,9 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
         if not allow_parallel:
             env.pop("MAKEFLAGS", None)
 
-        app.log_env(this['log'], env, argv_to_string(argv))
+        app.log_env(dn['log'], env, argv_to_string(argv))
 
-        with open(this['log'], "a") as logfile:
+        with open(dn['log'], "a") as logfile:
             exit_code = 99
             try:
                 exit_code = executor.run_sandbox_with_redirection(
@@ -178,28 +175,28 @@ def run_sandboxed(this, command, env=None, allow_parallel=False):
                         exit_code)
 
         if exit_code != 0:
-            app.log(this, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(argv))
-            call(['tail', '-n', '200', this['log']])
-            app.log(this, 'ERROR: log file is at', this['log'])
-            app.exit(this, 'ERROR: sandbox debris is at', this['sandbox'])
+            call(['tail', '-n', '200', dn['log']])
+            app.log(dn, 'ERROR: log file is at', dn['log'])
+            app.exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
     finally:
         if cur_makeflags is not None:
             env['MAKEFLAGS'] = cur_makeflags
 
 
-def run_logged(this, cmd_list):
-    app.log_env(this['log'], os.environ, argv_to_string(cmd_list))
-    with open(this['log'], "a") as logfile:
+def run_logged(dn, cmd_list):
+    app.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
+    with open(dn['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
-            app.log(this, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(cmd_list))
-            call(['tail', '-n', '200', this['log']])
-            app.exit(this, 'ERROR: log file is at', this['log'])
+            call(['tail', '-n', '200', dn['log']])
+            app.exit(dn, 'ERROR: log file is at', dn['log'])
 
 
-def run_extension(this, deployment, step, method):
-    app.log(this, 'Running %s extension:' % step, method)
+def run_extension(dn, deployment, step, method):
+    app.log(dn, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
     tempfile.tempdir = app.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
@@ -220,7 +217,7 @@ def run_extension(this, deployment, step, method):
     command = ["env"] + envlist + [cmd_tmp.name]
 
     if step in ('write', 'configure'):
-        command.append(this['sandbox'])
+        command.append(dn['sandbox'])
 
     if step in ('write', 'check'):
         command.append(deployment.get('location') or
@@ -234,18 +231,18 @@ def run_extension(this, deployment, step, method):
             os.chmod(cmd_tmp.name, 0o700)
 
             if call(command):
-                app.log(this, 'ERROR: %s extension failed:' % step, cmd_bin)
+                app.log(dn, 'ERROR: %s extension failed:' % step, cmd_bin)
                 raise SystemExit
         finally:
             os.remove(cmd_tmp.name)
     return
 
 
-def ccache_mounts(this, ccache_target):
-    if app.config['no-ccache'] or 'repo' not in this:
+def ccache_mounts(dn, ccache_target):
+    if app.config['no-ccache'] or 'repo' not in dn:
         mounts = []
     else:
-        name = os.path.basename(get_repo_url(this['repo']))
+        name = os.path.basename(get_repo_url(dn['repo']))
         if name.endswith('.git'):
             name = name[:-4]
         ccache_dir = os.path.join(app.config['ccache_dir'], name)
@@ -256,7 +253,7 @@ def ccache_mounts(this, ccache_target):
     return mounts
 
 
-def env_vars_for_build(defs, this):
+def env_vars_for_build(defs, dn):
     env = {}
     extra_path = []
 
@@ -274,7 +271,7 @@ def env_vars_for_build(defs, this):
 
     prefixes = []
 
-    for name in this.get('build-depends', []):
+    for name in dn.get('build-depends', []):
         dependency = defs.get(name)
         prefixes.append(dependency.get('prefix', '/usr'))
     prefixes = set(prefixes)
@@ -283,20 +280,18 @@ def env_vars_for_build(defs, this):
             bin_path = os.path.join(prefix, 'bin')
             extra_path += [bin_path]
 
-    if this.get('build-mode') == 'bootstrap':
+    if dn.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
-        full_path = [os.path.normpath(this['sandbox'] + p) for p in rel_path]
+        full_path = [os.path.normpath(dn['sandbox'] + p) for p in rel_path]
         path = full_path + app.config['base-path']
-        env['DESTDIR'] = this.get('install')
+        env['DESTDIR'] = dn.get('install')
     else:
         path = extra_path + ccache_path + app.config['base-path']
-        env['DESTDIR'] = os.path.join('/',
-                                      os.path.basename(this.get('install')))
+        env['DESTDIR'] = os.path.join('/', os.path.basename(dn.get('install')))
 
     env['PATH'] = ':'.join(path)
-    env['PREFIX'] = this.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (this.get('max-jobs') or
-                                 app.config['max-jobs'])
+    env['PREFIX'] = dn.get('prefix') or '/usr'
+    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or app.config['max-jobs'])
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
@@ -316,16 +311,16 @@ def env_vars_for_build(defs, this):
     env['MORPH_ARCH'] = arch
     env['DEFINITIONS_REF'] = app.config['def-version']
     env['PROGRAM_REF'] = app.config['my-version']
-    if this.get('SOURCE_DATE_EPOCH'):
-        env['SOURCE_DATE_EPOCH'] = this['SOURCE_DATE_EPOCH']
+    if dn.get('SOURCE_DATE_EPOCH'):
+        env['SOURCE_DATE_EPOCH'] = dn['SOURCE_DATE_EPOCH']
 
     return env
 
 
-def create_devices(this):
+def create_devices(dn):
     perms_mask = stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO
-    for device in this['devices']:
-        destfile = os.path.join(this['install'], './' + device['filename'])
+    for device in dn['devices']:
+        destfile = os.path.join(dn['install'], './' + device['filename'])
         mode = int(device['permissions'], 8) & perms_mask
         if device['type'] == 'c':
             mode = mode | stat.S_IFCHR
@@ -335,7 +330,7 @@ def create_devices(this):
             raise IOError('Cannot create device node %s,'
                           'unrecognized device type "%s"'
                           % (destfile, device['type']))
-        app.log(this, "Creating device node", destfile)
+        app.log(dn, "Creating device node", destfile)
         os.mknod(destfile, mode, os.makedev(device['major'], device['minor']))
         os.chown(destfile, device['uid'], device['gid'])
 
