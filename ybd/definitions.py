@@ -44,17 +44,8 @@ class Definitions(object):
         self.defaults = Defaults()
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)
-        self._check_trees()
-
-        for path in self._data:
-            try:
-                dn = self._data[path]
-                if dn.get('ref') and self._trees.get(path):
-                    if dn['ref'] == self._trees.get(path)[0]:
-                        dn['tree'] = self._trees.get(path)[1]
-            except:
-                log('DEFINITIONS', 'WARNING: problem with .trees file')
-                pass
+        if self._check_trees():
+            self._set_trees()
 
     def parse_files(self, directory):
         schemas = self.load_schemas()
@@ -186,17 +177,12 @@ class Definitions(object):
                 item['path'] = item['name']
 
         item['path'] = self._demorph(item['path'])
-        item.setdefault('name', item['path'])
-        item['name'] = item['name'].replace('/', '-')
+        item.setdefault('name', item['path'].replace('/', '-'))
         if item['name'] == config['target']:
             config['target'] = item['path']
 
-        n = os.path.basename(item['name'])
-        if n.endswith('.morph'):
-            n = n.rpartition('.morph')[0]
-        p = os.path.basename(item['path'])
-        if p.endswith('.morph'):
-            p = p.rpartition('.morph')[0]
+        n = self._demorph(os.path.basename(item['name']))
+        p = self._demorph(os.path.basename(item['path']))
         if p not in n:
             if config.get('check-definitions') == 'warn':
                 log('DEFINITIONS',
@@ -252,8 +238,8 @@ class Definitions(object):
         return self._data.get(item.get('path', item.keys()[0]))
 
     def _demorph(self, path):
-        if path.endswith('.morph'):
-            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4]:
+        if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4]:
+            if path.endswith('.morph'):
                 path = path.rpartition('.morph')[0]
         return path
 
@@ -279,6 +265,18 @@ class Definitions(object):
             self._trees = {}
 
         return False
+
+    def _set_trees(self):
+        '''Use the tree values from .trees file, to save time'''
+        for path in self._data:
+            try:
+                dn = self._data[path]
+                if dn.get('ref') and self._trees.get(path):
+                    if dn['ref'] == self._trees.get(path)[0]:
+                        dn['tree'] = self._trees.get(path)[1]
+            except:
+                log('DEFINITIONS', 'WARNING: problem with .trees file')
+                pass
 
     def save_trees(self):
         '''Creates the .trees file for the current working directory
