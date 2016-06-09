@@ -255,17 +255,15 @@ def get_build_commands(dn):
         dn['install-commands'] = gather_integration_commands(dn)
         return
 
-    bs = dn.get('build-system', 'manual')
-    if dn.get('build-system', False):
+    if 'build-system' in dn:
+        bs = dn['build-system']
         log(dn, 'Defined build system is', bs)
     else:
-        if dn.get('kind', 'chunk') == 'chunk':
-            if 'install-commands' not in dn:
-                files = os.listdir(dn['build'])
-                bs = app.defs.defaults.detect_build_system(files)
-                if bs == 'NOT FOUND':
-                    exit(dn, 'ERROR: no build-system detected,',
-                         'and missing %s' % dn['path'])
+        files = os.listdir(dn['build'])
+        bs = app.defs.defaults.detect_build_system(files)
+        if bs == 'manual' and 'install-commands' not in dn:
+            if dn.get('kind', 'chunk') == 'chunk':
+                exit(dn, 'ERROR: no install-commands, manual build system', '')
         log(dn, 'WARNING: Assumed build system is', bs)
 
     for build_step in app.defs.defaults.build_steps:

@@ -97,4 +97,4 @@ class Defaults(object):
                 if any(x.endswith(indicator) for x in file_list):
                     return build_system
 
-        return 'NOT FOUND'
+        return 'manual'

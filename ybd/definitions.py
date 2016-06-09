@@ -154,7 +154,7 @@ class Definitions(object):
 
         return self._insert(item)
 
-    def _fix_keys(self, item, basepath=None):
+    def _fix_keys(self, item, base=None):
         '''Normalizes keys for a definition dict and its contents
 
         Some definitions have a 'morph' field which is a relative path. Others
@@ -169,15 +169,23 @@ class Definitions(object):
             if not os.path.isfile(item.get('morph')):
                 log('DEFINITION', 'WARNING: missing definition', item['morph'])
             item['path'] = self._demorph(item.pop('morph'))
+
         if 'path' not in item:
             if 'name' not in item:
                 exit(item, 'ERROR: no path, no name?')
-            item['path'] = os.path.join(self._demorph(basepath), item['name'])
             if config.get('artifact-version') in [0, 1, 2, 3, 4]:
                 item['path'] = item['name']
+            else:
+                item['path'] = os.path.join(self._demorph(base), item['name'])
+                if os.path.isfile(item['path'] + '.morph'):
+                    # morph file exists, but is not mentioned in stratum
+                    # so we ignore it
+                    log(item, 'WARNING: ignoring', item['path'] + '.morph')
+                    item['path'] += '.default'
 
         item['path'] = self._demorph(item['path'])
         item.setdefault('name', item['path'].replace('/', '-'))
+
         if item['name'] == config['target']:
             config['target'] = item['path']
 
