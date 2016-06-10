@@ -191,7 +191,7 @@ class Definitions(object):
 
         n = self._demorph(os.path.basename(item['name']))
         p = self._demorph(os.path.basename(item['path']))
-        if p not in n:
+        if os.path.splitext(p)[0] not in n:
             if config.get('check-definitions') == 'warn':
                 log('DEFINITIONS',
                     'WARNING: %s has wrong name' % item['path'], item['name'])
