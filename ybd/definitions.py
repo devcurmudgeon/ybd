@@ -25,16 +25,6 @@ from defaults import Defaults
 import jsonschema
 
 
-# copied from http://stackoverflow.com/questions/21016220
-class ExplicitDumper(yaml.SafeDumper):
-    """
-    A dumper that will never emit aliases.
-    """
-
-    def ignore_aliases(self, data):
-        return True
-
-
 class Definitions(object):
 
     def __init__(self, directory='.'):
@@ -64,14 +54,6 @@ class Definitions(object):
                             data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
-
-        if config.get('mode') == 'parse-only':
-            with open(config['result-file'], 'w') as f:
-                f.write(yaml.dump(self._data, default_flow_style=False,
-                                  Dumper=ExplicitDumper))
-            log('RESULT', 'Parsed definitions data in yaml format is at',
-                config['result-file'])
-            os._exit(0)
 
     def load_schemas(self):
         log('SCHEMAS', 'Validation is', config.get('schema-validation', 'off'))

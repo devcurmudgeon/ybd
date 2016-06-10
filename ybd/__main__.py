@@ -27,6 +27,32 @@ from definitions import Definitions
 import cache
 import sandbox
 import sandboxlib
+import yaml
+
+
+# copied from http://stackoverflow.com/questions/21016220
+class ExplicitDumper(yaml.SafeDumper):
+    """
+    A dumper that will never emit aliases.
+    """
+
+    def ignore_aliases(self, data):
+        return True
+
+
+def write_yaml():
+    with open(app.config['result-file'], 'w') as f:
+        f.write(yaml.dump(app.defs._data, default_flow_style=False,
+                          Dumper=ExplicitDumper))
+    app.log('RESULT', 'Parsed definitions data in yaml format is at',
+            app.config['result-file'])
+
+
+def write_cache_key():
+    with open(app.config['result-file'], 'w') as f:
+        f.write(target['cache'] + '\n')
+    app.log('RESULT', 'Cache-key for target is at',
+            app.config['result-file'])
 
 
 print('')
@@ -50,21 +76,24 @@ with app.timer('TOTAL'):
     with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
         app.defs = Definitions()
     target = app.defs.get(app.config['target'])
+
+    if app.config.get('mode', 'normal') == 'parse-only':
+        write_yaml()
+        os._exit(0)
+
     with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
 
-    cache.cull(app.config['artifacts'])
     if app.config['total'] == 0 or (app.config['total'] == 1 and
                                     target.get('kind') == 'cluster'):
         app.exit('ARCH', 'ERROR: no definitions found for', app.config['arch'])
 
     app.defs.save_trees()
     if app.config.get('mode', 'normal') == 'keys-only':
-        with open(app.config['result-file'], 'w') as f:
-            f.write(target['cache'] + '\n')
-        app.log('RESULT', 'Cache-key for target is at',
-                app.config['result-file'])
+        write_cache_key()
         os._exit(0)
+
+    cache.cull(app.config['artifacts'])
 
     sandbox.executor = sandboxlib.executor_for_platform()
     app.log(app.config['target'], 'Sandbox using %s' % sandbox.executor)
