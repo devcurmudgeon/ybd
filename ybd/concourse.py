@@ -17,74 +17,72 @@
 import sys
 import yaml
 import os
-from app import config, exit, log, setup, timer
+import app
+from app import exit, log, setup, timer, defs
 from definitions import Definitions
 import cache
 from repos import get_repo_url
 
-
-def inputs(defs, target):
-    target = defs.get(target)
-    resources = []
-    for it in target.get('contents', []) + target.get('build-depends', []):
-        component = defs.get(it)
-        if component.get('repo'):
-            resource = {'name': component['name'],
-                        'type': 'git',
-                        'source': {'uri': get_repo_url(component['repo']),
-                                   'branch': component['ref']}}
-        else:
-            resource = {'name': component['name'], 'type': 'foo'}
-
-        resources += [resource]
-    return resources
+# Concourse data model:
+# a 'resource' is an input line into a box
+# a 'job' is a box on the diagram
+# a 'job' has a 'plan' - a set of 'tasks' which operate on 'resources'
 
 
-def plan(defs, target):
-    return
+class Pipeline(object):
 
+    def __init__(self, dn):
 
-def job(defs, target):
-    component = defs.get(target)
-    return
+        self.resources = [{'name': ' ', 'type': 'foo'}]
+        self.jobs = []
+        self.config = {'run': {'path': 'ybd', 'args': []},
+                       'platform': 'linux',
+                       'image': 'docker:///devcurmudgeon/foo'}
 
+        self.write_pipeline(dn)
+        output = defs.get(dn)['name'] + '.yml'
+        with open(output, 'w') as f:
+            pipeline = {'resources': self.resources, 'jobs': self.jobs}
+            f.write(yaml.dump(pipeline, default_flow_style=False))
+        log('CONCOURSE', 'pipeline is at', output)
 
-def write_pipeline(defs, target):
-    target = defs.get(target)
-    config = {'run': {'path': 'ybd', 'args': []},
-              'platform': 'linux',
-              'image': 'docker:///devcurmudgeon/foo'}
+    def write_pipeline(self, dn):
+        dn = defs.get(dn)
+        self.add_resource(dn)
+        aggregate = []
+        passed = []
+        for it in dn.get('build-depends', []) + dn.get('contents', []):
+            component = defs.get(it)
+            self.add_resource(component)
+            if component.get('kind', 'chunk') == 'chunk':
+                aggregate += [{'get': component['name']}]
+            else:
+                self.write_pipeline(component)
+                aggregate += [{'get': ' ', 'passed': [component['name']]}]
 
-    aggregate = []
-    passed = []
-    for it in target.get('contents', []) + target.get('build-depends', []):
-        component = defs.get(it)
-        if component.get('repo'):
-            log('AGGREGATE', 'Adding aggregate for', component['name'])
-            aggregate += [{'get': component['name']}]
-        else:
-            log('PASSED', 'Adding passed for', component['name'])
-            aggregate += [{'get': component['name']}]
-            passed += [component['name']]
+        self.add_job(dn, [{'aggregate': aggregate}, {'put': ' '}])
 
-    plan = [{'task': 'Build', 'config': config}, {'aggregate': aggregate}]
-    job = {'name': target['name'], 'plan': plan, 'passed': passed}
-    pipeline = {'resources': inputs(defs, target), 'jobs': [job]}
+    def add_job(self, component, plan):
+        found = False
+        for job in self.jobs:
+            if job['name'] == component['name']:
+                found = True
+                for i in plan:
+                    if i not in job['plan']:
+                        job['plan'] += i
+        if not found:
+            self.jobs += [{'name': component['name'], 'plan': plan}]
 
-    output = './pipeline.yml'
-    with open(output, 'w') as f:
-        f.write(yaml.dump(pipeline, default_flow_style=False))
-
-    exit('CONCOURSE', 'pipeline is at', output)
-
-
-setup(sys.argv)
-
-with timer('TOTAL'):
-    target = os.path.join(config['defdir'], config['target'])
-    log('TARGET', 'Target is %s' % target, config['arch'])
-    with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
-        defs = Definitions()
-    with timer('CACHE-KEYS', 'cache-key calculations'):
-        cache.cache_key(defs, config['target'])
-    write_pipeline(defs, config['target'])
+    def add_resource(self, component):
+        found = False
+        for resource in self.resources:
+            if resource['name'] == component['name']:
+                found = True
+        if not found:
+            if component.get('kind', 'chunk') == 'chunk':
+                self.resources += [{'name': component['name'],
+                                    'type': 'git',
+                                    'source': {'uri': component.get('repo'),
+                                               'branch': 'master'}}]
+            else:
+                self.resources += [{'name': component['name'], 'type': 'foo'}]

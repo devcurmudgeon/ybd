@@ -40,13 +40,14 @@ class ExplicitDumper(yaml.SafeDumper):
         return True
 
 
-def write_yaml():
+def write_yaml(target):
     with open(app.config['result-file'], 'w') as f:
         f.write(yaml.dump(app.defs._data, default_flow_style=False,
                           Dumper=ExplicitDumper))
-    app.log('RESULT', 'Parsed definitions data in yaml format is at',
-            app.config['result-file'])
-
+    app.log('RESULT', 'Dumped yaml definitions at', app.config['result-file'])
+    if target:
+        import concourse
+        concourse.Pipeline(app.config['target'])
 
 def write_cache_key():
     with open(app.config['result-file'], 'w') as f:
@@ -84,7 +85,7 @@ with app.timer('TOTAL'):
     target = app.defs.get(app.config['target'])
 
     if app.config.get('mode', 'normal') == 'parse-only':
-        write_yaml()
+        write_yaml(target)
         os._exit(0)
 
     with app.timer('CACHE-KEYS', 'cache-key calculations'):

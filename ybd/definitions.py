@@ -131,6 +131,11 @@ class Definitions(object):
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
 
+            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4, 5]:
+                dn = self._data.get(component['path'])
+                if dn and 'build-depends' in dn:
+                    component['build-depends'] += dn['build-depends']
+
             splits = component.get('artifacts', [])
             item['contents'][index] = {self._insert(component): splits}
 
