@@ -51,6 +51,12 @@ def write_yaml():
 def write_cache_key():
     with open(app.config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
+    app.log('RESULT', '%s contains %s systems' % (app.config['target'],
+                                                  app.config['systems']))
+    app.log('RESULT', '%s contains %s strata' % (app.config['target'],
+                                                 app.config['strata']))
+    app.log('RESULT', '%s contains %s chunks' % (app.config['target'],
+                                                 app.config['chunks']))
     app.log('RESULT', 'Cache-key for target is at',
             app.config['result-file'])
 

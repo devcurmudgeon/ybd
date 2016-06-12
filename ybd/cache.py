@@ -64,6 +64,13 @@ def cache_key(dn):
         x = ' '
         app.config['tasks'] += 1
 
+    if dn.get('kind', 'chunk') == 'chunk':
+        app.config['chunks'] += 1
+    if dn.get('kind', 'chunk') == 'stratum':
+        app.config['strata'] += 1
+    if dn.get('kind', 'chunk') == 'system':
+        app.config['systems'] += 1
+
     app.log('CACHE-KEYS', '[%s]' % x, dn['cache'])
     if app.config.get('manifest', False):
         update_manifest(dn, app.config['manifest'])

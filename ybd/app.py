@@ -166,6 +166,7 @@ def setup(args):
             config['kbas-url'] += '/'
 
     config['total'] = config['tasks'] = config['counter'] = 0
+    config['systems'] = config['strata'] = config['chunks'] = 0
     config['reproduced'] = []
     config['keys'] = []
     config['pid'] = os.getpid()
