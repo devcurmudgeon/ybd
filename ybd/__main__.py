@@ -54,7 +54,7 @@ def write_cache_key():
     with open(config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
     for kind in ['systems', 'strata', 'chunks']:
-        log('RESULT', '%s has %s %s' % (config['target'], config[kind], kind))
+        log('COUNT', '%s has %s %s' % (config['target'], config[kind], kind))
     log('RESULT', 'Cache-key for target is at', config['result-file'])
 
 
@@ -92,8 +92,8 @@ with timer('TOTAL'):
         exit('ARCH', 'ERROR: no definitions found for', config['arch'])
 
     app.defs.save_trees()
+    write_cache_key()
     if config.get('mode', 'normal') == 'keys-only':
-        write_cache_key()
         os._exit(0)
 
     cache.cull(config['artifacts'])
