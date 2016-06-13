@@ -21,7 +21,6 @@ import os
 import sys
 import fcntl
 import app
-from app import cleanup, config, log, RetryException, setup, spawn, timer
 from assembly import compose
 from deployment import deploy
 from definitions import Definitions
@@ -42,20 +41,25 @@ class ExplicitDumper(yaml.SafeDumper):
 
 
 def write_yaml(target):
-    with open(config['result-file'], 'w') as f:
+    with open(app.config['result-file'], 'w') as f:
         f.write(yaml.dump(app.defs._data, default_flow_style=False,
                           Dumper=ExplicitDumper))
-    log('RESULT', 'Dumped yaml definitions at', config['result-file'])
+    app.log('RESULT', 'Dumped yaml definitions at', app.config['result-file'])
     if target:
         import concourse
-        concourse.Pipeline(config['target'])
+        concourse.Pipeline(app.config['target'])
 
 def write_cache_key():
-    with open(config['result-file'], 'w') as f:
+    with open(app.config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
-    for kind in ['systems', 'strata', 'chunks']:
-        log('RESULT', '%s has %s %s' % (config['target'], config[kind], kind))
-    log('RESULT', 'Cache-key for target is at', config['result-file'])
+    app.log('RESULT', '%s contains %s systems' % (app.config['target'],
+                                                  app.config['systems']))
+    app.log('RESULT', '%s contains %s strata' % (app.config['target'],
+                                                 app.config['strata']))
+    app.log('RESULT', '%s contains %s chunks' % (app.config['target'],
+                                                 app.config['chunks']))
+    app.log('RESULT', 'Cache-key for target is at',
+            app.config['result-file'])
 
 
 print('')
@@ -67,67 +71,68 @@ if not os.path.exists('./VERSION'):
             if os.path.isdir(os.path.join(os.getcwd(), '..', 'definitions')):
                 os.chdir(os.path.join(os.getcwd(), '..', 'definitions'))
 
-setup(sys.argv)
-cleanup(config['tmp'])
+app.setup(sys.argv)
+app.cleanup(app.config['tmp'])
 
-with timer('TOTAL'):
-    tmp_lock = open(os.path.join(config['tmp'], 'lock'), 'r')
+with app.timer('TOTAL'):
+    tmp_lock = open(os.path.join(app.config['tmp'], 'lock'), 'r')
     fcntl.flock(tmp_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
 
-    target = os.path.join(config['defdir'], config['target'])
-    log('TARGET', 'Target is %s' % target, config['arch'])
-    with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
+    target = os.path.join(app.config['defdir'], app.config['target'])
+    app.log('TARGET', 'Target is %s' % target, app.config['arch'])
+    with app.timer('DEFINITIONS', 'parsing %s' % app.config['def-version']):
         app.defs = Definitions()
-    target = app.defs.get(config['target'])
+    target = app.defs.get(app.config['target'])
 
-    if config.get('mode', 'normal') == 'parse-only':
+    if app.config.get('mode', 'normal') == 'parse-only':
         write_yaml(target)
         os._exit(0)
 
-    with timer('CACHE-KEYS', 'cache-key calculations'):
+    with app.timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
 
-    if config['total'] == 0 or (config['total'] == 1 and
-                                target.get('kind') == 'cluster'):
-        exit('ARCH', 'ERROR: no definitions found for', config['arch'])
+    if app.config['total'] == 0 or (app.config['total'] == 1 and
+                                    target.get('kind') == 'cluster'):
+        app.exit('ARCH', 'ERROR: no definitions found for', app.config['arch'])
 
-    defs.save_trees()
-    if config.get('mode', 'normal') == 'keys-only':
+    app.defs.save_trees()
+    if app.config.get('mode', 'normal') == 'keys-only':
         write_cache_key()
         os._exit(0)
 
-    cache.cull(config['artifacts'])
+    cache.cull(app.config['artifacts'])
 
     sandbox.executor = sandboxlib.executor_for_platform()
-    log(config['target'], 'Sandbox using %s' % sandbox.executor)
+    app.log(app.config['target'], 'Sandbox using %s' % sandbox.executor)
     if sandboxlib.chroot == sandbox.executor:
-        log(config['target'], 'WARNING: using chroot is less safe ' +
-            'than using linux-user-chroot')
+        app.log(app.config['target'], 'WARNING: using chroot is less safe ' +
+                'than using linux-user-chroot')
 
-    if 'instances' in config:
-        spawn()
+    if 'instances' in app.config:
+        app.spawn()
 
     while True:
         try:
             compose(target)
             break
         except KeyboardInterrupt:
-            log(target, 'Interrupted by user')
+            app.log(target, 'Interrupted by user')
             os._exit(1)
-        except RetryException:
+        except app.RetryException:
             pass
         except:
             import traceback
             traceback.print_exc()
-            log(target, 'Exiting: uncaught exception')
+            app.log(target, 'Exiting: uncaught exception')
             os._exit(1)
 
-    if config.get('reproduce'):
-        log('REPRODUCED',
-            'Matched %s of' % len(config['reproduced']), config['tasks'])
-        for match in config['reproduced']:
+    if app.config.get('reproduce'):
+        app.log('REPRODUCED',
+                'Matched %s of' % len(app.config['reproduced']),
+                app.config['tasks'])
+        for match in app.config['reproduced']:
             print match[0], match[1]
 
-    if target.get('kind') == 'cluster' and config.get('fork') is None:
-        with timer(target, 'cluster deployment'):
+    if target.get('kind') == 'cluster' and app.config.get('fork') is None:
+        with app.timer(target, 'cluster deployment'):
             deploy(target)
