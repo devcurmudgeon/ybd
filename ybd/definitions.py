@@ -14,12 +14,10 @@
 #
 # =*= License: GPL-2 =*=
 
-import json
 import yaml
 import os
 from app import chdir, config, log, exit
-import cache
-from subprocess import check_output, PIPE
+from subprocess import check_output
 import hashlib
 from defaults import Defaults
 import jsonschema

@@ -15,11 +15,10 @@
 # =*= License: GPL-2 =*=
 
 import os
-import json
 import re
 import shutil
 import string
-from subprocess import call, check_output, check_call
+from subprocess import call, check_output
 import sys
 
 import requests

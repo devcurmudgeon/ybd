@@ -16,20 +16,16 @@
 
 import os
 import random
-from subprocess import call, check_output
 import contextlib
 import fcntl
 import errno
 
-import json
 import app
-from app import config, chdir, exit, timer, elapsed
+from app import config, exit, timer, elapsed
 from app import log, log_riemann, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
-from shutil import copyfile
-import time
 import datetime
 from splitting import write_metadata, install_split_artifacts
 

@@ -18,12 +18,9 @@ import app
 from app import config, exit, log
 from cache import get_cache
 import os
-import glob
 import re
-import assembly
 import yaml
 import utils
-from collections import OrderedDict
 from fs.osfs import OSFS
 
 

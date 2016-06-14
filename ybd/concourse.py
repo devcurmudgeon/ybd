@@ -14,14 +14,8 @@
 #
 # =*= License: GPL-2 =*=
 
-import sys
 import yaml
-import os
-import app
-from app import exit, log, setup, timer, defs
-from definitions import Definitions
-import cache
-from repos import get_repo_url
+from app import log, timer, defs
 
 # Concourse data model:
 # a 'resource' is an input line into a box
@@ -50,7 +44,6 @@ class Pipeline(object):
         dn = defs.get(dn)
         self.add_resource(dn)
         aggregate = []
-        passed = []
         for it in dn.get('build-depends', []) + dn.get('contents', []):
             component = defs.get(it)
             self.add_resource(component)

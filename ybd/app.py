@@ -22,10 +22,8 @@ import shutil
 import sys
 import warnings
 import yaml
-from multiprocessing import cpu_count, Process, Value, Lock
-from subprocess import call, check_output
-import platform
-import hashlib
+from multiprocessing import cpu_count, Value, Lock
+from subprocess import call
 from fs.osfs import OSFS  # not used here, but we import it to check install
 from repos import get_version
 from cache import cache_key
@@ -283,7 +281,6 @@ def timer(dn, message=''):
     log(dn, 'Starting ' + message)
     if type(dn) is dict:
         dn['start-time'] = starttime
-    do_log = True
     try:
         yield
     except:
