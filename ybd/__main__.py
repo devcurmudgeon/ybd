@@ -50,6 +50,7 @@ def write_yaml(target):
         import concourse
         concourse.Pipeline(config['target'])
 
+
 def write_cache_key():
     with open(config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
