@@ -21,7 +21,7 @@ import os
 import sys
 import fcntl
 import app
-from app import cleanup, config, log, RetryException, setup, spawn, timer
+from app import cleanup, config, exit, log, RetryException, setup, spawn, timer
 from assembly import compose
 from deployment import deploy
 from definitions import Definitions
