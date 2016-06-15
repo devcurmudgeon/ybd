@@ -59,15 +59,13 @@ class Definitions(object):
                 for x in config.get('schemas')}
 
     def validate_schema(self, schemas, data):
-        if schemas == {} or \
-                config.get('schema-validation', False) is False:
+        if config.get('schema-validation', False) is False:
             return
         try:
             jsonschema.validate(data, schemas[data.get('kind', None)])
         except jsonschema.exceptions.ValidationError as e:
             if config.get('schema-validation') == 'strict':
                 exit(data, 'ERROR: schema validation failed:\n', e)
-
             log(data, 'WARNING: schema validation failed:')
             print e
 
