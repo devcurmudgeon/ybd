@@ -81,8 +81,10 @@ with timer('TOTAL'):
         app.defs = Definitions()
     target = app.defs.get(config['target'])
 
-    if config.get('mode', 'normal') == 'parse-only':
+    if config.get('mode', 'normal') in ['parse-only', 'no-build']:
         write_yaml(target)
+
+    if config.get('mode', 'normal') == 'parse-only':
         os._exit(0)
 
     with timer('CACHE-KEYS', 'cache-key calculations'):
@@ -93,8 +95,8 @@ with timer('TOTAL'):
         exit('ARCH', 'ERROR: no definitions found for', config['arch'])
 
     app.defs.save_trees()
-    write_cache_key()
     if config.get('mode', 'normal') == 'keys-only':
+        write_cache_key()
         os._exit(0)
 
     cache.cull(config['artifacts'])
