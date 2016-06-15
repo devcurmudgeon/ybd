@@ -133,7 +133,7 @@ class Definitions(object):
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
 
-            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4, 5]:
+            if config.get('artifact-version', 0) not in range(0, 5):
                 dn = self._data.get(component['path'])
                 if dn and 'build-depends' in dn:
                     component['build-depends'] += dn['build-depends']
@@ -162,7 +162,7 @@ class Definitions(object):
         if 'path' not in item:
             if 'name' not in item:
                 exit(item, 'ERROR: no path, no name?')
-            if config.get('artifact-version') in [0, 1, 2, 3, 4]:
+            if config.get('artifact-version') in range(0, 4):
                 item['path'] = item['name']
             else:
                 item['path'] = os.path.join(self._demorph(base), item['name'])
@@ -235,7 +235,7 @@ class Definitions(object):
         return self._data.get(item.get('path', item.keys()[0]))
 
     def _demorph(self, path):
-        if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4]:
+        if config.get('artifact-version', 0) not in range(0, 4):
             if path.endswith('.morph'):
                 path = path.rpartition('.morph')[0]
         return path

@@ -79,7 +79,7 @@ def install_split_artifacts(component, stratum, artifacts):
                 split_metadata = {'ref': metadata.get('ref'),
                                   'repo': metadata.get('repo'),
                                   'products': []}
-                if config.get('artifact-version', 0) not in [0, 1]:
+                if config.get('artifact-version', 0) not in range(0, 1):
                     metadata['cache'] = component.get('cache')
 
                 for product in metadata['products']:
@@ -236,7 +236,7 @@ def write_stratum_metafiles(stratum):
                           'repo': metadata.get('repo'),
                           'products': []}
 
-        if config.get('artifact-version', 0) not in [0, 1]:
+        if config.get('artifact-version', 0) not in range(0, 1):
             split_metadata['cache'] = metadata.get('cache')
 
         chunk_artifacts = app.defs.get(chunk).get('artifacts', {})
@@ -267,11 +267,11 @@ def write_metafile(rules, splits, component):
         metadata['repo'] = component.get('repo')
         metadata['ref'] = component.get('ref')
     else:
-        if config.get('artifact-version', 0) not in [0, 1, 2]:
+        if config.get('artifact-version', 0) not in range(0, 2):
             metadata['repo'] = config['defdir']
             metadata['ref'] = config['def-version']
 
-    if config.get('artifact-version', 0) not in [0, 1]:
+    if config.get('artifact-version', 0) not in range(0, 1):
         metadata['cache'] = component.get('cache')
 
     meta = os.path.join(component['baserockdir'], component['name'] + '.meta')

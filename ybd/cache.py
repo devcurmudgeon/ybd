@@ -109,7 +109,7 @@ def hash_factors(dn):
     if app.config.get('artifact-version', False):
         hash_factors['artifact-version'] = app.config.get('artifact-version')
 
-        if app.config.get('artifact-version', 0) in [0, 1, 2]:
+        if app.config.get('artifact-version', 0) in range(0, 2):
             # this way, any change to any build-system invalidates all caches
             hash_factors['default-build-systems'] = \
                 app.defs.defaults.build_systems
