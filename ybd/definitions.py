@@ -122,7 +122,13 @@ class Definitions(object):
                 log(item, 'WARNING: %s contains' % item['path'], item['name'])
 
             for x, it in enumerate(component.get('build-depends', [])):
-                component['build-depends'][x] = lookup.get(it, it)
+                if not it in lookup:
+                    # it is defined as a build depend, but hasn't actually been
+                    # defined yet...
+                    dependency = {'name': it}
+                    self._fix_keys(dependency,  item['path'])
+                    lookup[it] = dependency['path']
+                component['build-depends'][x] = lookup[it]
 
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
