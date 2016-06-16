@@ -48,7 +48,8 @@ class Definitions(object):
                         path = os.path.join(dirname, filename)
                         data = self._load(path)
                         if data is not None:
-                            self.validate_schema(schemas, data)
+                            if config.get('schema-validation'):
+                                self.validate_schema(schemas, data)
                             data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
@@ -59,8 +60,6 @@ class Definitions(object):
                 for x in config.get('schemas')}
 
     def validate_schema(self, schemas, data):
-        if config.get('schema-validation', False) is False:
-            return
         try:
             jsonschema.validate(data, schemas[data.get('kind', None)])
         except jsonschema.exceptions.ValidationError as e:
