@@ -20,10 +20,9 @@ from app import chdir, config, log, exit
 from subprocess import check_output
 import hashlib
 from defaults import Defaults
-import jsonschema
 
 
-class Definitions(object):
+class Morphs(object):
 
     def __init__(self, directory='.'):
         '''Load all definitions from a directory tree.'''
@@ -32,10 +31,8 @@ class Definitions(object):
         self.defaults = Defaults()
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)
-        self._set_trees()
 
     def parse_files(self, directory):
-        schemas = self.load_schemas()
         with chdir(directory):
             for dirname, dirnames, filenames in os.walk('.'):
                 filenames.sort()
@@ -52,20 +49,6 @@ class Definitions(object):
                             data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
-
-    def load_schemas(self):
-        log('SCHEMAS', 'Validation is', config.get('schema-validation', 'off'))
-        return {x: self._load(config['schemas'][x])
-                for x in config.get('schemas')}
-
-    def validate_schema(self, schemas, data):
-        try:
-            jsonschema.validate(data, schemas[data.get('kind', None)])
-        except jsonschema.exceptions.ValidationError as e:
-            if config.get('schema-validation') == 'strict':
-                exit(data, 'ERROR: schema validation failed:\n', e)
-            log(data, 'WARNING: schema validation failed:')
-            print e
 
     def _load(self, path):
         '''Load a single definition file as a dict.
@@ -213,59 +196,8 @@ class Definitions(object):
 
         return new_def['path']
 
-    def get(self, item):
-        '''Return a definition from the dictionary.
-
-        If `item` is a string, return the definition with that key.
-
-        If `item` is a dict, return the definition with key equal
-        to the 'path' value in the given dict.
-
-        '''
-        if type(item) is str:
-            return self._data.get(item)
-
-        return self._data.get(item.get('path', item.keys()[0]))
-
     def _demorph(self, path):
         if config.get('artifact-version', 0) not in range(0, 4):
             if path.endswith('.morph'):
                 path = path.rpartition('.morph')[0]
         return path
-
-    def _set_trees(self):
-        '''Use the tree values from .trees file, to save time'''
-        with open('.trees') as f:
-            text = f.read()
-        self._trees = yaml.safe_load(text)
-        for path in self._data:
-            try:
-                dn = self._data[path]
-                if dn.get('ref') and self._trees.get(path):
-                    if dn['ref'] == self._trees.get(path)[0]:
-                        dn['tree'] = self._trees.get(path)[1]
-            except:
-                log('DEFINITIONS', 'WARNING: problem with .trees file')
-                pass
-
-    def save_trees(self):
-        '''Creates the .trees file for the current working directory
-
-        .trees contains a list of git trees for all the definitions, and a
-        checksum for the state of the working subdirectories
-        '''
-        with chdir(config['defdir']):
-            try:
-                checksum = check_output('ls -lRA */', shell=True)
-            except:
-                checksum = check_output('ls -lRA .', shell=True)
-        checksum = hashlib.md5(checksum).hexdigest()
-        self._trees = {'.checksum': checksum}
-        for name in self._data:
-            if self._data[name].get('tree') is not None:
-                self._trees[name] = [self._data[name]['ref'],
-                                     self._data[name]['tree'],
-                                     self._data[name].get('cache')]
-
-        with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
-            f.write(yaml.safe_dump(self._trees, default_flow_style=False))

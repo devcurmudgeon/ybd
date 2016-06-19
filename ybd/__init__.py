@@ -18,6 +18,7 @@ import assembly
 import cache
 import defaults
 import definitions
+import pots
 import deployment
 import repos
 import sandbox

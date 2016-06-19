@@ -24,31 +24,11 @@ import app
 from app import cleanup, config, exit, log, RetryException, setup, spawn, timer
 from assembly import compose
 from deployment import deploy
-from definitions import Definitions
+from pots import Pots
 import cache
 import sandbox
 import sandboxlib
 import yaml
-
-
-# copied from http://stackoverflow.com/questions/21016220
-class ExplicitDumper(yaml.SafeDumper):
-    """
-    A dumper that will never emit aliases.
-    """
-
-    def ignore_aliases(self, data):
-        return True
-
-
-def write_yaml(target):
-    with open(config['result-file'], 'w') as f:
-        f.write(yaml.dump(app.defs._data, default_flow_style=False,
-                          Dumper=ExplicitDumper))
-    log('RESULT', 'Dumped yaml definitions at', config['result-file'])
-    if target:
-        import concourse
-        concourse.Pipeline(config['target'])
 
 
 def write_cache_key():
@@ -78,9 +58,8 @@ with timer('TOTAL'):
     target = os.path.join(config['defdir'], config['target'])
     log('TARGET', 'Target is %s' % target, config['arch'])
     with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
-        app.defs = Definitions()
+        app.defs = Pots()
     target = app.defs.get(config['target'])
-
     if config.get('mode', 'normal') in ['parse-only', 'no-build']:
         write_yaml(target)
 
