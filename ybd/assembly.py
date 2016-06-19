@@ -30,49 +30,49 @@ import datetime
 from splitting import write_metadata, install_split_artifacts
 
 
-def compose(component):
+def compose(dn):
     '''Work through defs tree, building and assembling until target exists'''
 
-    if type(component) is not dict:
-        component = app.defs.get(component)
+    if type(dn) is not dict:
+        dn = app.defs.get(dn)
 
     # if we can't calculate cache key, we can't create this component
-    if cache_key(component) is False:
-        if 'tried' not in component:
-            log(component, 'No cache_key, so skipping compose')
-            component['tried'] = True
+    if cache_key(dn) is False:
+        if 'tried' not in dn:
+            log(dn, 'No cache_key, so skipping compose')
+            dn['tried'] = True
         return False
 
-    # if this component is already cached, we're done
-    if get_cache(component):
-        return cache_key(component)
+    # if dn is already cached, we're done
+    if get_cache(dn):
+        return cache_key(dn)
 
-    log(component, "Composing", component['name'], verbose=True)
+    log(dn, "Composing", dn['name'], verbose=True)
 
     # if we have a kbas, look there to see if this component exists
     if config.get('kbas-url') and not config.get('reproduce'):
-        with claim(component):
-            if get_remote(component):
+        with claim(dn):
+            if get_remote(dn):
                 config['counter'].increment()
-                return cache_key(component)
+                return cache_key(dn)
 
     # we only work with user-specified arch
-    if 'arch' in component and component['arch'] != config['arch']:
+    if 'arch' in dn and dn['arch'] != config['arch']:
         return None
 
     # Create composite components (strata, systems, clusters)
-    systems = component.get('systems', [])
+    systems = dn.get('systems', [])
     shuffle(systems)
     for system in systems:
         compose(system['path'])
         for subsystem in system.get('subsystems', []):
             compose(subsystem)
 
-    with sandbox.setup(component):
-        install_contents(component)
-        build(component)     # bring in 'build-depends', and run make
+    with sandbox.setup(dn):
+        install_contents(dn)
+        build(dn)     # bring in 'build-depends', and run make
 
-    return cache_key(component)
+    return cache_key(dn)
 
 
 def install_contents(component, contents=None):
