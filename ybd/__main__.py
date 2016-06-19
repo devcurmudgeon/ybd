@@ -26,6 +26,7 @@ from assembly import compose
 from deployment import deploy
 from pots import Pots
 import cache
+from release_note import do_release_note
 import sandbox
 import sandboxlib
 import yaml
@@ -59,6 +60,9 @@ with timer('TOTAL'):
     log('TARGET', 'Target is %s' % target, config['arch'])
     with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
         app.defs = Pots()
+        if 'release-note' in config:
+            do_release_note(config['release-note'])
+
     target = app.defs.get(config['target'])
     if config.get('mode', 'normal') in ['parse-only', 'no-build']:
         write_yaml(target)

@@ -14,6 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
+import contextlib
 import os
 import re
 import shutil
@@ -80,7 +81,7 @@ def get_last_tag(gitdir):
     try:
         with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             tag = check_output(['git', 'describe', '--abbrev=0',
-                                '--tags', ref], stderr=fnull)[0:-1]
+                                '--tags', 'HEAD'], stderr=fnull)[0:-1]
         return tag
     except:
         return None
@@ -215,11 +216,6 @@ def source_date_epoch(checkout):
         return check_output(['git', 'log', '-1', '--pretty=%ct'])[:-1]
 
 
-def run(args, dir='.'):
-    with app.chdir(dir), open(os.devnull, "w") as fnull:
-        ret = call(['git'] + args)
-
-
 def extract_commit(name, repo, ref, target_dir):
     '''Check out a single commit (or tree) from a Git repo.
     The checkout() function actually clones the entire repo, so this
@@ -291,3 +287,16 @@ def checkout_submodules(dn):
 
         except:
             app.exit(dn, "ERROR: git submodules problem", "")
+
+
+@contextlib.contextmanager
+def explore(ref):
+    try:
+        call(['git', 'stash', '--include-untracked'])
+        head = get_version('.').split(' ')[1]
+        call(['git', 'checkout', ref])
+        yield
+
+    finally:
+        call(['git', 'checkout', head])
+        call(['git', 'stash', 'pop'])
