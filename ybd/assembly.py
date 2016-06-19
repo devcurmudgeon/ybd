@@ -146,21 +146,21 @@ def install_dependencies(component, dependencies=None):
         sandbox.list_files(component)
 
 
-def build(component):
+def build(dn):
     '''Create an artifact for a single component and add it to the cache'''
 
-    if get_cache(component):
+    if get_cache(dn):
         return
 
-    with claim(component):
-        if component.get('kind', 'chunk') == 'chunk':
-            install_dependencies(component)
-        with timer(component, 'build of %s' % component['cache']):
-            run_build(component)
+    with claim(dn):
+        if dn.get('kind', 'chunk') == 'chunk':
+            install_dependencies(dn)
+        with timer(dn, 'build of %s' % dn['cache']):
+            run_build(dn)
 
-        with timer(component, 'artifact creation'):
-            write_metadata(component)
-            cache(component)
+        with timer(dn, 'artifact creation'):
+            write_metadata(dn)
+            cache(dn)
 
 
 def run_build(dn):
