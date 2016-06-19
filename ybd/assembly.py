@@ -117,33 +117,32 @@ def install_contents(component, contents=None):
         sandbox.list_files(component)
 
 
-def install_dependencies(component, dependencies=None):
+def install_dependencies(dn, dependencies=None):
     '''Install recursed dependencies of component into component's sandbox.'''
 
     if dependencies is None:
-        dependencies = component.get('build-depends', [])
+        dependencies = dn.get('build-depends', [])
 
-    log(component, 'Installing dependencies\n', dependencies, verbose=True)
+    log(dn, 'Installing dependencies\n', dependencies, verbose=True)
     shuffle(dependencies)
     for it in dependencies:
         dependency = app.defs.get(it)
-        if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+        if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                        dependency['name'] + '.meta')):
             # dependency has already been installed
-            log(component, 'Already did', dependency['name'], verbose=True)
+            log(dn, 'Already did', dependency['name'], verbose=True)
             continue
 
-        install_dependencies(component,
-                             dependency.get('build-depends', []))
-        if (it in component['build-depends']) or \
+        install_dependencies(dn, dependency.get('build-depends', []))
+        if (it in dn['build-depends']) or \
             (dependency.get('build-mode', 'staging') ==
-                component.get('build-mode', 'staging')):
+                dn.get('build-mode', 'staging')):
             compose(dependency)
             if dependency.get('contents'):
-                install_dependencies(component, dependency['contents'])
-            sandbox.install(component, dependency)
+                install_dependencies(dn, dependency['contents'])
+            sandbox.install(dn, dependency)
     if config.get('log-verbose'):
-        sandbox.list_files(component)
+        sandbox.list_files(dn)
 
 
 def build(dn):
