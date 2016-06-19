@@ -17,7 +17,7 @@ import app
 import assembly
 import cache
 import defaults
-import definitions
+import morphs
 import pots
 import deployment
 import repos

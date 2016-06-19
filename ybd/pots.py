@@ -18,7 +18,7 @@ import os
 import yaml
 from app import chdir, config, log, exit
 from defaults import Defaults
-from definitions import Morphs
+from morphs import Morphs
 import repos
 
 
