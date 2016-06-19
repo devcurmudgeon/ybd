@@ -175,13 +175,13 @@ def update_mirror(name, repo, gitdir):
 
 
 def checkout(dn):
-    _checkout(dn['name'], dn['repo'], dn['ref'], dn['build'])
+    _checkout(dn['name'], dn['repo'], dn['ref'], dn['checkout'])
 
-    with app.chdir(dn['build']):
+    with app.chdir(dn['checkout']):
         if os.path.exists('.gitmodules') or dn.get('submodules'):
             checkout_submodules(dn)
 
-    utils.set_mtime_recursively(dn['build'])
+    utils.set_mtime_recursively(dn['checkout'])
 
 
 def _checkout(name, repo, ref, checkout):

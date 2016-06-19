@@ -177,7 +177,7 @@ def run_build(dn):
 
     if dn.get('repo'):
         repos.checkout(dn)
-        dn['SOURCE_DATE_EPOCH'] = repos.source_date_epoch(dn['build'])
+        dn['SOURCE_DATE_EPOCH'] = repos.source_date_epoch(dn['checkout'])
 
     get_build_commands(dn)
     env_vars = sandbox.env_vars_for_build(dn)
@@ -254,7 +254,7 @@ def get_build_commands(dn):
         bs = dn['build-system']
         log(dn, 'Defined build system is', bs)
     else:
-        files = os.listdir(dn['build'])
+        files = os.listdir(dn['checkout'])
         bs = app.defs.defaults.detect_build_system(files)
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':

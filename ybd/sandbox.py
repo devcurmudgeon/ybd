@@ -41,11 +41,11 @@ def setup(dn):
     dn['sandbox'] = tempfile.mkdtemp()
     os.environ['TMPDIR'] = app.config['tmp']
     app.config['sandboxes'] += [dn['sandbox']]
-    dn['build'] = os.path.join(dn['sandbox'], dn['name'] + '.build')
+    dn['checkout'] = os.path.join(dn['sandbox'], dn['name'] + '.build')
     dn['install'] = os.path.join(dn['sandbox'], dn['name'] + '.inst')
     dn['baserockdir'] = os.path.join(dn['install'], 'baserock')
     dn['tmp'] = os.path.join(dn['sandbox'], 'tmp')
-    for directory in ['build', 'install', 'tmp', 'baserockdir']:
+    for directory in ['checkout', 'install', 'tmp', 'baserockdir']:
         os.makedirs(dn[directory])
     dn['log'] = os.path.join(app.config['artifacts'],
                              dn['cache'] + '.build-log')
@@ -116,10 +116,10 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
         # can use the compilers etc.
         tmpdir = app.config.get("TMPDIR", "/tmp")
 
-        writable_paths = [dn['build'], dn['install'], tmpdir, ]
+        writable_paths = [dn['checkout'], dn['install'], tmpdir, ]
 
         config = dict(
-            cwd=dn['build'],
+            cwd=dn['checkout'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
             mounts='isolated',

@@ -135,7 +135,7 @@ def cache(dn):
     if dn.get('kind') == "system":
         utils.hardlink_all_files(dn['install'], dn['sandbox'])
         shutil.rmtree(dn['install'])
-        shutil.rmtree(dn['build'])
+        shutil.rmtree(dn['checkout'])
         utils.set_mtime_recursively(dn['sandbox'])
         utils.make_deterministic_tar_archive(cachefile, dn['sandbox'])
         shutil.move('%s.tar' % cachefile, cachefile)
