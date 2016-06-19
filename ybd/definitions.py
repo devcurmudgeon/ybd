@@ -121,7 +121,7 @@ class Definitions(object):
                 log(item, 'WARNING: %s contains' % item['path'], item['name'])
 
             for x, it in enumerate(component.get('build-depends', [])):
-                if not it in lookup:
+                if it not in lookup:
                     # it is defined as a build depend, but hasn't actually been
                     # defined yet...
                     dependency = {'name': it}
@@ -131,11 +131,6 @@ class Definitions(object):
 
             component['build-depends'] = (item.get('build-depends', []) +
                                           component.get('build-depends', []))
-
-            if config.get('artifact-version', 0) not in range(0, 5):
-                dn = self._data.get(component['path'])
-                if dn and 'build-depends' in dn:
-                    component['build-depends'] += dn['build-depends']
 
             splits = component.get('artifacts', [])
             item['contents'][index] = {self._insert(component): splits}
