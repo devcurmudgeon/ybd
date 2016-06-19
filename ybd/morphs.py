@@ -17,8 +17,6 @@
 import yaml
 import os
 from app import chdir, config, log, exit
-from subprocess import check_output
-import hashlib
 from defaults import Defaults
 
 
@@ -44,8 +42,6 @@ class Morphs(object):
                         path = os.path.join(dirname, filename)
                         data = self._load(path)
                         if data is not None:
-                            if config.get('schema-validation'):
-                                self.validate_schema(schemas, data)
                             data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)

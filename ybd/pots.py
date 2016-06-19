@@ -16,10 +16,9 @@
 
 import os
 import yaml
-from app import chdir, config, log, exit
+from app import log
 from defaults import Defaults
 from morphs import Morphs
-import repos
 
 
 # copied from http://stackoverflow.com/questions/21016220
