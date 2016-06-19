@@ -75,50 +75,50 @@ def compose(dn):
     return cache_key(dn)
 
 
-def install_contents(component, contents=None):
-    ''' Install contents (recursively) into component['sandbox'] '''
+def install_contents(dn, contents=None):
+    ''' Install contents (recursively) into dn['sandbox'] '''
 
     if contents is None:
-        contents = component.get('contents', [])
+        contents = dn.get('contents', [])
 
-    log(component, 'Installing contents\n', contents, verbose=True)
+    log(dn, 'Installing contents\n', contents, verbose=True)
 
     shuffle(contents)
     for it in contents:
-        dn = app.defs.get(it)
-        if os.path.exists(os.path.join(component['sandbox'],
-                                       'baserock', dn['name'] + '.meta')):
+        item = app.defs.get(it)
+        if os.path.exists(os.path.join(dn['sandbox'],
+                                       'baserock', item['name'] + '.meta')):
             # content has already been installed
-            log(component, 'Already installed', dn['name'], verbose=True)
+            log(dn, 'Already installed', item['name'], verbose=True)
             continue
 
-        if component.get('kind', 'chunk') == 'system':
+        if dn.get('kind', 'chunk') == 'system':
             artifacts = []
-            for content in component['contents']:
-                if content.keys()[0] == dn['path']:
-                    artifacts = content[dn['path']]
+            for content in dn['contents']:
+                if content.keys()[0] == item['path']:
+                    artifacts = content[item['path']]
                     break
 
             if artifacts != [] or config.get('default-splits', []) != []:
-                compose(dn)
-                install_split_artifacts(component, dn, artifacts)
+                compose(item)
+                install_split_artifacts(dn, item, artifacts)
                 continue
 
-        for i in dn.get('contents', []):
-            install_contents(component, [i])
+        for i in item.get('contents', []):
+            install_contents(dn, [i])
 
-        if dn.get('build-mode', 'staging') != 'bootstrap':
-            if not get_cache(dn):
-                compose(dn)
-            sandbox.install(component, dn)
+        if item.get('build-mode', 'staging') != 'bootstrap':
+            if not get_cache(item):
+                compose(item)
+            sandbox.install(dn, item)
 
     if config.get('log-verbose'):
-        log(component, 'Added contents\n', contents)
-        sandbox.list_files(component)
+        log(dn, 'Added contents\n', contents)
+        sandbox.list_files(dn)
 
 
 def install_dependencies(dn, dependencies=None):
-    '''Install recursed dependencies of component into component's sandbox.'''
+    '''Install recursed dependencies of dn into dn's sandbox.'''
 
     if dependencies is None:
         dependencies = dn.get('build-depends', [])
