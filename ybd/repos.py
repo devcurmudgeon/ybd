@@ -20,12 +20,11 @@ import shutil
 import string
 from subprocess import call, check_output
 import sys
-
 import requests
-
 import app
 import utils
 import tempfile
+
 
 if sys.version_info.major == 2:
     # For compatibility with Python 2.
@@ -75,6 +74,16 @@ def get_version(gitdir, ref='HEAD'):
         result = ref[:8] + " (No tag found)"
 
     return result
+
+
+def get_last_tag(gitdir):
+    try:
+        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+            tag = check_output(['git', 'describe', '--abbrev=0',
+                                '--tags', ref], stderr=fnull)[0:-1]
+        return tag
+    except:
+        return None
 
 
 def get_tree(dn):
@@ -204,6 +213,11 @@ def _checkout(name, repo, ref, checkout):
 def source_date_epoch(checkout):
     with app.chdir(checkout):
         return check_output(['git', 'log', '-1', '--pretty=%ct'])[:-1]
+
+
+def run(args, dir='.'):
+    with app.chdir(dir), open(os.devnull, "w") as fnull:
+        ret = call(['git'] + args)
 
 
 def extract_commit(name, repo, ref, target_dir):
