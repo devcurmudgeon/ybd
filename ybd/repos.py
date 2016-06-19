@@ -64,14 +64,13 @@ def get_repo_name(repo):
 def get_version(gitdir, ref='HEAD'):
     try:
         with app.chdir(gitdir), open(os.devnull, "w") as fnull:
-            described = check_output(['git', 'describe', '--tags', '--dirty'],
-                                     stderr=fnull)[0:-1]
-            last_tag = check_output(['git', 'describe', '--abbrev=0',
-                                     '--tags', ref], stderr=fnull)[0:-1]
-            commits = check_output(['git', 'rev-list', last_tag + '..' + ref,
+            version = check_output(['git', 'describe', '--tags', '--dirty'],
+                                   stderr=fnull)[0:-1]
+            tag = check_output(['git', 'describe', '--abbrev=0',
+                                '--tags', ref], stderr=fnull)[0:-1]
+            commits = check_output(['git', 'rev-list', tag + '..' + ref,
                                     '--count'])[0:-1]
-        result = "%s %s (%s + %s commits)" % (ref[:8], described, last_tag,
-                                              commits)
+        result = "%s %s (%s + %s commits)" % (ref[:8], version, tag, commits)
     except:
         result = ref[:8] + " (No tag found)"
 
