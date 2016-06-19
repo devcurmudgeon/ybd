@@ -32,8 +32,7 @@ class Definitions(object):
         self.defaults = Defaults()
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)
-        if self._check_trees():
-            self._set_trees()
+        self._set_trees()
 
     def parse_files(self, directory):
         schemas = self.load_schemas()
@@ -234,31 +233,11 @@ class Definitions(object):
                 path = path.rpartition('.morph')[0]
         return path
 
-    def _check_trees(self):
-        '''True if the .trees file matches the current working subdirectories
-
-        The .trees file lists all git trees for a set of definitions, and a
-        checksum of the checked-out subdirectories when we calculated them.
-
-        If the checksum for the current subdirectories matches, return True
-
-        '''
-        try:
-            with chdir(config['defdir']):
-                checksum = check_output('ls -lRA */', shell=True)
-            checksum = hashlib.md5(checksum).hexdigest()
-            with open('.trees') as f:
-                text = f.read()
-            self._trees = yaml.safe_load(text)
-            if self._trees.get('.checksum') == checksum:
-                return True
-        except:
-            self._trees = {}
-
-        return False
-
     def _set_trees(self):
         '''Use the tree values from .trees file, to save time'''
+        with open('.trees') as f:
+            text = f.read()
+        self._trees = yaml.safe_load(text)
         for path in self._data:
             try:
                 dn = self._data[path]
