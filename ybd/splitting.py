@@ -24,15 +24,15 @@ import utils
 from fs.osfs import OSFS
 
 
-def install_split_artifacts(component, stratum, artifacts):
+def install_split_artifacts(dn, stratum, artifacts):
     '''Create the .meta files for a split stratum
 
     Given a stratum and a list of artifacts to split, writes new .meta files to
-    the baserock dir in the 'sandbox' dir of the component and copies the files
+    the baserock dir in the 'sandbox' dir of the dn and copies the files
     from the .unpacked directory of each individual chunk to the sandbox
 
     '''
-    if os.path.exists(os.path.join(component['sandbox'], 'baserock',
+    if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                    stratum['name'] + '.meta')):
         return
 
@@ -41,7 +41,7 @@ def install_split_artifacts(component, stratum, artifacts):
         for split in config.get('default-splits', []):
             artifacts += [stratum['name'] + split]
 
-    log(component, 'Installing %s splits' % stratum['name'], artifacts)
+    log(dn, 'Installing %s splits' % stratum['name'], artifacts)
     stratum_metadata = get_metadata(stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
@@ -52,10 +52,10 @@ def install_split_artifacts(component, stratum, artifacts):
                 components += product['components']
                 split_stratum_metadata['products'].append(product)
 
-    log(component, 'Splitting artifacts:', artifacts, verbose=True)
-    log(component, 'Splitting components:', components, verbose=True)
+    log(dn, 'Splitting artifacts:', artifacts, verbose=True)
+    log(dn, 'Splitting components:', components, verbose=True)
 
-    baserockpath = os.path.join(component['sandbox'], 'baserock')
+    baserockpath = os.path.join(dn['sandbox'], 'baserock')
     if not os.path.isdir(baserockpath):
         os.mkdir(baserockpath)
     split_stratum_metafile = os.path.join(baserockpath,
@@ -80,7 +80,7 @@ def install_split_artifacts(component, stratum, artifacts):
                                   'repo': metadata.get('repo'),
                                   'products': []}
                 if config.get('artifact-version', 0) not in range(0, 1):
-                    metadata['cache'] = component.get('cache')
+                    metadata['cache'] = dn.get('cache')
 
                 for product in metadata['products']:
                     if product['artifact'] in components:
@@ -99,16 +99,16 @@ def install_split_artifacts(component, stratum, artifacts):
 
                     cachepath, cachedir = os.path.split(get_cache(chunk))
                     path = os.path.join(cachepath, cachedir + '.unpacked')
-                    utils.copy_file_list(path, component['sandbox'], filelist)
+                    utils.copy_file_list(path, dn['sandbox'], filelist)
         except:
             # if we got here, something has gone badly wrong parsing metadata
             # or copying files into the sandbox...
             log(stratum, 'WARNING: failed copying files from', metafile)
             log(stratum, 'WARNING: copying *all* files')
-            utils.copy_all_files(path, component['sandbox'])
+            utils.copy_all_files(path, dn['sandbox'])
 
 
-def check_overlaps(component):
+def check_overlaps(dn):
     if set(config['new-overlaps']) <= set(config['overlaps']):
         config['new-overlaps'] = []
         return
@@ -116,21 +116,21 @@ def check_overlaps(component):
     overlaps_found = False
     config['new-overlaps'] = list(set(config['new-overlaps']))
     for path in config['new-overlaps']:
-        log(component, 'WARNING: overlapping path', path)
-        for filename in os.listdir(component['baserockdir']):
-            with open(os.path.join(component['baserockdir'], filename)) as f:
+        log(dn, 'WARNING: overlapping path', path)
+        for filename in os.listdir(dn['baserockdir']):
+            with open(os.path.join(dn['baserockdir'], filename)) as f:
                 for line in f:
                     if path[1:] in line:
                         log(filename, 'WARNING: overlap at', path[1:])
                         overlaps_found = True
                         break
         if config.get('check-overlaps') == 'exit':
-            exit(component, 'ERROR: overlaps found', config['new-overlaps'])
+            exit(dn, 'ERROR: overlaps found', config['new-overlaps'])
     config['overlaps'] = list(set(config['new-overlaps'] + config['overlaps']))
     config['new-overlaps'] = []
 
 
-def get_metadata(component):
+def get_metadata(dn):
     '''Load an individual .meta file
 
     The .meta file is expected to be in the .unpacked/baserock directory of the
@@ -138,47 +138,46 @@ def get_metadata(component):
 
     '''
     try:
-        with open(path_to_metafile(component), "r") as f:
+        with open(path_to_metafile(dn), "r") as f:
             metadata = yaml.safe_load(f)
-        log(component, 'Loaded metadata', component['path'], verbose=True)
+        log(dn, 'Loaded metadata', dn['path'], verbose=True)
         return metadata
     except:
-        log(component, 'WARNING: problem loading metadata', component)
+        log(dn, 'WARNING: problem loading metadata', dn)
         return None
 
 
-def path_to_metafile(component):
-    ''' Return the path to metadata file for component. '''
+def path_to_metafile(dn):
+    ''' Return the path to metadata file for dn. '''
 
-    return os.path.join(get_cache(component) + '.unpacked', 'baserock',
-                        component['name'] + '.meta')
+    return os.path.join(get_cache(dn) + '.unpacked', 'baserock',
+                        dn['name'] + '.meta')
 
 
-def compile_rules(component):
+def compile_rules(dn):
     regexps = []
     splits = {}
-    split_rules = component.get('products', [])
-    default_rules = app.defs.defaults.get_split_rules(component.get('kind',
-                                                                    'chunk'))
+    split_rules = dn.get('products', [])
+    default_rules = app.defs.defaults.get_split_rules(dn.get('kind', 'chunk'))
     for rules in split_rules, default_rules:
         for rule in rules:
             regexp = re.compile('^(?:' + '|'.join(rule.get('include')) + ')$')
             artifact = rule.get('artifact')
             if artifact.startswith('-'):
-                artifact = component['name'] + artifact
+                artifact = dn['name'] + artifact
             regexps.append([artifact, regexp])
             splits[artifact] = []
 
     return regexps, splits
 
 
-def write_metadata(component):
-    if component.get('kind', 'chunk') == 'chunk':
-        write_chunk_metafile(component)
-    elif component.get('kind', 'chunk') == 'stratum':
-        write_stratum_metafiles(component)
+def write_metadata(dn):
+    if dn.get('kind', 'chunk') == 'chunk':
+        write_chunk_metafile(dn)
+    elif dn.get('kind', 'chunk') == 'stratum':
+        write_stratum_metafiles(dn)
     if config.get('check-overlaps', 'ignore') != 'ignore':
-        check_overlaps(component)
+        check_overlaps(dn)
 
 
 def write_chunk_metafile(chunk):
@@ -258,23 +257,23 @@ def write_stratum_metafiles(stratum):
     write_metafile(rules, splits, stratum)
 
 
-def write_metafile(rules, splits, component):
+def write_metafile(rules, splits, dn):
     metadata = {'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
                              for a, r in rules]}
 
-    if component.get('kind', 'chunk') == 'chunk':
-        metadata['repo'] = component.get('repo')
-        metadata['ref'] = component.get('ref')
+    if dn.get('kind', 'chunk') == 'chunk':
+        metadata['repo'] = dn.get('repo')
+        metadata['ref'] = dn.get('ref')
     else:
         if config.get('artifact-version', 0) not in range(0, 2):
             metadata['repo'] = config['defdir']
             metadata['ref'] = config['def-version']
 
     if config.get('artifact-version', 0) not in range(0, 1):
-        metadata['cache'] = component.get('cache')
+        metadata['cache'] = dn.get('cache')
 
-    meta = os.path.join(component['baserockdir'], component['name'] + '.meta')
+    meta = os.path.join(dn['baserockdir'], dn['name'] + '.meta')
 
     with open(meta, "w") as f:
         yaml.safe_dump(metadata, f, default_flow_style=False)

@@ -40,18 +40,18 @@ defs = {}
 
 
 class RetryException(Exception):
-    def __init__(self, component):
-        if config.get('last-retry-component') != component:
-            log(component, 'Already assembling, so wait/retry', verbose=True)
+    def __init__(self, dn):
+        if config.get('last-retry-dn') != dn:
+            log(dn, 'Already assembling, so wait/retry', verbose=True)
         if config.get('last-retry-time'):
             wait = datetime.datetime.now() - config.get('last-retry-time')
             if wait.seconds < 1:
-                with open(lockfile(component), 'r') as l:
+                with open(lockfile(dn), 'r') as l:
                     call(['flock', '--shared', '--timeout',
                           config.get('timeout', '60'), str(l.fileno())])
-                log(component, 'Finished wait loop', verbose=True)
+                log(dn, 'Finished wait loop', verbose=True)
         config['last-retry-time'] = datetime.datetime.now()
-        config['last-retry-component'] = component
+        config['last-retry-dn'] = dn
         for dirname in config['sandboxes']:
             remove_dir(dirname)
         config['sandboxes'] = []
@@ -77,13 +77,13 @@ def lockfile(dn):
     return os.path.join(config['tmp'], cache_key(dn) + '.lock')
 
 
-def log(component, message='', data='', verbose=False):
+def log(dn, message='', data='', verbose=False):
     ''' Print a timestamped log. '''
 
     if verbose is True and config.get('log-verbose', False) is False:
         return
 
-    name = component['name'] if type(component) is dict else component
+    name = dn['name'] if type(dn) is dict else dn
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
     if config.get('log-timings') == 'elapsed':
@@ -111,9 +111,9 @@ def log_env(log, env, message=''):
         logfile.flush()
 
 
-def exit(component, message, data):
+def exit(dn, message, data):
     print('\n\n')
-    log(component, message, data)
+    log(dn, message, data)
     print('\n\n')
     os._exit(1)
 
