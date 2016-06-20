@@ -69,7 +69,7 @@ class Morphs(object):
             return None
         return contents
 
-    def _tidy_and_insert_recursively(self, item):
+    def _tidy_and_insert_recursively(self, dn):
         '''Insert a definition and its contents into the dictionary.
 
         Takes a dict containing the content of a definition file.
@@ -81,41 +81,41 @@ class Morphs(object):
 
         '''
         # handle morph syntax oddities...
-        for index, component in enumerate(item.get('build-depends', [])):
+        for index, component in enumerate(dn.get('build-depends', [])):
             self._fix_keys(component)
-            item['build-depends'][index] = self._insert(component)
+            dn['build-depends'][index] = self._insert(component)
 
         # The 'contents' field in the internal data model corresponds to the
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
-        item['contents'] = item.get('contents', [])
-        item['contents'] += item.pop('chunks', []) + item.pop('strata', [])
+        dn['contents'] = dn.get('contents', [])
+        dn['contents'] += dn.pop('chunks', []) + dn.pop('strata', [])
 
         lookup = {}
-        for index, component in enumerate(item['contents']):
-            self._fix_keys(component, item['path'])
+        for index, component in enumerate(dn['contents']):
+            self._fix_keys(component, dn['path'])
             lookup[component['name']] = component['path']
-            if component['name'] == item['name']:
-                log(item, 'WARNING: %s contains' % item['path'], item['name'])
+            if component['name'] == dn['name']:
+                log(dn, 'WARNING: %s contains' % dn['path'], dn['name'])
 
             for x, it in enumerate(component.get('build-depends', [])):
                 if it not in lookup:
                     # it is defined as a build depend, but hasn't actually been
                     # defined yet...
                     dependency = {'name': it}
-                    self._fix_keys(dependency,  item['path'])
+                    self._fix_keys(dependency,  dn['path'])
                     lookup[it] = dependency['path']
                 component['build-depends'][x] = lookup[it]
 
-            component['build-depends'] = (item.get('build-depends', []) +
+            component['build-depends'] = (dn.get('build-depends', []) +
                                           component.get('build-depends', []))
 
             splits = component.get('artifacts', [])
-            item['contents'][index] = {self._insert(component): splits}
+            dn['contents'][index] = {self._insert(component): splits}
 
-        return self._insert(item)
+        return self._insert(dn)
 
-    def _fix_keys(self, item, base=None):
+    def _fix_keys(self, dn, base=None):
         '''Normalizes keys for a definition dict and its contents
 
         Some definitions have a 'morph' field which is a relative path. Others
@@ -126,41 +126,41 @@ class Morphs(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        if item.get('morph'):
-            if not os.path.isfile(item.get('morph')):
-                log('DEFINITION', 'WARNING: missing definition', item['morph'])
-            item['path'] = self._demorph(item.pop('morph'))
+        if dn.get('morph'):
+            if not os.path.isfile(dn.get('morph')):
+                log('DEFINITION', 'WARNING: missing definition', dn['morph'])
+            dn['path'] = self._demorph(dn.pop('morph'))
 
-        if 'path' not in item:
-            if 'name' not in item:
-                exit(item, 'ERROR: no path, no name?')
+        if 'path' not in dn:
+            if 'name' not in dn:
+                exit(dn, 'ERROR: no path, no name?')
             if config.get('artifact-version') in range(0, 4):
-                item['path'] = item['name']
+                dn['path'] = dn['name']
             else:
-                item['path'] = os.path.join(self._demorph(base), item['name'])
-                if os.path.isfile(item['path'] + '.morph'):
+                dn['path'] = os.path.join(self._demorph(base), dn['name'])
+                if os.path.isfile(dn['path'] + '.morph'):
                     # morph file exists, but is not mentioned in stratum
                     # so we ignore it
-                    log(item, 'WARNING: ignoring', item['path'] + '.morph')
-                    item['path'] += '.default'
+                    log(dn, 'WARNING: ignoring', dn['path'] + '.morph')
+                    dn['path'] += '.default'
 
-        item['path'] = self._demorph(item['path'])
-        item.setdefault('name', item['path'].replace('/', '-'))
+        dn['path'] = self._demorph(dn['path'])
+        dn.setdefault('name', dn['path'].replace('/', '-'))
 
-        if item['name'] == config['target']:
-            config['target'] = item['path']
+        if dn['name'] == config['target']:
+            config['target'] = dn['path']
 
-        n = self._demorph(os.path.basename(item['name']))
-        p = self._demorph(os.path.basename(item['path']))
+        n = self._demorph(os.path.basename(dn['name']))
+        p = self._demorph(os.path.basename(dn['path']))
         if os.path.splitext(p)[0] not in n:
             if config.get('check-definitions') == 'warn':
                 log('DEFINITIONS',
-                    'WARNING: %s has wrong name' % item['path'], item['name'])
+                    'WARNING: %s has wrong name' % dn['path'], dn['name'])
             if config.get('check-definitions') == 'exit':
                 exit('DEFINITIONS',
-                     'ERROR: %s has wrong name' % item['path'], item['name'])
+                     'ERROR: %s has wrong name' % dn['path'], dn['name'])
 
-        for system in (item.get('systems', []) + item.get('subsystems', [])):
+        for system in (dn.get('systems', []) + dn.get('subsystems', [])):
             self._fix_keys(system)
 
     def _insert(self, new_def):
@@ -177,16 +177,16 @@ class Morphs(object):
         duplicated in the existing definition, output a warning.
 
         '''
-        item = self._data.get(new_def['path'])
-        if item:
-            if (item.get('ref') is None or new_def.get('ref') is None):
+        dn = self._data.get(new_def['path'])
+        if dn:
+            if (dn.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
-                    item[key] = new_def[key]
+                    dn[key] = new_def[key]
 
             for key in new_def:
-                if item.get(key) != new_def[key]:
+                if dn.get(key) != new_def[key]:
                     log(new_def, 'WARNING: multiple definitions of', key)
-                    log(new_def, '%s | %s' % (item.get(key), new_def[key]))
+                    log(new_def, '%s | %s' % (dn.get(key), new_def[key]))
         else:
             self._data[new_def['path']] = new_def
 
