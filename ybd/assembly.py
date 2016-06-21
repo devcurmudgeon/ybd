@@ -92,18 +92,6 @@ def install_contents(dn, contents=None):
             log(dn, 'Already installed', item['name'], verbose=True)
             continue
 
-        if dn.get('kind', 'chunk') == 'system':
-            artifacts = []
-            for content in dn['contents']:
-                if content.keys()[0] == item['path']:
-                    artifacts = content[item['path']]
-                    break
-
-            if artifacts != [] or config.get('default-splits', []) != []:
-                compose(item)
-                install_split_artifacts(dn, item, artifacts)
-                continue
-
         for i in item.get('contents', []):
             install_contents(dn, [i])
 
@@ -158,6 +146,10 @@ def build(dn):
             run_build(dn)
 
         with timer(dn, 'artifact creation'):
+
+            if dn.get('kind', 'chunk') == 'system':
+                install_split_artifacts(dn)
+
             write_metadata(dn)
             cache(dn)
 

@@ -20,42 +20,56 @@ from cache import get_cache
 import os
 import re
 import yaml
-import utils
+from utils import copy_file_list
 from fs.osfs import OSFS
 
 
-def install_split_artifacts(dn, stratum, artifacts):
-    '''Create the .meta files for a split stratum
+def install_split_artifacts(dn):
+    '''Create the .meta files for a split system
 
-    Given a stratum and a list of artifacts to split, writes new .meta files to
-    the baserock dir in the 'sandbox' dir of the dn and copies the files
-    from the .unpacked directory of each individual chunk to the sandbox
+    Given a list of artifacts to split, writes new .meta files to
+    the baserock dir in dn['install'] and copies the files from the
+    sandbox to the dn['install']
 
     '''
-    if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
-                                   stratum['name'] + '.meta')):
-        return
+    all_splits = []
+    for i in app.defs.defaults.get_split_rules('stratum'):
+        all_splits += [i['artifact']]
+    for index, content in enumerate(dn['contents']):
+        for stratum, artifacts in content.items():
+            if artifacts == []:
+                if config.get('default-splits', []) != []:
+                    for split in config.get('default-splits'):
+                        artifacts += [os.path.basename(stratum) + split]
+                else:
+                    for split in all_splits:
+                        artifacts += [os.path.basename(stratum) + split]
 
-    if artifacts == []:
-        default_artifacts = app.defs.defaults.get_split_rules('stratum')
-        for split in config.get('default-splits', []):
-            artifacts += [stratum['name'] + split]
+        dn['contents'][index] = {stratum: artifacts}
 
-    log(dn, 'Installing %s splits' % stratum['name'], artifacts)
+    log(dn, 'Installing splits\n', dn['contents'])
+
+    for content in dn['contents']:
+        key = content.keys()[0]
+        stratum = app.defs.get(key)
+        move_required_files(dn, stratum, content[key])
+
+
+def move_required_files(dn, stratum, artifacts):
     stratum_metadata = get_metadata(stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
-    components = []
+    to_keep = []
     for product in stratum_metadata['products']:
         for artifact in artifacts:
             if artifact == product['artifact']:
-                components += product['components']
+                to_keep += product['components']
                 split_stratum_metadata['products'].append(product)
 
     log(dn, 'Splitting artifacts:', artifacts, verbose=True)
-    log(dn, 'Splitting components:', components, verbose=True)
+    log(dn, 'Splitting components:', to_keep, verbose=True)
 
-    baserockpath = os.path.join(dn['sandbox'], 'baserock')
+    baserockpath = os.path.join(dn['install'], 'baserock')
     if not os.path.isdir(baserockpath):
         os.mkdir(baserockpath)
     split_stratum_metafile = os.path.join(baserockpath,
@@ -67,9 +81,6 @@ def install_split_artifacts(dn, stratum, artifacts):
         chunk = app.defs.get(path)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
-
-        if not get_cache(chunk):
-            exit(stratum, 'ERROR: artifact not found', chunk.get('name'))
 
         try:
             metafile = path_to_metafile(chunk)
@@ -83,7 +94,7 @@ def install_split_artifacts(dn, stratum, artifacts):
                     metadata['cache'] = dn.get('cache')
 
                 for product in metadata['products']:
-                    if product['artifact'] in components:
+                    if product['artifact'] in to_keep:
                         filelist += product.get('components', [])
                         # handle old artifacts still containing 'files'
                         filelist += product.get('files', [])
@@ -97,15 +108,9 @@ def install_split_artifacts(dn, stratum, artifacts):
                         yaml.safe_dump(split_metadata, f,
                                        default_flow_style=False)
 
-                    cachepath, cachedir = os.path.split(get_cache(chunk))
-                    path = os.path.join(cachepath, cachedir + '.unpacked')
-                    utils.copy_file_list(path, dn['sandbox'], filelist)
+                    copy_file_list(dn['sandbox'], dn['install'], filelist)
         except:
-            # if we got here, something has gone badly wrong parsing metadata
-            # or copying files into the sandbox...
-            log(stratum, 'WARNING: failed copying files from', metafile)
-            log(stratum, 'WARNING: copying *all* files')
-            utils.copy_all_files(path, dn['sandbox'])
+            exit(dn, 'ERROR: failed to install split components', '')
 
 
 def check_overlaps(dn):

@@ -135,10 +135,9 @@ def cache(dn):
     cachefile = os.path.join(tmpdir, cache_key(dn))
     if dn.get('kind') == "system":
         utils.hardlink_all_files(dn['install'], dn['sandbox'])
-        shutil.rmtree(dn['install'])
         shutil.rmtree(dn['checkout'])
-        utils.set_mtime_recursively(dn['sandbox'])
-        utils.make_deterministic_tar_archive(cachefile, dn['sandbox'])
+        utils.set_mtime_recursively(dn['install'])
+        utils.make_deterministic_tar_archive(cachefile, dn['install'])
         shutil.move('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(dn['install'])
