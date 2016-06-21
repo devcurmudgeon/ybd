@@ -27,6 +27,7 @@ from repos import get_repo_url, get_tree
 import utils
 import tempfile
 import yaml
+import re
 
 
 def cache_key(dn):
@@ -191,6 +192,7 @@ def unpack(dn, tmpfile):
             app.exit(dn, 'ERROR: problem creating cache artifact', path)
 
         size = os.path.getsize(get_cache(dn))
+        size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
         checksum = md5(get_cache(dn))
         app.log(dn, 'Cached %s bytes %s as' % (size, checksum),
                 cache_key(dn))
