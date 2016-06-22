@@ -40,7 +40,7 @@ def install_split_artifacts(dn):
             if artifacts == []:
                 if config.get('default-splits', []) != []:
                     for split in config.get('default-splits'):
-                        artifacts += [os.path.basename(stratum) + split]
+                        artifacts += [app.defs.get(stratum)['name'] + split]
                 else:
                     for split in all_splits:
                         artifacts += [os.path.basename(stratum) + split]
