@@ -122,7 +122,7 @@ class KeyedBinaryArtifactServer(object):
             return
 
         cache_id = request.forms.get('filename')
-        if re.match('^[a-zA-Z0-9\.\-\_]*$', cache_id) is None:
+        if re.match('^[a-zA-Z0-9\.\-\_\@]*$', cache_id) is None:
             response.status = 400  # bad request, cache_id contains bad things
             return
 
