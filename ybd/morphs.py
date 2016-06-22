@@ -25,7 +25,6 @@ class Morphs(object):
     def __init__(self, directory='.'):
         '''Load all definitions from a directory tree.'''
         self._data = {}
-        self._trees = {}
         self.defaults = Defaults()
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)

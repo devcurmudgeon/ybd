@@ -16,7 +16,7 @@
 
 import os
 import yaml
-from app import log
+from app import config, log
 from defaults import Defaults
 from morphs import Morphs
 
@@ -34,8 +34,9 @@ class ExplicitDumper(yaml.SafeDumper):
 class Pots(object):
 
     def __init__(self, directory='.'):
-        self._trees = {}
         self._data = Morphs()._data
+        self._trees = {}
+        self._set_trees()
         self.defaults = Defaults()
         self._save_pots('./definitions.yml')
 
@@ -64,18 +65,18 @@ class Pots(object):
 
     def _set_trees(self):
         '''Use the tree values from .trees file, to save time'''
-        with open('.trees') as f:
-            text = f.read()
-        self._trees = yaml.safe_load(text)
-        for path in self._data:
-            try:
+        try:
+            with open(os.path.join(config['artifacts'], '.trees')) as f:
+                text = f.read()
+                self._trees = yaml.safe_load(text)
+            for path in self._data:
                 dn = self._data[path]
                 if dn.get('ref') and self._trees.get(path):
                     if dn['ref'] == self._trees.get(path)[0]:
                         dn['tree'] = self._trees.get(path)[1]
-            except:
-                log('DEFINITIONS', 'WARNING: problem with .trees file')
-                pass
+        except:
+            log('DEFINITIONS', 'WARNING: problem with .trees file')
+            pass
 
     def save_trees(self):
         '''Creates the .trees file for the current working directory
@@ -87,6 +88,5 @@ class Pots(object):
                 self._trees[name] = [self._data[name]['ref'],
                                      self._data[name]['tree'],
                                      self._data[name].get('cache')]
-
-        with open(os.path.join(os.getcwd(), '.trees'), 'w') as f:
+        with open(os.path.join(config['artifacts'], '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
