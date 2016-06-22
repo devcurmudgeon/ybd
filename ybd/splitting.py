@@ -47,8 +47,6 @@ def install_split_artifacts(dn):
 
         dn['contents'][index] = {stratum: artifacts}
 
-    log(dn, 'Installing splits\n', dn['contents'])
-
     for content in dn['contents']:
         key = content.keys()[0]
         stratum = app.defs.get(key)
@@ -56,6 +54,7 @@ def install_split_artifacts(dn):
 
 
 def move_required_files(dn, stratum, artifacts):
+    log(dn, 'Installing %s artifacts' % stratum['name'], artifacts)
     stratum_metadata = get_metadata(stratum)
     split_stratum_metadata = {}
     split_stratum_metadata['products'] = []
