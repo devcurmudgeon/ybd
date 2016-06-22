@@ -146,7 +146,7 @@ def cache(dn):
 
     app.config['counter'].increment()
 
-    save(dn, cachefile)
+    unpack(dn, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
         if dn.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
@@ -176,14 +176,14 @@ def update_manifest(dn, manifest):
         m.flush()
 
 
-def save(dn, tmpfile):
+def unpack(dn, tmpfile):
     unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
-    with open(os.devnull, "w") as fnull:
-        if call(['tar', 'tvf', tmpfile], stdout=fnull):
-            app.log(dn, 'Problem with tar check on', tmpfile)
-            shutil.rmtree(os.path.dirname(tmpfile))
-            return False
+    if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
+        app.log(dn, 'Problem unpacking', tmpfile)
+        shutil.rmtree(os.path.dirname(tmpfile))
+        return False
+
     try:
         path = os.path.join(app.config['artifacts'], cache_key(dn))
         shutil.move(os.path.dirname(tmpfile), path)
@@ -193,7 +193,8 @@ def save(dn, tmpfile):
         size = os.path.getsize(get_cache(dn))
         size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
         checksum = md5(get_cache(dn))
-        app.log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
+        app.log(dn, 'Cached %s bytes %s as' % (size, checksum),
+                cache_key(dn))
         return path
     except:
         app.log(dn, 'Bah! I raced on', cache_key(dn))
@@ -286,7 +287,7 @@ def get_remote(dn):
             with open(cachefile, 'wb') as f:
                 f.write(response.content)
 
-            return save(dn, cachefile)
+            return unpack(dn, cachefile)
 
         except:
             app.log(dn, 'WARNING: failed downloading', cache_key(dn))
