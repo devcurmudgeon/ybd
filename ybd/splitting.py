@@ -106,7 +106,9 @@ def move_required_files(dn, stratum, artifacts):
                     with open(split_metafile, "w") as f:
                         yaml.safe_dump(split_metadata, f,
                                        default_flow_style=False)
-
+                    log(dn, 'Splits split_metadata is\n', split_metadata,
+                        verbose=True)
+                    log(dn, 'Splits filelist is\n', filelist, verbose=True)
                     copy_file_list(dn['sandbox'], dn['install'], filelist)
         except:
             import traceback
