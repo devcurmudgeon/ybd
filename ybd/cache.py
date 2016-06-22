@@ -14,7 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
-from requests import get, post, quote
+import requests
 
 import hashlib
 import json
@@ -205,12 +205,12 @@ def unpack(dn, tmpfile):
 def upload(dn):
     cachefile = get_cache(dn)
     url = app.config['kbas-url'] + 'upload'
-    params = {"filename": quote(dn['cache'], safe=''),
+    params = {"filename": dn['cache'],
               "password": app.config['kbas-password'],
               "checksum": md5(cachefile)}
     with open(cachefile, 'rb') as f:
         try:
-            response = post(url=url, data=params, files={"file": f})
+            response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
                 app.log(dn, 'Uploaded %s to' % dn['cache'], url)
                 return
@@ -272,8 +272,8 @@ def get_remote(dn):
 
     try:
         app.log(dn, 'Try downloading', cache_key(dn))
-        url = app.config['kbas-url'] + 'get/' + quote(cache_key(dn), safe='')
-        response = get(url=url, stream=True)
+        url = app.config['kbas-url'] + 'get/' + cache_key(dn)
+        response = requests.get(url=url, stream=True)
     except:
         app.config.pop('kbas-url')
         app.log(dn, 'WARNING: remote artifact server is not working')
