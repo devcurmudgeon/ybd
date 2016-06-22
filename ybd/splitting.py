@@ -109,6 +109,8 @@ def move_required_files(dn, stratum, artifacts):
 
                     copy_file_list(dn['sandbox'], dn['install'], filelist)
         except:
+            import traceback
+            traceback.print_exc()
             exit(dn, 'ERROR: failed to install split components', '')
 
 
