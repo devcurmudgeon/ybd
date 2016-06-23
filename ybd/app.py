@@ -82,7 +82,7 @@ def log(dn, message='', data='', verbose=False, exit=False):
 
     if exit:
         print('\n\n')
-        message = 'ERROR: ' + message
+        message = 'ERROR: ' + message.replace('WARNING: ', '')
 
     if verbose is True and config.get('log-verbose', False) is False:
         return

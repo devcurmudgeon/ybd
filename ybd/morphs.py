@@ -125,9 +125,10 @@ class Morphs(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
+        exit = True if config.get('check-definitions') == 'exit' else False
         if dn.get('morph'):
             if not os.path.isfile(dn.get('morph')):
-                log('DEFINITION', 'WARNING: missing definition', dn['morph'])
+                log('DEFINITION', 'WARNING: missing', dn['morph'], exit=exit)
             dn['path'] = self._demorph(dn.pop('morph'))
 
         if 'path' not in dn:
@@ -140,20 +141,21 @@ class Morphs(object):
                 if os.path.isfile(dn['path'] + '.morph'):
                     # morph file exists, but is not mentioned in stratum
                     # so we ignore it
-                    log(dn, 'WARNING: ignoring', dn['path'] + '.morph')
+                    log(dn, 'WARNING: ignoring', dn['path'] + '.morph',
+                        exit=exit)
                     dn['path'] += '.default'
 
         dn['path'] = self._demorph(dn['path'])
-        dn.setdefault('name', dn['path'].replace('/', '-'))
+        dn.setdefault('name', os.path.basename(dn['path']))
 
-        if dn['name'] == config['target']:
+        if dn.get('name') == config['target']:
             config['target'] = dn['path']
 
         n = self._demorph(os.path.basename(dn['name']))
         p = self._demorph(os.path.basename(dn['path']))
         if os.path.splitext(p)[0] not in n:
-            exit = True if config.get('check-definitions') == 'exit' else False
-            log('MORPHS', '%s wrong name' % dn['path'], dn['name'], exit=exit)
+            log('MORPHS', 'WARNING: %s wrong name' % dn['path'], dn['name'],
+                exit=exit)
 
         for system in (dn.get('systems', []) + dn.get('subsystems', [])):
             self._fix_keys(system)
@@ -172,16 +174,24 @@ class Morphs(object):
         duplicated in the existing definition, output a warning.
 
         '''
+        exit = True if config.get('check-definitions') == 'exit' else False
         dn = self._data.get(new_def['path'])
         if dn:
             if (dn.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
-                    dn[key] = new_def[key]
+                    if key is not 'name':
+                        dn[key] = new_def[key]
+
+            if dn['name'] != new_def['name']:
+                log(new_def, 'WARNING: %s also named as' % new_def['name'],
+                    dn['name'], exit=exit)
+                dn[key] = new_def[key]
 
             for key in new_def:
-                if dn.get(key) != new_def[key]:
-                    log(new_def, 'WARNING: multiple definitions of', key)
-                    log(new_def, '%s | %s' % (dn.get(key), new_def[key]))
+                if dn.get(key) and new_def[key] and dn[key] != new_def[key]:
+                    log(new_def,
+                        'WARNING: multiple definitions of %s \n' % key,
+                        '%s | %s' % (dn.get(key), new_def[key]), exit=exit)
         else:
             self._data[new_def['path']] = new_def
 
