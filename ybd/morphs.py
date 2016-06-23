@@ -16,7 +16,7 @@
 
 import yaml
 import os
-from app import chdir, config, log, exit
+from app import chdir, config, log
 from defaults import Defaults
 
 
@@ -57,7 +57,7 @@ class Morphs(object):
                 text = f.read()
             contents = yaml.safe_load(text)
         except yaml.YAMLError, exc:
-            exit('DEFINITIONS', 'ERROR: could not parse %s' % path, exc)
+            log('DEFINITIONS', 'Could not parse %s' % path, exc, exit=True)
         except:
             log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
             return None
@@ -132,7 +132,7 @@ class Morphs(object):
 
         if 'path' not in dn:
             if 'name' not in dn:
-                exit(dn, 'ERROR: no path, no name?')
+                log(dn, 'No path, no name?', exit=True)
             if config.get('artifact-version') in range(0, 4):
                 dn['path'] = dn['name']
             else:
@@ -152,12 +152,8 @@ class Morphs(object):
         n = self._demorph(os.path.basename(dn['name']))
         p = self._demorph(os.path.basename(dn['path']))
         if os.path.splitext(p)[0] not in n:
-            if config.get('check-definitions') == 'warn':
-                log('DEFINITIONS',
-                    'WARNING: %s has wrong name' % dn['path'], dn['name'])
-            if config.get('check-definitions') == 'exit':
-                exit('DEFINITIONS',
-                     'ERROR: %s has wrong name' % dn['path'], dn['name'])
+            exit = True if config.get('check-definitions') == 'exit' else False
+            log('MORPHS', '%s wrong name' % dn['path'], dn['name'], exit=exit)
 
         for system in (dn.get('systems', []) + dn.get('subsystems', [])):
             self._fix_keys(system)

@@ -21,7 +21,7 @@ import os
 import sys
 import fcntl
 import app
-from app import cleanup, config, exit, log, RetryException, setup, spawn, timer
+from app import cleanup, config, log, RetryException, setup, spawn, timer
 from assembly import compose
 from deployment import deploy
 from pots import Pots
@@ -75,7 +75,7 @@ with timer('TOTAL'):
 
     if config['total'] == 0 or (config['total'] == 1 and
                                 target.get('kind') == 'cluster'):
-        exit('ARCH', 'ERROR: no definitions found for', config['arch'])
+        log('ARCH', 'No definitions for', config['arch'], exit=True)
 
     app.defs.save_trees()
     if config.get('mode', 'normal') == 'keys-only':

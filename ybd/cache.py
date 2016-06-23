@@ -32,13 +32,13 @@ import re
 
 def cache_key(dn):
     if dn is None:
-        app.exit(dn, 'ERROR: No definition found for', dn)
+        app.log(dn, 'No definition found for', dn, exit=True)
 
     if type(dn) is not dict:
         dn = app.defs.get(dn)
 
     if dn.get('cache') == 'calculating':
-        app.exit(dn, 'ERROR: recursion loop for', dn)
+        app.log(dn, 'Recursion loop for', dn, exit=True)
 
     if dn.get('cache'):
         return dn['cache']
@@ -188,7 +188,7 @@ def unpack(dn, tmpfile):
         path = os.path.join(app.config['artifacts'], cache_key(dn))
         shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
-            app.exit(dn, 'ERROR: problem creating cache artifact', path)
+            app.log(dn, 'Problem creating artifact', path, exit=True)
 
         size = os.path.getsize(get_cache(dn))
         size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
@@ -331,8 +331,8 @@ def cull(artifact_dir):
     stat = os.statvfs(artifact_dir)
     free = stat.f_frsize * stat.f_bavail / 1000000000
     if free < app.config.get('min-gigabytes', 10):
-        app.exit('SETUP', 'ERROR: %sGB is less than min-gigabytes:' % free,
-                 app.config.get('min-gigabytes', 10))
+        app.log('SETUP', '%sGB is less than min-gigabytes:' % free,
+                app.config.get('min-gigabytes', 10), exit=True)
 
 
 def check(artifact):

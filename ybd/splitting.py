@@ -15,7 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import app
-from app import config, exit, log
+from app import config, log
 from cache import get_cache
 import os
 import re
@@ -113,7 +113,7 @@ def move_required_files(dn, stratum, artifacts):
         except:
             import traceback
             traceback.print_exc()
-            exit(dn, 'ERROR: failed to install split components', '')
+            log(dn, 'Failed to install split components', exit=True)
 
 
 def check_overlaps(dn):
@@ -133,7 +133,7 @@ def check_overlaps(dn):
                         overlaps_found = True
                         break
         if config.get('check-overlaps') == 'exit':
-            exit(dn, 'ERROR: overlaps found', config['new-overlaps'])
+            log(dn, 'Overlaps found', config['new-overlaps'], exit=True)
     config['overlaps'] = list(set(config['new-overlaps'] + config['overlaps']))
     config['new-overlaps'] = []
 

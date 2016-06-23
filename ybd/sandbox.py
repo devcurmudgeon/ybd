@@ -63,7 +63,7 @@ def setup(dn):
         import traceback
         app.log(dn, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
-        app.exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
+        app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         pass
 
@@ -78,7 +78,7 @@ def install(dn, component):
         return
     app.log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
     if cache.get_cache(component) is False:
-        app.exit(dn, 'ERROR: unable to get cache for', component['name'])
+        app.log(dn, 'Unable to get cache for', component['name'], exit=True)
     unpackdir = cache.get_cache(component) + '.unpacked'
     if dn.get('kind') is 'system':
         utils.copy_all_files(unpackdir, dn['sandbox'])
@@ -179,7 +179,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
                     os.getcwd(), argv_to_string(argv))
             call(['tail', '-n', '200', dn['log']])
             app.log(dn, 'ERROR: log file is at', dn['log'])
-            app.exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
+            app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         if cur_makeflags is not None:
             env['MAKEFLAGS'] = cur_makeflags
@@ -192,7 +192,7 @@ def run_logged(dn, cmd_list):
             app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(cmd_list))
             call(['tail', '-n', '200', dn['log']])
-            app.exit(dn, 'ERROR: log file is at', dn['log'])
+            app.log(dn, 'Log file is at', dn['log'], exit=True)
 
 
 def run_extension(dn, deployment, step, method):

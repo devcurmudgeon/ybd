@@ -93,7 +93,7 @@ def get_tree(dn):
     if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
         gitdir = dn['repo'].replace('file://', '')
         if not os.path.isdir(gitdir):
-            app.exit(dn, 'ERROR: git repo not found:', dn['repo'])
+            app.log(dn, 'Git repo not found:', dn['repo'], exit=True)
 
     if not os.path.exists(gitdir):
         try:
@@ -121,7 +121,7 @@ def get_tree(dn):
         except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
-            app.exit(dn, 'ERROR: could not find tree for ref', (ref, gitdir))
+            app.log(dn, 'No tree for ref', (ref, gitdir), exit=True)
 
 
 def mirror(name, repo):
@@ -141,11 +141,11 @@ def mirror(name, repo):
         app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
             if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
-                app.exit(name, 'ERROR: failed to clone', repo)
+                app.log(name, 'Failed to clone', repo, exit=True)
 
     with app.chdir(tmpdir):
         if call(['git', 'rev-parse']):
-            app.exit(name, 'ERROR: problem mirroring git repo at', tmpdir)
+            app.log(name, 'Problem mirroring git repo at', tmpdir, exit=True)
 
     gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     try:
@@ -172,7 +172,7 @@ def update_mirror(name, repo, gitdir):
         repo_url = get_repo_url(repo)
         if call(['git', 'fetch', repo_url, '+refs/*:refs/*', '--prune'],
                 stdout=fnull, stderr=fnull):
-            app.exit(name, 'ERROR: git update mirror failed', repo)
+            app.log(name, 'Git update mirror failed', repo, exit=True)
 
 
 def checkout(dn):
@@ -200,12 +200,12 @@ def _checkout(name, repo, ref, checkout):
         # removed --no-hardlinks, though.
         if call(['git', 'clone', '--no-hardlinks', gitdir, checkout],
                 stdout=fnull, stderr=fnull):
-            app.exit(name, 'ERROR: git clone failed for', ref)
+            app.log(name, 'Git clone failed for', ref, exit=True)
 
         with app.chdir(checkout):
             if call(['git', 'checkout', '--force', ref], stdout=fnull,
                     stderr=fnull):
-                app.exit(name, 'ERROR: git checkout failed for', ref)
+                app.log(name, 'Git checkout failed for', ref, exit=True)
 
             app.log(name, 'Git checkout %s in %s' % (repo, checkout))
             app.log(name, 'Upstream version %s' % get_version(checkout, ref))
@@ -235,10 +235,10 @@ def extract_commit(name, repo, ref, target_dir):
 
         app.log(name, 'Extracting commit', ref)
         if call(['git', 'read-tree', ref], env=git_env, cwd=gitdir):
-            app.exit(name, 'ERROR: git read-tree failed for', ref)
+            app.log(name, 'git read-tree failed for', ref, exit=True)
         app.log(name, 'Then checkout index', ref)
         if call(['git', 'checkout-index', '--all'], env=git_env, cwd=gitdir):
-            app.exit(name, 'ERROR: git checkout-index failed for', ref)
+            app.log(name, 'Git checkout-index failed for', ref, exit=True)
         app.log(name, 'Done', ref)
 
     utils.set_mtime_recursively(target_dir)
@@ -286,7 +286,7 @@ def checkout_submodules(dn):
                         fields)
 
         except:
-            app.exit(dn, "ERROR: git submodules problem", "")
+            app.log(dn, "Git submodules problem", exit=True)
 
 
 @contextlib.contextmanager

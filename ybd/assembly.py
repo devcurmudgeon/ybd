@@ -21,7 +21,7 @@ import fcntl
 import errno
 
 import app
-from app import config, exit, timer, elapsed
+from app import config, timer, elapsed
 from app import log, log_riemann, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
 import repos
@@ -211,7 +211,7 @@ def claim(dn):
                 log(dn, 'ERROR: surprise exception in assembly', '')
                 import traceback
                 traceback.print_exc()
-                exit(dn, 'ERROR: sandbox debris is at', dn['sandbox'])
+                log(dn, 'Sandbox debris at', dn['sandbox'], exit=True)
         try:
             yield
         finally:
@@ -250,7 +250,7 @@ def get_build_commands(dn):
         bs = app.defs.defaults.detect_build_system(files)
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':
-                exit(dn, 'ERROR: no install-commands, manual build system', '')
+                log(dn, 'No install-commands, manual build-system', exit=True)
         log(dn, 'WARNING: Assumed build system is', bs)
 
     for build_step in app.defs.defaults.build_steps:

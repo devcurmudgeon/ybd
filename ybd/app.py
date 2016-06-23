@@ -77,8 +77,12 @@ def lockfile(dn):
     return os.path.join(config['tmp'], cache_key(dn) + '.lock')
 
 
-def log(dn, message='', data='', verbose=False):
+def log(dn, message='', data='', verbose=False, exit=False):
     ''' Print a timestamped log. '''
+
+    if exit:
+        print('\n\n')
+        message = 'ERROR: ' + message
 
     if verbose is True and config.get('log-verbose', False) is False:
         return
@@ -101,6 +105,10 @@ def log(dn, message='', data='', verbose=False):
     print(entry),
     sys.stdout.flush()
 
+    if exit:
+        print('\n\n')
+        os._exit(1)
+
 
 def log_env(log, env, message=''):
     with open(log, "a") as logfile:
@@ -109,13 +117,6 @@ def log_env(log, env, message=''):
             logfile.write('%s=%s\n' % (key, msg))
         logfile.write(message + '\n\n')
         logfile.flush()
-
-
-def exit(dn, message, data):
-    print('\n\n')
-    log(dn, message, data)
-    print('\n\n')
-    os._exit(1)
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
@@ -193,8 +194,8 @@ def setup(args):
             os.makedirs(config[directory])
         except OSError:
             if not os.path.isdir(config[directory]):
-                exit('SETUP', 'ERROR: Can not find or create',
-                     config[directory])
+                log('SETUP', 'Cannot find or create', config[directory],
+                    exit=True)
 
         log('SETUP', '%s is directory for' % config[directory], directory)
 
