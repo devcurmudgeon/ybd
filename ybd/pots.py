@@ -38,7 +38,6 @@ class Pots(object):
         self._trees = {}
         self._set_trees()
         self.defaults = Defaults()
-        self._save_pots('./definitions.yml')
 
     def get(self, dn):
         ''' Return a definition from the dictionary.
@@ -48,7 +47,9 @@ class Pots(object):
         value in the given dict. '''
 
         if type(dn) is str:
-            return self._data.get(dn)
+            if self._data.get(dn):
+                return self._data.get(dn)
+            log(dn, 'Unable to find definition for', dn, exit=True)
 
         return self._data.get(dn.get('path', dn.keys()[0]))
 
