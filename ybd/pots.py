@@ -38,6 +38,7 @@ class Pots(object):
         self._trees = {}
         self._set_trees()
         self.defaults = Defaults()
+        self._save_pots('./definitions.yml')
 
     def get(self, dn):
         ''' Return a definition from the dictionary.
