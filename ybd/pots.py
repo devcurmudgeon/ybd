@@ -90,8 +90,10 @@ class Pots(object):
         '''
         for name in self._data:
             if self._data[name].get('tree') is not None:
-                self._trees[name] = [self._data[name]['ref'],
-                                     self._data[name]['tree'],
-                                     self._data[name].get('cache')]
+                if len(self._data[name]['ref']) == 40:
+                    # only save tree entry for full SHA
+                    self._trees[name] = [self._data[name]['ref'],
+                                         self._data[name]['tree'],
+                                         self._data[name].get('cache')]
         with open(os.path.join(config['artifacts'], '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
