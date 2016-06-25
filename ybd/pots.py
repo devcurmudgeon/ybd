@@ -71,11 +71,14 @@ class Pots(object):
             with open(os.path.join(config['artifacts'], '.trees')) as f:
                 text = f.read()
                 self._trees = yaml.safe_load(text)
+            count = 0
             for path in self._data:
                 dn = self._data[path]
                 if dn.get('ref') and self._trees.get(path):
                     if dn['ref'] == self._trees.get(path)[0]:
                         dn['tree'] = self._trees.get(path)[1]
+                        count += 1
+            log('DEFINITIONS', 'Re-used %s entries from .trees file' % count)
         except:
             log('DEFINITIONS', 'WARNING: problem with .trees file')
             pass
