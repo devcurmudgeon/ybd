@@ -36,7 +36,9 @@ def do_release_note(release_note):
         old_defs = Morphs()._data
 
     for key in app.defs._data:
-        log_changes(key, tmpdir, old_defs, ref)
+        dn = app.defs.get(key)
+        if dn.get('cache'):
+            log_changes(key, tmpdir, old_defs, ref)
 
     count = 0
     with open(release_note, 'w') as f:
@@ -79,8 +81,9 @@ def log_changes(key, tmpdir, old_defs, ref):
 
         if dn.get('kind', 'chunk') == 'chunk' and config['release-command']:
             log(dn, 'Logging git change history', tmpdir)
-            gitdir = os.path.join(config['gits'], get_repo_name(dn['repo']))
             try:
+                gitdir = os.path.join(config['gits'],
+                                      get_repo_name(dn['repo']))
                 if not os.path.exists(gitdir):
                     mirror(dn['name'], dn['repo'])
                 elif not mirror_has_ref(gitdir, ref):
