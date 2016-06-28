@@ -35,10 +35,10 @@ def do_release_note(release_note):
     with explore(ref):
         old_defs = Morphs()._data
 
-    for key in app.defs._data:
-        dn = app.defs.get(key)
+    for path in app.defs._data:
+        dn = app.defs.get(path)
         if dn.get('cache'):
-            log_changes(key, tmpdir, old_defs, ref)
+            log_changes(dn, tmpdir, old_defs, ref)
 
     count = 0
     with open(release_note, 'w') as f:
@@ -53,29 +53,28 @@ def do_release_note(release_note):
         release_note)
 
 
-def log_changes(key, tmpdir, old_defs, ref):
+def log_changes(dn, tmpdir, old_defs, ref):
     do_git_log = False
-    dn = app.defs.get(key)
-    old_def = old_defs.get(key)
+    old_def = old_defs.get(dn['path'])
     log_file = os.path.join(tmpdir, dn['name'])
     with open(log_file, 'w') as f:
-        for i in dn:
+        for key in dn:
             try:
-                old_value = old_def.get(i)
+                old_value = old_def.get(key)
             except:
                 old_value = ['None']
 
-            if dn[i] != old_value:
-                f.write('[%s] Value changed: %s\n' % (dn['path'], i))
-                if type(dn[i]) is str:
-                    f.write('%s | %s\n' % (old_value, dn[i]))
-                if type(dn[i]) is not str and type(dn[i]) is not float:
+            if dn[key] != old_value:
+                f.write('[%s] Value changed: %s\n' % (dn['path'], key))
+                if type(dn[key]) is str:
+                    f.write('%s | %s\n' % (old_value, dn[key]))
+                if type(dn[key]) is not str and type(dn[key]) is not float:
                     if old_value:
                         for x in old_value:
                             f.write(repr(x))
                     f.write('\n                vvv\n')
-                    if dn[i]:
-                        for x in dn[i]:
+                    if dn[key]:
+                        for x in dn[key]:
                             f.write(repr(x))
                 f.write('\n\n')
 
