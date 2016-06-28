@@ -60,18 +60,16 @@ with timer('TOTAL'):
     log('TARGET', 'Target is %s' % target, config['arch'])
     with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
         app.defs = Pots()
-        if 'release-note' in config:
-            do_release_note(config['release-note'])
 
     target = app.defs.get(config['target'])
-    if config.get('mode', 'normal') in ['parse-only', 'no-build']:
-        write_yaml(target)
-
     if config.get('mode', 'normal') == 'parse-only':
         os._exit(0)
 
     with timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
+
+    if 'release-note' in config:
+        do_release_note(config['release-note'])
 
     if config['total'] == 0 or (config['total'] == 1 and
                                 target.get('kind') == 'cluster'):
