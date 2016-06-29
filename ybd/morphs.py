@@ -88,6 +88,15 @@ class Morphs(object):
         # 'chunks' field in a stratum .morph file, or the 'strata' field in a
         # system .morph file.
         dn['contents'] = dn.get('contents', [])
+
+        if type(dn.get('chunks', [])) is not list:
+            log('DEFINITIONS', 'WARNING: %s chunks must be list\n' % dn['path'],
+                dn.get('chunks', []), exit=True)
+
+        if type(dn.get('strata', [])) is not list:
+            log('DEFINITIONS', 'WARNING: %s strata must be list\n' % dn['path'],
+                dn.get('strata', []), exit=True)
+
         dn['contents'] += dn.pop('chunks', []) + dn.pop('strata', [])
 
         lookup = {}
