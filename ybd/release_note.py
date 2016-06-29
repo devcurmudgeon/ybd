@@ -58,12 +58,12 @@ def log_changes(dn, tmpdir, old_defs, ref):
     old_def = old_defs.get(dn['path'])
     log_file = os.path.join(tmpdir, dn['name'])
     with open(log_file, 'w') as f:
-        for key in dn:
+        keys = set(dn) - set(['tree', 'cache'])
+        for key in keys:
             try:
                 old_value = old_def.get(key)
             except:
-                old_value = ['None']
-
+                old_value = None
             if dn[key] != old_value:
                 f.write('[%s] Value changed: %s\n' % (dn['path'], key))
                 if type(dn[key]) is str:
