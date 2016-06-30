@@ -94,7 +94,16 @@ def _process_tree(srcpath, destpath, actionfunc):
         # Ensure directory exists in destination, then recurse.
         if not os.path.lexists(destpath):
             os.makedirs(destpath)
-        dest_stat = os.stat(os.path.realpath(destpath))
+        try:
+            realpath = os.path.realpath(destpath)
+            dest_stat = os.stat(realpath)
+        except:
+            import traceback
+            traceback.print_exc()
+            print 'destpath is', destpath
+            print 'realpath is', realpath
+
+            app.log('UTILS', 'ERROR: file operation failed', exit=True)
         if not stat.S_ISDIR(dest_stat.st_mode):
             raise IOError('Destination not a directory. source has %s'
                           ' destination has %s' % (srcpath, destpath))
