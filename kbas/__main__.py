@@ -100,12 +100,12 @@ class KeyedBinaryArtifactServer(object):
         artifacts = len(os.listdir(app.config['artifact-dir']))
         started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
         last_upload = app.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
-        content = [['Started:', started]]
-        content += [['Last upload:', last_upload]]
+        content = [['Started:', started, None]]
+        content += [['Last upload:', last_upload, None]]
         if app.config.get('last-reject'):
-            content += [['Last reject:', app.config['last-reject']]]
-        content += [['Space:', str(free) + 'GB']]
-        content += [['Artifacts:', str(artifacts)]]
+            content += [['Last reject:', app.config['last-reject', None]]]
+        content += [['Space:', str(free) + 'GB', None]]
+        content += [['Artifacts:', str(artifacts), None]]
         return template('kbas',
                         title='KBAS status',
                         content=content,

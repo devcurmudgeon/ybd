@@ -11,11 +11,12 @@
 <p>{{title}}</p>
 <table border="0">
 %for row in content:
-  <tr>
-  %for column in row:
-    <td>{{column}}</td>
-  %end
-  </tr>
+    <tr>
+      <td>{{row[0]}}</td><td>{{row[1]}}</td>
+      %if row[2]:
+         <td><a href="/get/{{row[2]}}"> {{row[2]}}</a></td>
+      %end
+    </tr>
 %end
 </table>
 </body>

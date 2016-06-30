@@ -19,3 +19,5 @@ p {
 table {
 		font-size: 10pt;
 }
+
+:link, :visited, :active { color: #9ff; }
