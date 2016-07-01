@@ -61,6 +61,53 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
         os.utime(dirname, (set_time, set_time))
 
 
+# relative_symlink_target()
+# @root:    The staging area root location
+# @symlink: The location of the symlink in the staging area (including the root path)
+# @target:  The symbolic link target, which may be an absolute path
+#
+# If @target is an absolute path, a relative path from the symbolic link location
+# will be returned, otherwise if @target is a relative path, it will be return
+# unchanged.
+#
+def relative_symlink_target(root, symlink, target):
+    '''Resolves a relative symbolic link target if the target is an absolute path
+
+    This is is necessary when staging files into a staging area, otherwise we
+    can either get errors for non-existant paths on the host filesystem or
+    even worse, if we are running as super user we can end up silently overwriting
+    files on the build host.
+
+    '''
+
+    if os.path.isabs (target):
+
+        # First fix the input a little, the symlink itself must not have a
+        # trailing slash, otherwise we fail to remove the symlink filename
+        # from it's directory components in os.path.split()
+        #
+        # The absolute target filename must have it's leading separator
+        # removed, otherwise os.path.join() will discard the prefix
+        symlink = symlink.rstrip (os.path.sep)
+        target  = target.lstrip (os.path.sep)
+
+        # We want a relative path from the directory in which symlink
+        # is located, not from the symlink itself.
+        symlinkdir, unused = os.path.split (symlink)
+
+        # Create a full path to the target including the leading staging directory
+        fulltarget = os.path.join (root, target)
+
+        # now get the relative path from the directory where the symlink
+        # is located within the staging root, to the target within the same
+        # staging root
+        newtarget = os.path.relpath (fulltarget, symlinkdir)
+
+        return newtarget
+    else:
+        return target
+
+
 def copy_all_files(srcpath, destpath):
     '''Copy every file in the source path to the destination.
 
@@ -74,7 +121,7 @@ def copy_all_files(srcpath, destpath):
                 shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 
-    _process_tree(srcpath, destpath, _copyfun)
+    _process_tree(destpath, srcpath, destpath, _copyfun)
 
 
 def hardlink_all_files(srcpath, destpath):
@@ -83,10 +130,10 @@ def hardlink_all_files(srcpath, destpath):
     If an exception is raised, the staging-area is indeterminate.
 
     '''
-    _process_tree(srcpath, destpath, os.link)
+    _process_tree(destpath, srcpath, destpath, os.link)
 
 
-def _process_tree(srcpath, destpath, actionfunc):
+def _process_tree(root, srcpath, destpath, actionfunc):
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
 
@@ -109,7 +156,8 @@ def _process_tree(srcpath, destpath, actionfunc):
                           ' destination has %s' % (srcpath, destpath))
 
         for entry in os.listdir(srcpath):
-            _process_tree(os.path.join(srcpath, entry),
+            _process_tree(root,
+                          os.path.join(srcpath, entry),
                           os.path.join(destpath, entry),
                           actionfunc)
     elif stat.S_ISLNK(mode):
@@ -120,7 +168,11 @@ def _process_tree(srcpath, destpath, actionfunc):
                              destpath).group(0)).group(0)
             app.config['new-overlaps'] += [path]
             os.remove(destpath)
-        os.symlink(os.readlink(srcpath), destpath)
+
+        # Ensure that the symlink target is a relative path
+        target = os.readlink(srcpath)
+        target = relative_symlink_target(root, destpath, target)
+        os.symlink(target, destpath)
 
     elif stat.S_ISREG(mode):
         # Process the file.
@@ -215,7 +267,11 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             # Copy the symlink.
             if os.path.lexists(destpath):
                 os.remove(destpath)
-            os.symlink(os.readlink(srcpath), destpath)
+
+            # Ensure that the symlink target is a relative path
+            target = os.readlink(srcpath)
+            target = relative_symlink_target(destdir, destpath, target)
+            os.symlink(target, destpath)
 
         elif stat.S_ISREG(mode):
             # Process the file.
