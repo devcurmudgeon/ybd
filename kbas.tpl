@@ -14,7 +14,7 @@
     <tr>
       <td>{{row[0]}}</td><td>{{row[1]}}</td>
       %if row[2]:
-         <td><a href="/get/{{row[2]}}"> {{row[2]}}</a></td>
+         <td><a href="./get/{{row[2]}}"> {{row[2]}}</a></td>
       %end
     </tr>
 %end
