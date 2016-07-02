@@ -178,7 +178,10 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             path = re.search('/.*$', re.search('tmp[^/]+/.*$',
                              destpath).group(0)).group(0)
             app.config['new-overlaps'] += [path]
-            os.remove(destpath)
+            if os.path.isdir(destpath):
+                shutil.rmtree(destpath)
+            else:
+                os.remove(destpath)
 
         # Ensure that the symlink target is a relative path
         target = os.readlink(srcpath)
