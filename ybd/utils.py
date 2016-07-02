@@ -133,17 +133,6 @@ def hardlink_all_files(srcpath, destpath):
     _process_tree(destpath, srcpath, destpath, os.link)
 
 
-def _process_list(srcdir, destdir, actionfunc, filelist):
-
-    for path in sorted(filelist):
-        srcpath = os.path.join(srcdir, path)
-        destpath = os.path.join(destdir, path)
-
-        # The destination directory may not have been created separately
-        _copy_directories(srcdir, destdir, path)
-
-        _process_tree(destpath, srcpath, destpath, actionfunc)
-
 def _process_tree(root, srcpath, destpath, actionfunc):
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
@@ -178,10 +167,7 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             path = re.search('/.*$', re.search('tmp[^/]+/.*$',
                              destpath).group(0)).group(0)
             app.config['new-overlaps'] += [path]
-            if os.path.isdir(destpath):
-                shutil.rmtree(destpath)
-            else:
-                os.remove(destpath)
+            os.remove(destpath)
 
         # Ensure that the symlink target is a relative path
         target = os.readlink(srcpath)
@@ -220,7 +206,7 @@ def copy_file_list(srcpath, destpath, filelist):
                 shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 
-    _process_list(srcpath, destpath, _copyfun, filelist)
+    _process_list(srcpath, destpath, filelist, _copyfun)
 
 
 def hardlink_file_list(srcpath, destpath, filelist):
@@ -229,7 +215,7 @@ def hardlink_file_list(srcpath, destpath, filelist):
     If an exception is raised, the staging-area is indeterminate.
 
     '''
-    _process_list(srcpath, destpath, os.link, filelist)
+    _process_list(srcpath, destpath, filelist, os.link)
 
 
 def _copy_directories(srcdir, destdir, target):
@@ -253,6 +239,57 @@ def _copy_directories(srcdir, destdir, target):
             else:
                 raise IOError('Source directory tree has file where '
                               'directory expected: %s' % dir)
+
+
+def _process_list(srcdir, destdir, filelist, actionfunc):
+
+    for path in sorted(filelist):
+        srcpath = os.path.join(srcdir, path)
+        destpath = os.path.join(destdir, path)
+
+        # The destination directory may not have been created separately
+        _copy_directories(srcdir, destdir, path)
+
+        file_stat = os.lstat(srcpath)
+        mode = file_stat.st_mode
+
+        if stat.S_ISDIR(mode):
+            # Ensure directory exists in destination, then recurse.
+            if not os.path.lexists(destpath):
+                os.makedirs(destpath)
+            dest_stat = os.stat(os.path.realpath(destpath))
+            if not stat.S_ISDIR(dest_stat.st_mode):
+                raise IOError('Destination not a directory. source has %s'
+                              ' destination has %s' % (srcpath, destpath))
+            shutil.copystat(srcpath, destpath)
+
+        elif stat.S_ISLNK(mode):
+            # Copy the symlink.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+
+            # Ensure that the symlink target is a relative path
+            target = os.readlink(srcpath)
+            target = relative_symlink_target(destdir, destpath, target)
+            os.symlink(target, destpath)
+
+        elif stat.S_ISREG(mode):
+            # Process the file.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+            actionfunc(srcpath, destpath)
+
+        elif stat.S_ISCHR(mode) or stat.S_ISBLK(mode):
+            # Block or character device. Put contents of st_dev in a mknod.
+            if os.path.lexists(destpath):
+                os.remove(destpath)
+            os.mknod(destpath, file_stat.st_mode, file_stat.st_rdev)
+            os.chmod(destpath, file_stat.st_mode)
+
+        else:
+            # Unsupported type.
+            raise IOError('Cannot extract %s into staging-area. Unsupported'
+                          ' type.' % srcpath)
 
 
 def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
