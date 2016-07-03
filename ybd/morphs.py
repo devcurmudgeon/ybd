@@ -90,11 +90,11 @@ class Morphs(object):
         dn['contents'] = dn.get('contents', [])
 
         if type(dn.get('chunks', [])) is not list:
-            log('DEFINITIONS', 'WARNING: %s chunks must be list\n' % dn['path'],
+            log('DEFINITIONS', 'WARNING: %s chunks must be list:' % dn['path'],
                 dn.get('chunks', []), exit=True)
 
         if type(dn.get('strata', [])) is not list:
-            log('DEFINITIONS', 'WARNING: %s strata must be list\n' % dn['path'],
+            log('DEFINITIONS', 'WARNING: %s strata must be list:' % dn['path'],
                 dn.get('strata', []), exit=True)
 
         dn['contents'] += dn.pop('chunks', []) + dn.pop('strata', [])

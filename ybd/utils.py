@@ -63,24 +63,24 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
 
 # relative_symlink_target()
 # @root:    The staging area root location
-# @symlink: The location of the symlink in the staging area (including the root path)
+# @symlink: Location of the symlink in staging area (including the root path)
 # @target:  The symbolic link target, which may be an absolute path
 #
-# If @target is an absolute path, a relative path from the symbolic link location
-# will be returned, otherwise if @target is a relative path, it will be return
-# unchanged.
+# If @target is an absolute path, a relative path from the symbolic link
+# location will be returned, otherwise if @target is a relative path, it will
+# be returned unchanged.
 #
 def relative_symlink_target(root, symlink, target):
-    '''Resolves a relative symbolic link target if the target is an absolute path
+    '''Resolves a relative symbolic link target if target is an absolute path
 
     This is is necessary when staging files into a staging area, otherwise we
     can either get errors for non-existant paths on the host filesystem or
-    even worse, if we are running as super user we can end up silently overwriting
-    files on the build host.
+    even worse, if we are running as super user we can end up silently
+    overwriting files on the build host.
 
     '''
 
-    if os.path.isabs (target):
+    if os.path.isabs(target):
 
         # First fix the input a little, the symlink itself must not have a
         # trailing slash, otherwise we fail to remove the symlink filename
@@ -88,20 +88,21 @@ def relative_symlink_target(root, symlink, target):
         #
         # The absolute target filename must have it's leading separator
         # removed, otherwise os.path.join() will discard the prefix
-        symlink = symlink.rstrip (os.path.sep)
-        target  = target.lstrip (os.path.sep)
+        symlink = symlink.rstrip(os.path.sep)
+        target = target.lstrip(os.path.sep)
 
         # We want a relative path from the directory in which symlink
         # is located, not from the symlink itself.
-        symlinkdir, unused = os.path.split (symlink)
+        symlinkdir, unused = os.path.split(symlink)
 
-        # Create a full path to the target including the leading staging directory
-        fulltarget = os.path.join (root, target)
+        # Create a full path to the target, including the leading staging
+        # directory
+        fulltarget = os.path.join(root, target)
 
         # now get the relative path from the directory where the symlink
         # is located within the staging root, to the target within the same
         # staging root
-        newtarget = os.path.relpath (fulltarget, symlinkdir)
+        newtarget = os.path.relpath(fulltarget, symlinkdir)
 
         return newtarget
     else:
