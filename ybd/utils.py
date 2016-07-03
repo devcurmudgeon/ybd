@@ -134,6 +134,9 @@ def hardlink_all_files(srcpath, destpath):
 
 
 def _process_tree(root, srcpath, destpath, actionfunc):
+    if os.path.lexists(destpath):
+        app.log('OVERLAPS', 'WARNING: overlap at', destpath, verbose=True)
+
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
 
@@ -151,8 +154,9 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             print 'realpath is', realpath
 
             app.log('UTILS', 'ERROR: file operation failed', exit=True)
+
         if not stat.S_ISDIR(dest_stat.st_mode):
-            raise IOError('Destination not a directory. source has %s'
+            raise IOError('Destination not a directory: source has %s'
                           ' destination has %s' % (srcpath, destpath))
 
         for entry in os.listdir(srcpath):
@@ -195,8 +199,7 @@ def _process_tree(root, srcpath, destpath, actionfunc):
 
     else:
         # Unsupported type.
-        raise IOError('Cannot extract %s into staging-area. Unsupported'
-                      ' type.' % srcpath)
+        raise IOError('Cannot stage %s, unsupported type' % srcpath)
 
 
 def copy_file_list(srcpath, destpath, filelist):
