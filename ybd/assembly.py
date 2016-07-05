@@ -250,6 +250,7 @@ def get_build_commands(dn):
         bs = app.defs.defaults.detect_build_system(files)
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':
+                print dn
                 log(dn, 'No install-commands, manual build-system', exit=True)
         log(dn, 'WARNING: Assumed build system is', bs)
 
