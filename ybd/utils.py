@@ -254,14 +254,18 @@ def _copy_directories(srcdir, destdir, target):
 def _process_list(srcdir, destdir, filelist, actionfunc):
 
     for path in sorted(filelist):
-        srcpath = os.path.join(srcdir, path)
-        destpath = os.path.join(destdir, path)
+        srcpath = os.path.join(srcdir, path).encode('UTF-8')
+        destpath = os.path.join(destdir, path).encode('UTF-8')
 
         # The destination directory may not have been created separately
         _copy_directories(srcdir, destdir, path)
 
-        file_stat = os.lstat(srcpath)
-        mode = file_stat.st_mode
+        try:
+            file_stat = os.lstat(srcpath)
+            mode = file_stat.st_mode
+        except UnicodeEncodeError as ue:
+            app.log("UnicodeErr", "Couldn't get lstat info for '%s'."%(srcpath))
+            raise ue
 
         if stat.S_ISDIR(mode):
             # Ensure directory exists in destination, then recurse.
