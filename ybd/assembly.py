@@ -242,6 +242,7 @@ def get_build_commands(dn):
         dn['install-commands'] = gather_integration_commands(dn)
         return
 
+    exit = True if config.get('check-definitions') == 'exit' else False
     if 'build-system' in dn:
         bs = dn['build-system']
         log(dn, 'Defined build system is', bs)
@@ -251,7 +252,8 @@ def get_build_commands(dn):
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':
                 print dn
-                log(dn, 'No install-commands, manual build-system', exit=True)
+                log(dn, 'WARNING: No install-commands, manual build-system',
+                    exit=exit)
         log(dn, 'WARNING: Assumed build system is', bs)
 
     for build_step in app.defs.defaults.build_steps:
