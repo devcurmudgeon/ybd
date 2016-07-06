@@ -64,9 +64,10 @@ def compose(dn):
     systems = dn.get('systems', [])
     shuffle(systems)
     for system in systems:
-        compose(system['path'])
-        for subsystem in system.get('subsystems', []):
+        for s in system.get('subsystems', []):
+            subsystem = app.defs.get(s['path'])
             compose(subsystem)
+        compose(system['path'])
 
     with sandbox.setup(dn):
         install_contents(dn)
