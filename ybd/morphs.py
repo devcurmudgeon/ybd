@@ -26,6 +26,7 @@ class Morphs(object):
         '''Load all definitions from a directory tree.'''
         self._data = {}
         self.defaults = Defaults()
+        self.fields = self.defaults.build_steps + self.defaults.fields
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
         self.parse_files(directory)
 
@@ -57,7 +58,7 @@ class Morphs(object):
                 text = f.read()
             contents = yaml.safe_load(text)
             for field in contents:
-                if field not in self.defaults.build_steps + self.defaults.fields:
+                if field not in self.fields:
                         log('DEFINITIONS', 'Invalid field "%s" in' % field,
                             path, exit=True)
         except yaml.YAMLError, exc:

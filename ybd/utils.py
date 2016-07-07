@@ -264,7 +264,8 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             file_stat = os.lstat(srcpath)
             mode = file_stat.st_mode
         except UnicodeEncodeError as ue:
-            app.log("UnicodeErr", "Couldn't get lstat info for '%s'."%(srcpath))
+            app.log("UnicodeErr",
+                    "Couldn't get lstat info for '%s'." % srcpath)
             raise ue
 
         if stat.S_ISDIR(mode):
