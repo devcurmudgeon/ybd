@@ -44,6 +44,8 @@ def cache_key(dn):
         return dn['cache']
 
     if dn.get('arch', app.config['arch']) != app.config['arch']:
+        app.log(dn, 'Cache_key requested but arch %s mismatch' % dn['arch'],
+                app.config['arch'])
         return False
 
     dn['cache'] = 'calculating'
