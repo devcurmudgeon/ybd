@@ -42,6 +42,9 @@ def deploy_system(system_spec, parent_location=''):
 
     '''
     system = app.defs.get(system_spec['path'])
+    if not cache.get_cache(system):
+        app.log('DEPLOY', 'System is not built, cannot deploy:\n', system,
+                exit=True)
     deploy_defaults = system_spec.get('deploy-defaults')
 
     with sandbox.setup(system):
