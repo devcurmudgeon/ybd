@@ -1,4 +1,4 @@
-Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd) GitLab: [![Build Status](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)](https://gitlab.com/devcurmudgeon/ybd/badges/master/build.svg)
+Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd)
 
 # ybd
 
