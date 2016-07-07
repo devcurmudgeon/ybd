@@ -56,11 +56,12 @@ class Morphs(object):
             with open(path) as f:
                 text = f.read()
             contents = yaml.safe_load(text)
+            for field in contents:
+                if field not in self.defaults.build_steps + self.defaults.fields:
+                        log('DEFINITIONS', 'Invalid field "%s" in' % field,
+                            path, exit=True)
         except yaml.YAMLError, exc:
             log('DEFINITIONS', 'Could not parse %s' % path, exc, exit=True)
-        except:
-            log('DEFINITIONS', 'WARNING: Unexpected error loading', path)
-            return None
 
         if type(contents) is not dict:
             log('DEFINITIONS', 'WARNING: %s contents is not dict:' % path,

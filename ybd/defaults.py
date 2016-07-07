@@ -34,6 +34,7 @@ class Defaults(object):
     def __init__(self):
         defaults = self._load_defaults()
         self.build_steps = defaults.get('build-steps', {})
+        self.fields = defaults.get('morph-fields', {})
         self.build_systems = defaults.get('build-systems', {})
         self.split_rules = defaults.get('split-rules', {})
         self.cpus = defaults.get('cpus', {})
