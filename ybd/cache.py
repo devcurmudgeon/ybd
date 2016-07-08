@@ -182,9 +182,7 @@ def unpack(dn, tmpfile):
     unpackdir = tmpfile + '.unpacked'
     os.makedirs(unpackdir)
     if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-        app.log(dn, 'Problem unpacking', tmpfile)
-        shutil.rmtree(os.path.dirname(tmpfile))
-        return False
+        app.log(dn, 'WARNING: Problem unpacking', tmpfile, exit=True)
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(dn))
