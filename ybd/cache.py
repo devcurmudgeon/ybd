@@ -143,7 +143,7 @@ def cache(dn):
         shutil.move('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(dn['install'])
-        utils.make_deterministic_gztar_archive(cachefile, dn['install'])
+        utils.make_fixed_gztar_archive(cachefile, dn['install'])
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     app.config['counter'].increment()

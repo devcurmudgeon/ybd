@@ -307,6 +307,21 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
                           ' type.' % srcpath)
 
 
+def make_fixed_gztar_archive(base_name, root, time=1321009871.0):
+    with app.chdir(root), open(base_name + '.tar.gz', 'wb') as f:
+        context = gzip.GzipFile(filename='', mode='wb', fileobj=f, mtime=time)
+        with context as f_gzip:
+
+            with tarfile.TarFile(mode='w', fileobj=f_gzip) as f_tar:
+
+                for dirname, dirs, filenames in os.walk('.', topdown=False):
+                    if os.path.isdir(dirname) and not os.path.islink(dirname):
+                        filenames.sort()
+                        for filename in filenames:
+                            path = os.path.join(dirname, filename)
+                            f_tar.add(name=path, recursive=False)
+
+
 def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
     '''Make a gzipped tar archive of contents of 'root_dir'.
 
