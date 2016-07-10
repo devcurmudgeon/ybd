@@ -37,10 +37,10 @@ def set_mtime_recursively(root, set_time=default_magic_timestamp):
 
     '''
 
-    for dirname, subdirs, basenames in os.walk(root.encode("utf-8"),
+    for dirname, subdirs, filenames in os.walk(root.encode("utf-8"),
                                                topdown=False):
-        for basename in basenames:
-            pathname = os.path.join(dirname, basename)
+        for filename in filenames:
+            pathname = os.path.join(dirname, filename)
 
             # Python's os.utime only ever modifies the timestamp
             # of the target, it is not acceptable to set the timestamp
