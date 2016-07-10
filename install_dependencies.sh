@@ -26,8 +26,8 @@ installed=false
 # install dependencies for debian, ubuntu
 which apt-get 2>&1 > /dev/null
 if [ $? -eq 0 ]; then
-    sudo apt-get -qq update
-    sudo apt-get -qq install build-essential gawk git m4 wget
+    apt-get -qq update
+    apt-get -qq install build-essential gawk git m4 wget
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -38,7 +38,7 @@ fi
 # install for fedora
 which dnf 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    sudo dnf install -y which make automake gcc gcc-c++ gawk git m4 wget
+    dnf install -y which make automake gcc gcc-c++ gawk git m4 wget
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -49,7 +49,7 @@ fi
 # install for aws
 which yum 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    sudo yum install -y which make automake gcc gcc-c++ gawk git m4 wget
+    yum install -y which make automake gcc gcc-c++ gawk git m4 wget
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -60,7 +60,7 @@ fi
 # install for Arch
 which pacman 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    sudo pacman -S --noconfirm which make automake gcc gawk git m4 wget
+    pacman -S --noconfirm which make automake gcc gawk git m4 wget
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -76,10 +76,10 @@ fi
 pip --version 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
     wget https://bootstrap.pypa.io/get-pip.py
-    sudo python get-pip.py
-    sudo rm get-pip.py
+    python get-pip.py
+    rm get-pip.py
 fi
 
-sudo pip install fs pyyaml sandboxlib requests
-sudo pip install jsonschema bottle cherrypy riemann-client
-sudo pip install pep8
+pip install fs pyyaml sandboxlib requests
+pip install jsonschema bottle cherrypy riemann-client
+pip install pep8
