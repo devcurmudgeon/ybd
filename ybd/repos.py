@@ -134,7 +134,7 @@ def mirror(name, repo):
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(app.config['tar-url'], tar_file)],
-                 stdout=fnull)
+                 stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stderr=fnull)
             os.remove(tar_file)
             update_mirror(name, repo, tmpdir)
