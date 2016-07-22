@@ -126,6 +126,7 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
 
 
 def setup(args):
+    os.environ['LANG'] = 'en_US.UTF-8'
     config['start-time'] = datetime.datetime.now()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))
