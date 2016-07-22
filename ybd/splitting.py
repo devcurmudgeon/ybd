@@ -198,25 +198,22 @@ def write_chunk_metafile(chunk):
     log(chunk['name'], 'Splitting', chunk.get('kind'))
     rules, splits = compile_rules(chunk)
 
-    install_dir = chunk['install']
-    fs = OSFS(install_dir)
-    files = fs.walkfiles('.', search='depth')
-    dirs = fs.walkdirs('.', search='depth')
-
-    for path in files:
-        for artifact, rule in rules:
-            if rule.match(path):
-                splits[artifact].append(path)
-                break
-
-    all_files = [a for x in splits.values() for a in x]
-    for path in dirs:
-        if not any(map(lambda y: y.startswith(path),
-                   all_files)) and path != '':
-            for artifact, rule in rules:
+    install = chunk['install']
+    for root, dirs, files in os.walk(install.encode('UTF-8'), topdown=False):
+        for path in files:
+             for artifact, rule in rules:
                 if rule.match(path) or rule.match(path + '/'):
                     splits[artifact].append(path)
                     break
+
+        all_files = [a for x in splits.values() for a in x]
+        for path in dirs:
+            if not any(map(lambda y: y.startswith(path),
+                       all_files)) and path != '':
+                for artifact, rule in rules:
+                    if rule.match(path) or rule.match(path + '/'):
+                        splits[artifact].append(path)
+                        break
 
     write_metafile(rules, splits, chunk)
 
