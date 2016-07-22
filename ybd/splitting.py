@@ -199,7 +199,7 @@ def write_chunk_metafile(chunk):
     rules, splits = compile_rules(chunk)
 
     install_dir = chunk['install']
-    fs = OSFS(install_dir, encoding='UTF-8')
+    fs = OSFS(install_dir)
     files = fs.walkfiles('.', search='depth')
     dirs = fs.walkdirs('.', search='depth')
 
