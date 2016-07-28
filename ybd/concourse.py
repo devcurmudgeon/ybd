@@ -15,6 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import yaml
+import app
 from app import log, timer, defs
 
 # Concourse data model:
@@ -27,33 +28,34 @@ class Pipeline(object):
 
     def __init__(self, dn):
 
-        self.resources = [{'name': ' ', 'type': 'foo'}]
+        self.resources = [{'name': dn['name'], 'type': 'foo'}]
         self.jobs = []
         self.config = {'run': {'path': 'ybd', 'args': []},
                        'platform': 'linux',
                        'image': 'docker:///devcurmudgeon/foo'}
 
         self.write_pipeline(dn)
-        output = defs.get(dn)['name'] + '.yml'
+        output = app.defs.get(dn)['name'] + '.yml'
         with open(output, 'w') as f:
             pipeline = {'resources': self.resources, 'jobs': self.jobs}
             f.write(yaml.dump(pipeline, default_flow_style=False))
         log('CONCOURSE', 'pipeline is at', output)
 
     def write_pipeline(self, dn):
-        dn = defs.get(dn)
+        dn = app.defs.get(dn)
         self.add_resource(dn)
         aggregate = []
         for it in dn.get('build-depends', []) + dn.get('contents', []):
-            component = defs.get(it)
+            component = app.defs.get(it)
             self.add_resource(component)
             if component.get('kind', 'chunk') == 'chunk':
                 aggregate += [{'get': component['name']}]
             else:
                 self.write_pipeline(component)
-                aggregate += [{'get': ' ', 'passed': [component['name']]}]
+                aggregate += [{'get': component['name'],
+                               'passed': [component['name']]}]
 
-        self.add_job(dn, [{'aggregate': aggregate}, {'put': ' '}])
+        self.add_job(dn, [{'aggregate': aggregate}, {'put': dn['name']}])
 
     def add_job(self, component, plan):
         found = False

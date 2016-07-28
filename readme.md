@@ -202,7 +202,8 @@ to start a local concourse instance:
     vagrant up
     # generate pipeline, run concourse.py (same arguments as ybd.py)
     python ../ybd/ybd/concourse.py <target> <arch>
-    fly set-pipeline -p foo -c pipeline.yml
+    fly -t local login -c http://192.168.100.4:8080
+    fly -t local set-pipeline -p <target> -c <target>.yml
 ```
 
 you can view the local pipelines at http://192.168.100.4:8080

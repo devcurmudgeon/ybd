@@ -25,6 +25,7 @@ from app import cleanup, config, log, RetryException, setup, spawn, timer
 from assembly import compose
 from deployment import deploy
 from pots import Pots
+from concourse import Pipeline
 import cache
 from release_note import do_release_note
 import sandbox
@@ -63,6 +64,7 @@ with timer('TOTAL'):
 
     target = app.defs.get(config['target'])
     if config.get('mode', 'normal') == 'parse-only':
+        Pipeline(target)
         os._exit(0)
 
     with timer('CACHE-KEYS', 'cache-key calculations'):
