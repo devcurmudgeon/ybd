@@ -120,6 +120,11 @@ class Morphs(object):
             component['build-depends'] = (dn.get('build-depends', []) +
                                           component.get('build-depends', []))
 
+            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4, 5]:
+                c = self._data.get(component['path'])
+                if c and 'build-depends' in c:
+                    component['build-depends'] += c['build-depends']
+
             splits = component.get('artifacts', [])
             dn['contents'][index] = {self._insert(component): splits}
 
