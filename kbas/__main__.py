@@ -90,7 +90,8 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
-        return static_file(f, root=app.config['artifact-dir'], download=True)
+        return static_file(f, root=app.config['artifact-dir'], download=True,
+                           mimetype='application/x-tar')
 
     @bottle.get('/')
     @bottle.get('/status')
