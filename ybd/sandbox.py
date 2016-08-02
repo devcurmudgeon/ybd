@@ -148,7 +148,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             network='isolated',
         )
 
-    argv = ['sh', '-c', command]
+    argv = ['sh', '-c', '-e', command]
 
     cur_makeflags = env.get("MAKEFLAGS")
 
