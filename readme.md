@@ -188,6 +188,14 @@ by default ybd is configured to check for artifacts from a kbas server at
 
 ```
     http://artifacts1.baserock.org:8000/
+
+config for kbas follows the same approach as ybd, defaulting to config in
+
+    kbas/config/kbas.conf
+
+NOTE: the default password is 'insecure' and the uploading is disabled unless
+you change it.
+
 ```
 
 
