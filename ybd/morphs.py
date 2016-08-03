@@ -201,7 +201,7 @@ class Morphs(object):
             if dn['name'] != new_def['name']:
                 log(new_def, 'WARNING: %s also named as' % new_def['name'],
                     dn['name'], exit=exit)
-                dn[key] = new_def[key]
+                dn['name'] = new_def['name']
 
             for key in new_def:
                 if dn.get(key) and new_def[key] and dn[key] != new_def[key]:
