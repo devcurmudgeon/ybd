@@ -144,7 +144,7 @@ class Morphs(object):
         exit = True if config.get('check-definitions') == 'exit' else False
         if dn.get('morph'):
             if not os.path.isfile(dn.get('morph')):
-                log('DEFINITION', 'WARNING: missing', dn['morph'], exit=exit)
+                log('DEFINITION', 'WARNING: missing', dn['morph'], exit=True)
             dn['path'] = self._demorph(dn.pop('morph'))
 
         if 'path' not in dn:
