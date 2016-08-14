@@ -93,7 +93,11 @@ def hash_factors(dn):
     for factor in dn.get('contents', []):
         hash_factors[factor.keys()[0]] = cache_key(factor.keys()[0])
 
-    for factor in ['tree', 'submodules'] + app.defs.defaults.build_steps:
+    relevant_factors = ['tree', 'submodules'] + app.defs.defaults.build_steps
+    if app.config.get('artifact-version', False) not in range(0, 6):
+        relevant_factors += ['devices']
+
+    for factor in relevant_factors:
         if dn.get(factor):
             hash_factors[factor] = dn[factor]
 
