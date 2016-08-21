@@ -193,8 +193,13 @@ config for kbas follows the same approach as ybd, defaulting to config in
 
     kbas/config/kbas.conf
 
-NOTE: the default password is 'insecure' and the uploading is disabled unless
-you change it.
+NOTE:
+
+- the default password is 'insecure' and the uploading is disabled unless
+you change 'insecure' to be something else.
+
+- you should probably configure HTTPS too, by setting up a certificate and
+private key. See the kbas/config/kbas.conf file for a basic example
 
 ```
 

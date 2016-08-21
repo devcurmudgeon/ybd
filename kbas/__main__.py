@@ -23,11 +23,26 @@ from time import strftime, gmtime
 from datetime import datetime
 import tempfile
 from bottle import Bottle, request, response, template, static_file
+from bottle import server_names, ServerAdapter
 from subprocess import call
 
 from ybd import app, cache
 
 bottle = Bottle()
+
+
+class SSLServer(ServerAdapter):
+    def run(self, handler):
+        from cherrypy import wsgiserver
+        from cherrypy.wsgiserver.ssl_pyopenssl import pyOpenSSLAdapter
+
+        server = wsgiserver.CherryPyWSGIServer((self.host, self.port), handler)
+
+        server.ssl_adapter = pyOpenSSLAdapter(
+            certificate=app.config.get('certificate'),
+            private_key=app.config.get('private-key'),
+            certificate_chain=app.config.get('certificate-chain'))
+        server.start()
 
 
 class KeyedBinaryArtifactServer(object):
@@ -44,18 +59,18 @@ class KeyedBinaryArtifactServer(object):
         app.config['last-upload'] = datetime.now()
 
         try:
-            import cherrypy
-            server = 'cherrypy'
+            server_names['sslserver'] = SSLServer
+            bottle.run(host=app.config['host'],
+                       port=app.config['port'],
+                       server='sslserver')
         except:
             server = 'wsgiref'
-
-        # for development:
-        if app.config.get('mode') == 'development':
-            bottle.run(server=server, host=app.config['host'],
-                       port=app.config['port'], debug=True, reloader=True)
-        else:
-            bottle.run(server=server, host=app.config['host'],
-                       port=app.config['port'], reloader=True)
+            if app.config.get('mode') == 'development':
+                bottle.run(server=server, host=app.config['host'],
+                           port=app.config['port'], debug=True, reloader=True)
+            else:
+                bottle.run(server=server, host=app.config['host'],
+                           port=app.config['port'], reloader=True)
 
     @bottle.get('/static/<filename>')
     def send_static(filename):
