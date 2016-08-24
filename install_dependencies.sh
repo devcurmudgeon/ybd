@@ -60,7 +60,7 @@ fi
 # install for Arch
 which pacman 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    sudo pacman -S --noconfirm which make automake gcc gawk git m4 wget python
+    sudo pacman -S --noconfirm which make automake gcc gawk git m4 wget python2
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
