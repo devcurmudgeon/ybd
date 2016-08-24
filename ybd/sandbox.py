@@ -148,6 +148,14 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             network='isolated',
         )
 
+    # Awful hack to ensure string-escape is loaded:
+    #
+    # this ensures that when propagating an exception back from
+    # the child process in a chroot, the required string-escape
+    # python module is already in memory and no attempt to
+    # lazy load it in the chroot is made.
+    unused = "Some Text".encode('string-escape')
+
     argv = ['sh', '-c', '-e', command]
 
     cur_makeflags = env.get("MAKEFLAGS")
