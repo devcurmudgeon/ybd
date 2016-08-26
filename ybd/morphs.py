@@ -45,6 +45,12 @@ class Morphs(object):
                             data['path'] = self._demorph(path[2:])
                             self._fix_keys(data)
                             self._tidy_and_insert_recursively(data)
+        for x in self._data:
+            dn = self._data[x]
+            for field in dn:
+                if field not in self.fields:
+                    log(dn, 'Invalid field "%s" in' % field, dn['path'],
+                        exit=True)
 
     def _load(self, path):
         '''Load a single definition file as a dict.
@@ -57,10 +63,6 @@ class Morphs(object):
             with open(path) as f:
                 text = f.read()
             contents = yaml.safe_load(text)
-            for field in contents:
-                if field not in self.fields:
-                        log('DEFINITIONS', 'Invalid field "%s" in' % field,
-                            path, exit=True)
         except yaml.YAMLError, exc:
             log('DEFINITIONS', 'Could not parse %s' % path, exc, exit=True)
 
