@@ -125,7 +125,7 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
     return 'WARNING: %s\n' % (message)
 
 
-def setup(args):
+def setup(args, original_cwd=""):
     os.environ['LANG'] = 'en_US.UTF-8'
     config['start-time'] = datetime.datetime.now()
     config['program'] = os.path.basename(args[0])
@@ -156,6 +156,7 @@ def setup(args):
     load_configs([
         os.path.join(os.getcwd(), 'ybd.environment'),
         os.path.join(os.getcwd(), 'ybd.conf'),
+        os.path.join(original_cwd, 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
 
