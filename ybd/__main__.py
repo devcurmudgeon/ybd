@@ -42,6 +42,7 @@ def write_cache_key():
 
 
 print('')
+original_cwd=os.getcwd()
 if not os.path.exists('./VERSION'):
     if os.path.basename(os.getcwd()) != 'definitions':
         if os.path.isdir(os.path.join(os.getcwd(), 'definitions')):
@@ -50,7 +51,7 @@ if not os.path.exists('./VERSION'):
             if os.path.isdir(os.path.join(os.getcwd(), '..', 'definitions')):
                 os.chdir(os.path.join(os.getcwd(), '..', 'definitions'))
 
-setup(sys.argv)
+setup(sys.argv, original_cwd)
 cleanup(config['tmp'])
 
 with timer('TOTAL'):
