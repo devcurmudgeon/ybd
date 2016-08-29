@@ -143,9 +143,9 @@ class Morphs(object):
         the same as 'path' but replacing '/' by '-'
 
         '''
-        
+
         exit = (config.get('check-definitions') == 'exit')
-        
+
         if dn.get('morph'):
             if not os.path.isfile(dn.get('morph')):
                 log('DEFINITION', 'WARNING: missing', dn['morph'], exit=exit)
@@ -194,9 +194,9 @@ class Morphs(object):
         duplicated in the existing definition, output a warning.
 
         '''
-        
+
         exit = (config.get('check-definitions') == 'exit')
-        
+
         dn = self._data.get(new_def['path'])
         if dn:
             if (dn.get('ref') is None or new_def.get('ref') is None):
