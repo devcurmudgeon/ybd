@@ -42,7 +42,7 @@ def write_cache_key():
 
 
 print('')
-original_cwd=os.getcwd()
+original_cwd = os.getcwd()
 if not os.path.exists('./VERSION'):
     if os.path.basename(os.getcwd()) != 'definitions':
         if os.path.isdir(os.path.join(os.getcwd(), 'definitions')):
