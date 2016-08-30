@@ -130,13 +130,13 @@ def setup(args, original_cwd=""):
     config['start-time'] = datetime.datetime.now()
     config['program'] = os.path.basename(args[0])
     config['my-version'] = get_version(os.path.dirname(__file__))
-    if not os.geteuid() == 0:
-        log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
-
     log('SETUP', '%s version is' % config['program'], config['my-version'])
     if len(args) != 3:
         sys.stdout.write("\nUsage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
         sys.exit(1)
+
+    if not os.geteuid() == 0:
+        log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
 
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
