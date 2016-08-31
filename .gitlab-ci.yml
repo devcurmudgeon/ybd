@@ -13,7 +13,6 @@ cache:
 
 stages:
 - pep8
-- installation
 - cache_keys
 - build
 - test
@@ -22,10 +21,6 @@ stages:
 check_pep8:
   stage: pep8
   script: "pep8"
-
-check_installation:
-  stage: installation
-  script: "./ybd.py | grep SETUP | grep version"
 
 check_cache_keys:
   stage: cache_keys
