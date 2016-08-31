@@ -3,10 +3,6 @@ image: devcurmudgeon/foo
 before_script:
 - sh ./install_dependencies.sh
 
-variables:
-  YBD_mode: "keys-only"
-  YBD_artifact_version: "1"
-
 cache:
   paths:
   - "$YBD_base"
@@ -24,6 +20,9 @@ check_pep8:
 
 check_cache_keys:
   stage: cache_keys
+  variables:
+    YBD_artifact_version: "1"
+    YBD_mode: "keys-only"
   script:
   - env
   - cd ..
