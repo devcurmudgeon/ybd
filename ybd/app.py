@@ -135,9 +135,6 @@ def setup(args, original_cwd=""):
         sys.stdout.write("\nUsage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
         sys.exit(1)
 
-    if not os.geteuid() == 0:
-        log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
-
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
@@ -162,6 +159,9 @@ def setup(args, original_cwd=""):
         os.path.join(original_cwd, 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
+
+    if not os.geteuid() == 0 and config.get('mode') == 'normal':
+        log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
 
     if config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
         config.pop('kbas-url')
