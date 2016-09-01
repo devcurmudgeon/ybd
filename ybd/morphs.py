@@ -15,6 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import yaml
+import glob
 import os
 from app import chdir, config, log
 from defaults import Defaults
@@ -28,23 +29,17 @@ class Morphs(object):
         self.defaults = Defaults()
         self.fields = self.defaults.build_steps + self.defaults.fields
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
-        self.parse_files(directory)
 
-    def parse_files(self, directory):
-        with chdir(directory):
-            for dirname, dirnames, filenames in os.walk('.'):
-                filenames.sort()
-                dirnames.sort()
-                if '.git' in dirnames:
-                    dirnames.remove('.git')
-                for filename in filenames:
-                    if filename.endswith(('.def', '.morph')):
-                        path = os.path.join(dirname, filename)
-                        data = self._load(path)
-                        if data is not None:
-                            data['path'] = self._demorph(path[2:])
-                            self._fix_keys(data)
-                            self._tidy_and_insert_recursively(data)
+        directories = [d[0] for d in os.walk(directory) if '/.' not in d[0]]
+        for d in sorted(directories):
+            files = glob.glob(os.path.join(d, '*.morph'))
+            for path in sorted(files):
+                data = self._load(path)
+                if data is not None:
+                    data['path'] = self._demorph(path[2:])
+                    self._fix_keys(data)
+                    self._tidy_and_insert_recursively(data)
+
         for x in self._data:
             dn = self._data[x]
             for field in dn:
