@@ -3,16 +3,12 @@ image: devcurmudgeon/foo
 before_script:
 - sh ./install_dependencies.sh
 
-variables:
-  YBD_mode: "keys-only"
-  YBD_artifact_version: "1"
-
 cache:
-  path: "$YBD_base"
+  paths:
+  - "$YBD_base"
 
 stages:
 - pep8
-- installation
 - cache_keys
 - build
 - test
@@ -22,12 +18,11 @@ check_pep8:
   stage: pep8
   script: "pep8"
 
-check_installation:
-  stage: installation
-  script: "./ybd.py | grep SETUP | grep version"
-
 check_cache_keys:
   stage: cache_keys
+  variables:
+    YBD_artifact_version: "1"
+    YBD_mode: "keys-only"
   script:
   - env
   - cd ..
@@ -37,3 +32,11 @@ check_cache_keys:
   - ../ybd/ybd.py ci x86_64
   - echo ci.b9de86669ce182e60e3f9445e6394b478b67a2c73b4c0764491c158c5f2569e9 > expected.result
   - diff expected.result ybd.result
+
+check_build:
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+  script:
+  - git clone git://git.baserock.org/baserock/baserock/definitions
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
