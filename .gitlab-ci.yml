@@ -24,7 +24,6 @@ check_cache_keys:
     YBD_artifact_version: "1"
     YBD_mode: "keys-only"
   script:
-  - env
   - cd ..
   - git clone git://git.baserock.org/baserock/baserock/definitions
   - cd definitions
