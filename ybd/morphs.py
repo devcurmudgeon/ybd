@@ -122,7 +122,7 @@ class Morphs(object):
             component['build-depends'] = (dn.get('build-depends', []) +
                                           component.get('build-depends', []))
 
-            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4, 5]:
+            if config.get('artifact-version', 0) not in range(0, 5):
                 c = self._data.get(component['path'])
                 if c and 'build-depends' in c:
                     component['build-depends'] += c['build-depends']
@@ -154,7 +154,7 @@ class Morphs(object):
         if 'path' not in dn:
             if 'name' not in dn:
                 log(dn, 'No path, no name?', exit=True)
-            if config.get('artifact-version') in range(0, 4):
+            if config.get('artifact-version', 0) in range(0, 4):
                 dn['path'] = dn['name']
             else:
                 dn['path'] = os.path.join(self._demorph(base), dn['name'])
