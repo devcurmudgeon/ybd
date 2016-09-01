@@ -15,6 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import yaml
+import glob
 import os
 from app import chdir, config, log
 from defaults import Defaults
@@ -28,23 +29,17 @@ class Morphs(object):
         self.defaults = Defaults()
         self.fields = self.defaults.build_steps + self.defaults.fields
         config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
-        self.parse_files(directory)
 
-    def parse_files(self, directory):
-        with chdir(directory):
-            for dirname, dirnames, filenames in os.walk('.'):
-                filenames.sort()
-                dirnames.sort()
-                if '.git' in dirnames:
-                    dirnames.remove('.git')
-                for filename in filenames:
-                    if filename.endswith(('.def', '.morph')):
-                        path = os.path.join(dirname, filename)
-                        data = self._load(path)
-                        if data is not None:
-                            data['path'] = self._demorph(path[2:])
-                            self._fix_keys(data)
-                            self._tidy_and_insert_recursively(data)
+        directories = [d[0] for d in os.walk(directory) if '/.' not in d[0]]
+        for d in sorted(directories):
+            files = glob.glob(os.path.join(d, '*.morph'))
+            for path in sorted(files):
+                data = self._load(path)
+                if data is not None:
+                    data['path'] = self._demorph(path[2:])
+                    self._fix_keys(data)
+                    self._tidy_and_insert_recursively(data)
+
         for x in self._data:
             dn = self._data[x]
             for field in dn:
@@ -122,7 +117,7 @@ class Morphs(object):
             component['build-depends'] = (dn.get('build-depends', []) +
                                           component.get('build-depends', []))
 
-            if config.get('artifact-version', 0) not in [0, 1, 2, 3, 4, 5]:
+            if config.get('artifact-version', 0) not in range(0, 5):
                 c = self._data.get(component['path'])
                 if c and 'build-depends' in c:
                     component['build-depends'] += c['build-depends']
@@ -154,7 +149,7 @@ class Morphs(object):
         if 'path' not in dn:
             if 'name' not in dn:
                 log(dn, 'No path, no name?', exit=True)
-            if config.get('artifact-version') in range(0, 4):
+            if config.get('artifact-version', 0) in range(0, 4):
                 dn['path'] = dn['name']
             else:
                 dn['path'] = os.path.join(self._demorph(base), dn['name'])
