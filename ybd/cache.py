@@ -152,9 +152,9 @@ def cache(dn):
         utils.make_deterministic_gztar_archive(cachefile, dn['install'])
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
+    unpack(dn, cachefile)
     app.config['counter'].increment()
 
-    unpack(dn, cachefile)
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
             app.config.get('kbas-url') is not None:
         if dn.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
@@ -185,10 +185,15 @@ def update_manifest(dn, manifest):
 
 
 def unpack(dn, tmpfile):
-    unpackdir = tmpfile + '.unpacked'
-    os.makedirs(unpackdir)
-    if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-        app.log(dn, 'WARNING: Problem unpacking', tmpfile, exit=True)
+    if dn.get('kind') != 'system':
+        unpackdir = tmpfile + '.unpacked'
+        os.makedirs(unpackdir)
+        if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
+            app.log(dn, 'Problem unpacking', tmpfile, exit=True)
+    else:
+        with open(os.devnull, "w") as fnull:
+            if call(['tar', 'tvf', tmpfile], stdout=fnull, stderr=fnull):
+                app.log(dn, 'Problem with tarfile', tmpfile, exit=True)
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(dn))
@@ -199,8 +204,7 @@ def unpack(dn, tmpfile):
         size = os.path.getsize(get_cache(dn))
         size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
         checksum = md5(get_cache(dn))
-        app.log(dn, 'Cached %s bytes %s as' % (size, checksum),
-                cache_key(dn))
+        app.log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
         return path
     except:
         app.log(dn, 'Bah! I raced on', cache_key(dn))
@@ -248,7 +252,7 @@ def get_cache(dn):
         call(['touch', cachedir])
         artifact = os.path.join(cachedir, cache_key(dn))
         unpackdir = artifact + '.unpacked'
-        if not os.path.isdir(unpackdir):
+        if not os.path.isdir(unpackdir) and dn.get('kind') != 'system':
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             if call(['tar', 'xf', artifact, '--directory', tmpdir]):
@@ -261,7 +265,7 @@ def get_cache(dn):
                 # artifact was uploaded from somewhere, and more than one
                 # instance is attempting to unpack. another got there first
                 pass
-        return os.path.join(cachedir, cache_key(dn))
+        return artifact
 
     return False
 
