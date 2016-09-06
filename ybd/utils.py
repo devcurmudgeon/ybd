@@ -23,7 +23,6 @@ import stat
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
-
 import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
@@ -343,22 +342,28 @@ def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
                 add_directory_to_tarfile(f_tar, root_dir, '.')
 
 
-def make_deterministic_tar_archive(base_name, root_dir):
+def make_deterministic_tar_archive(base_name, root):
     '''Make a tar archive of contents of 'root_dir'.
 
-    This function uses monkeypatching to make shutil.make_archive() create
-    a deterministic tarfile.
+    This function takes extra steps to make the output more deterministic,
+    compared to shutil.make_archive() - it sorts the results to ensure
+    the ordering of the files in the archive is always the same.
 
-    https://bugs.python.org/issue24465 will make this function redundant.
+    Also this puts the directory last, to workaround a bug in docker/overlayfs
+    runners - see https://gitlab.com/baserock/ybd/issues/241
+
+    FIXME: make this do timestamps
 
     '''
-    real_listdir = os.listdir
 
-    def stable_listdir(path):
-        return sorted(real_listdir(path))
-
-    with monkeypatch(os, 'listdir', stable_listdir):
-        shutil.make_archive(base_name, 'tar', root_dir)
+    with app.chdir(root), open(base_name + '.tar', 'wb') as f:
+        with tarfile.TarFile(mode='w', fileobj=f) as f_tar:
+            directories = [d[0] for d in os.walk('.')]
+            for d in sorted(directories):
+                files = [os.path.join(d, f) for f in os.listdir(d)]
+                for path in sorted(files):
+                    f_tar.add(name=path, recursive=False)
+                f_tar.add(name=d, recursive=False)
 
 
 def _find_extensions(paths):
