@@ -88,7 +88,7 @@ def get_last_tag(gitdir):
 
 
 def get_tree(dn):
-    ref = dn['ref']
+    ref = str(dn['ref'])
     gitdir = os.path.join(app.config['gits'], get_repo_name(dn['repo']))
     if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
         gitdir = dn['repo'].replace('file://', '')
