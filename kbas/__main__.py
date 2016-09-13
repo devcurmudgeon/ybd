@@ -42,6 +42,7 @@ class KeyedBinaryArtifactServer(object):
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
         app.config['start-time'] = datetime.now()
         app.config['last-upload'] = datetime.now()
+        app.config['downloads'] = 0
 
         try:
             import cherrypy
@@ -90,6 +91,7 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
+        app.config['downloads'] += 1
         return static_file(f, root=app.config['artifact-dir'], download=True,
                            mimetype='application/x-tar')
 
@@ -100,6 +102,7 @@ class KeyedBinaryArtifactServer(object):
         free = stat.f_frsize * stat.f_bavail / 1000000000
         artifacts = len(os.listdir(app.config['artifact-dir']))
         started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
+        downloads = app.config['downloads']
         last_upload = app.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
         content = [['Started:', started, None]]
         content += [['Last upload:', last_upload, None]]
@@ -107,6 +110,7 @@ class KeyedBinaryArtifactServer(object):
             content += [['Last reject:', app.config['last-reject'], None]]
         content += [['Space:', str(free) + 'GB', None]]
         content += [['Artifacts:', str(artifacts), None]]
+        content += [['Downloads:', downloads, None]]
         return template('kbas',
                         title='KBAS status',
                         content=content,
