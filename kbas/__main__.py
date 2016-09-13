@@ -104,7 +104,7 @@ class KeyedBinaryArtifactServer(object):
         content = [['Started:', started, None]]
         content += [['Last upload:', last_upload, None]]
         if app.config.get('last-reject'):
-            content += [['Last reject:', app.config['last-reject', None]]]
+            content += [['Last reject:', app.config['last-reject'], None]]
         content += [['Space:', str(free) + 'GB', None]]
         content += [['Artifacts:', str(artifacts), None]]
         return template('kbas',
