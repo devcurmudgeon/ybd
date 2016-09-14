@@ -45,7 +45,7 @@ MacOS) using Vagrant and VirtualBox.
 on Fedora, Ubuntu, Debian (as root... hoping to fix this for non-root soon):
 
 ```
-    git clone git://github.com/devcurmudgeon/ybd && cd ybd
+    git clone git://gitlab.com/baserock/ybd && cd ybd
     # checkout latest tag
     git checkout `git describe --tags $(git rev-list --tags --max-count=1)`
     sudo sh ./install_dependencies.sh
@@ -56,7 +56,7 @@ on Fedora, Ubuntu, Debian (as root... hoping to fix this for non-root soon):
 or using Vagrant with VirtualBox:
 
 ```
-    git clone git://github.com/devcurmudgeon/ybd && cd ybd
+    git clone git://gitlab.com/baserock/ybd && cd ybd
     # checkout latest tag
     git checkout `git describe --tags $(git rev-list --tags --max-count=1)`
     vagrant up
@@ -245,9 +245,6 @@ doing to/with ybd:
     asset'
   - think hard before adding dependencies
   - code should be tested and pass pep8
-- upstream is at github because we need to build loads of stuff from github
-  *anyway* and it's the easiest workflow/infrastructure for a small project.
-  ybd will *remain* a small project.
 
 ## license
 

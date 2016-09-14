@@ -20,7 +20,7 @@ resources:
 - name: ybd
   type: git
   source:
-    uri: https://github.com/devcurmudgeon/ybd.git
+    uri: https://gitlab.com/baserock/ybd.git
     branch: master
 - name: definitions
   type: git
