@@ -131,6 +131,13 @@ def hash_factors(dn):
                     dn.get('kind') == 'system'):
                 hash_factors['default-splits'] = app.config['default-splits']
 
+        if app.config.get('artifact-version', 0) not in range(0, 7):
+            if dn.get('max-jobs'):
+                if dn['max-jobs'] == 1:
+                    hash_factors['max-jobs'] = 'single'
+                else:
+                    hash_factors['max-jobs'] = 'parallel'
+
     return hash_factors
 
 
