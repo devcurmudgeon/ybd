@@ -22,9 +22,8 @@ import os
 import shutil
 from subprocess import call
 
-import app
-from repos import get_repo_url, get_tree
-import utils
+from ybd import app, utils
+from ybd.repos import get_repo_url, get_tree
 import tempfile
 import yaml
 import re
@@ -91,7 +90,7 @@ def hash_factors(dn):
         hash_factors[factor] = cache_key(factor)
 
     for factor in dn.get('contents', []):
-        hash_factors[factor.keys()[0]] = cache_key(factor.keys()[0])
+        hash_factors[list(factor.keys())[0]] = cache_key(list(factor.keys())[0])
 
     relevant_factors = ['tree', 'submodules'] + app.defs.defaults.build_steps
     if app.config.get('artifact-version', False) not in range(0, 6):

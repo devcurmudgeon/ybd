@@ -13,13 +13,13 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import app
-import assembly
-import cache
-import defaults
-import morphs
-import pots
-import deployment
-import repos
-import sandbox
-import utils
+import ybd.app
+import ybd.assembly
+import ybd.cache
+import ybd.defaults
+import ybd.morphs
+import ybd.pots
+import ybd.deployment
+import ybd.repos
+import ybd.sandbox
+import ybd.utils

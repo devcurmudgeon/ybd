@@ -23,7 +23,7 @@ import stat
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
-import app
+from ybd import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
@@ -150,8 +150,8 @@ def _process_tree(root, srcpath, destpath, actionfunc):
         except:
             import traceback
             traceback.print_exc()
-            print 'destpath is', destpath
-            print 'realpath is', realpath
+            print('destpath is', destpath)
+            print('realpath is', realpath)
 
             app.log('UTILS', 'ERROR: file operation failed', exit=True)
 
@@ -210,8 +210,8 @@ def copy_file_list(srcpath, destpath, filelist):
     '''
 
     def _copyfun(inpath, outpath):
-        with open(inpath, "r") as infh:
-            with open(outpath, "w") as outfh:
+        with open(inpath, "r", encoding='utf-8', errors='ignore') as infh:
+            with open(outpath, "w", encoding='utf-8', errors='ignore') as outfh:
                 shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 

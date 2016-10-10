@@ -16,9 +16,10 @@
 
 import os
 import yaml
-from app import config, log
-from defaults import Defaults
-from morphs import Morphs
+from ybd import app
+from ybd.app import config, log
+from ybd.defaults import Defaults
+from ybd.morphs import Morphs
 
 
 # copied from http://stackoverflow.com/questions/21016220
@@ -52,7 +53,7 @@ class Pots(object):
                 return self._data.get(dn)
             log(dn, 'Unable to find definition for', dn, exit=True)
 
-        return self._data.get(dn.get('path', dn.keys()[0]))
+        return self._data.get(dn.get('path', list(dn.keys())[0]))
 
     def _save_pots(self, filename):
         with open(filename, 'w') as f:

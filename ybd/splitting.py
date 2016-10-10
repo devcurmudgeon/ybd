@@ -14,13 +14,13 @@
 #
 # =*= License: GPL-2 =*=
 
-import app
-from app import config, log, chdir
-from cache import get_cache
+from ybd import app
+from ybd.app import config, log, chdir
+from ybd.cache import get_cache
 import os
 import re
 import yaml
-from utils import copy_file_list
+from ybd.utils import copy_file_list
 
 
 def install_split_artifacts(dn):
@@ -33,7 +33,7 @@ def install_split_artifacts(dn):
     '''
 
     for content in dn['contents']:
-        key = content.keys()[0]
+        key = list(content.keys())[0]
         stratum = app.defs.get(key)
         move_required_files(dn, stratum, content[key])
 

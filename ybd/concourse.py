@@ -15,8 +15,8 @@
 # =*= License: GPL-2 =*=
 
 import yaml
-import app
-from app import log, timer, defs
+import ybd.app
+from ybd.app import log, timer, defs
 
 # Concourse data model:
 # a 'resource' is an input line into a box
