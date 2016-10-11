@@ -20,7 +20,8 @@ import tempfile
 from ybd import app
 from ybd.app import chdir, config, log
 from ybd.morphs import Morphs
-from ybd.repos import explore, get_last_tag, get_repo_name, mirror, mirror_has_ref
+from ybd.repos import explore, get_last_tag, get_repo_name
+from ybd.repos import mirror, mirror_has_ref
 
 
 def do_release_note(release_note):
