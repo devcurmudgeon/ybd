@@ -1,7 +1,7 @@
 ## Archaeology
 
-One of the stated aims of Baserock has been to ensure that old systems can
-be reproduced a long time into the future (decades, for example).
+One of the stated aims of Baserock has been to ensure that old systems can be
+reproduced a long time into the future (decades, for example).
 
 Stating it doesn't make it true, though.
 
@@ -12,7 +12,9 @@ themselves; we had never specified the definitions format, after all. In the
 end it seemed more productive to fix the assumptions and move forward, rather
 than make ybd repeat the mistakes.
 
-For what it's worth, as of 2016-04-10 ybd parses all the way back to baserock-14.40, which was the first tag where the morph files were organised into subdirectories. Going back further could be attempted, if we consider it
+For what it's worth, as of 2016-04-10 ybd parses all the way back to
+baserock-14.40, which was the first tag where the morph files were organised
+into subdirectories. Going back further could be attempted, if we consider it
 worthwhile to exhume the builds further back.
 
 This is how ybd behaves on various historical versions of ci.morph:

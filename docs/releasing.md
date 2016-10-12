@@ -1,10 +1,10 @@
 # Releasing
 
-This summarises what 'releasing' means for ybd - it's a work-in-progress. 
+This summarises what _releasing_ means for ybd - it's a work-in-progress.
 
 ### Past
 
-In the first months there were no 'releases' of ybd. The early goals of the
+In the first months there were no releases of ybd. The early goals of the
 project were to parse definitions as fast as possible, then build them, then
 deploy them.
 
@@ -64,5 +64,4 @@ Even to test this minimum list fully on real definitions will take a lot of
 server time, because actual system builds are big and heavy. To improve on
 this we'd benefit from establishing a reference definition set which is
 specifically for exercising ybd/definitions/spec.
-
 
