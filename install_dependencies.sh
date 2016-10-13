@@ -81,7 +81,7 @@ fi
 pip --version 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
     wget https://bootstrap.pypa.io/get-pip.py
-    $SUDO get-pip.py
+    $SUDO ./get-pip.py
     $SUDO rm get-pip.py
 fi
 
