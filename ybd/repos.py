@@ -201,7 +201,7 @@ def _checkout(name, repo, ref, checkout):
         # removed --no-hardlinks, though.
         if call(['git', 'clone', '--no-hardlinks', gitdir, checkout],
                 stdout=fnull, stderr=fnull):
-            app.log(name, 'Git clone failed for', ref, exit=True)
+            app.log(name, 'Git clone failed for', gitdir, exit=True)
 
         with app.chdir(checkout):
             if call(['git', 'checkout', '--force', ref], stdout=fnull,
