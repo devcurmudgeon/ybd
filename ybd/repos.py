@@ -136,6 +136,7 @@ def mirror(name, repo):
             call(['wget', os.path.join(app.config['tar-url'], tar_file)],
                  stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stderr=fnull)
+            call(['git', 'config', 'gc.autodetach', 'false'], stderr=fnull)
             os.remove(tar_file)
             update_mirror(name, repo, tmpdir)
     except:
