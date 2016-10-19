@@ -2,7 +2,11 @@ GitLab: [![build status](https://gitlab.com/baserock/ybd/badges/master/build.svg
 
 Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd)
 
-# ybd
+# ybd 16.42
+
+*NOTE: 16.42 is the expected to be the last release of ybd at its original
+upstream location (https://github.com/devcurmudgeon/ybd). This ybd release is
+known to parse and build all versions of definitions up to and including V8.*
 
 ybd is a tool for building integrated software stacks. It does four things:
 
