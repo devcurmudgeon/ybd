@@ -23,7 +23,7 @@
 set -x
 
 SUDO=""
-if [ "$EUID" -ne 0 ]
+if [ "$(id -u)" -ne 0 ];
   then SUDO="sudo"
 fi
 
