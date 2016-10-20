@@ -31,20 +31,6 @@ def install_split_artifacts(dn):
     sandbox to the dn['install']
 
     '''
-    all_splits = []
-    for i in app.defs.defaults.get_split_rules('stratum'):
-        all_splits += [i['artifact']]
-    for index, content in enumerate(dn['contents']):
-        for stratum, artifacts in content.items():
-            if artifacts == []:
-                if config.get('default-splits', []) != []:
-                    for split in config.get('default-splits'):
-                        artifacts += [app.defs.get(stratum)['name'] + split]
-                else:
-                    for split in all_splits:
-                        artifacts += [os.path.basename(stratum) + split]
-
-        dn['contents'][index] = {stratum: artifacts}
 
     for content in dn['contents']:
         key = content.keys()[0]
@@ -53,19 +39,25 @@ def install_split_artifacts(dn):
 
 
 def move_required_files(dn, stratum, artifacts):
-    log(dn, 'Installing %s artifacts' % stratum['name'], artifacts)
     stratum_metadata = get_metadata(stratum)
     split_stratum_metadata = {}
-    split_stratum_metadata['products'] = []
-    to_keep = []
-    for product in stratum_metadata['products']:
-        for artifact in artifacts:
-            if artifact == product['artifact']:
-                to_keep += product['components']
-                split_stratum_metadata['products'].append(product)
+    if not artifacts:
+        # Include all artifacts if no ones were explicitly given for an
+        # included stratum on a system.
+        artifacts = [p['artifact'] for p in stratum_metadata['products']]
 
-    log(dn, 'Splitting artifacts:', artifacts, verbose=True)
-    log(dn, 'Splitting components:', to_keep, verbose=True)
+    to_keep = [component
+               for product in stratum_metadata['products']
+               for component in product['components']
+               if product['artifact'] in artifacts]
+
+    split_stratum_metadata['products'] = (
+              [product
+               for product in stratum_metadata['products']
+               if product['artifact'] in artifacts])
+
+    log(dn, 'Installing %s artifacts' % stratum['name'], artifacts)
+    log(dn, 'Installing components:', to_keep, verbose=True)
 
     baserockpath = os.path.join(dn['install'], 'baserock')
     if not os.path.isdir(baserockpath):
