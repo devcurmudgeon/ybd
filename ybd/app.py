@@ -34,6 +34,8 @@ try:
 except ImportError:
     riemann_available = False
 
+import sandbox
+import sandboxlib
 
 config = {}
 defs = {}
@@ -160,7 +162,9 @@ def setup(args, original_cwd=""):
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
 
-    if not os.geteuid() == 0 and config.get('mode') == 'normal':
+    # chroot and linux_user_chroot both need to be run as root
+    if sandbox.executor in [sandboxlib.chroot, sandboxlib.linux_user_chroot] \
+            and not os.geteuid() == 0 and config.get('mode') == 'normal':
         log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
 
     if config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':

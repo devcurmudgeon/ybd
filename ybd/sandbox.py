@@ -123,7 +123,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
             mounts='isolated',
-            extra_mounts=[],
+            extra_mounts=[('/dev', '/dev', None)],
             network='isolated',
         )
     else:
