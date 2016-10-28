@@ -39,3 +39,12 @@ check_build:
   script:
   - git clone git://git.baserock.org/baserock/baserock/definitions
   - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+
+check_build_no_kbas:
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+    YBD_kbas_url: "false-url"
+  script:
+  - git clone git://git.baserock.org/baserock/baserock/definitions
+  - ./ybd.py definitions/strata/build-essential.morph x86_64
