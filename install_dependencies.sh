@@ -86,22 +86,6 @@ if [ $? -ne 0 ]; then
     $SUDO rm get-pip.py
 fi
 
-pythonmodules=(
-"pep8"
-"fs"
-"pyyaml"
-"sandboxlib"
-"requests"
-"jsonschema"
-"bottle"
-"cherrypy"
-"riemann-client")
-
-for module in "${pythonmodules[@]}";
-do
-	$SUDO pip install $module
-	if [ $? -ne 0 ]; then
-	    echo "Pip install failed for" $module
-	    exit 1
-	fi
-done
+$SUDO pip install fs pyyaml sandboxlib requests
+$SUDO pip install jsonschema bottle cherrypy riemann-client
+$SUDO pip install pep8
