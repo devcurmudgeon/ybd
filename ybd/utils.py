@@ -14,12 +14,14 @@
 #
 # =*= License: GPL-2 =*=
 
+import datetime
 import gzip
 import tarfile
 import contextlib
 import os
 import shutil
 import stat
+import sys
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
@@ -132,9 +134,16 @@ def hardlink_all_files(srcpath, destpath):
     _process_tree(destpath, srcpath, destpath, os.link)
 
 
+def elapsed(starttime):
+    td = datetime.datetime.now() - starttime
+    hours, remainder = divmod(int(td.total_seconds()), 60*60)
+    minutes, seconds = divmod(remainder, 60)
+    return "%02d:%02d:%02d" % (hours, minutes, seconds)
+
+
 def _process_tree(root, srcpath, destpath, actionfunc):
     if os.path.lexists(destpath):
-        app.log('OVERLAPS', 'WARNING: overlap at', destpath, verbose=True)
+        log('OVERLAPS', 'WARNING: overlap at', destpath, verbose=True)
 
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
@@ -152,7 +161,7 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             print('destpath is', destpath)
             print('realpath is', realpath)
 
-            app.log('UTILS', 'ERROR: file operation failed', exit=True)
+            log('UTILS', 'ERROR: file operation failed', exit=True)
 
         if not stat.S_ISDIR(dest_stat.st_mode):
             raise IOError('Destination not a directory: source has %s'
@@ -262,8 +271,8 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             file_stat = os.lstat(srcpath)
             mode = file_stat.st_mode
         except UnicodeEncodeError as ue:
-            app.log("UnicodeErr",
-                    "Couldn't get lstat info for '%s'." % srcpath)
+            log("UnicodeErr",
+                "Couldn't get lstat info for '%s'." % srcpath)
             raise ue
 
         if stat.S_ISDIR(mode):
@@ -409,3 +418,45 @@ def monkeypatch(obj, attr, new_value):
     setattr(obj, attr, new_value)
     yield
     setattr(obj, attr, old_value)
+
+
+def log(dn, message='', data='', verbose=False, exit=False):
+    ''' Print a timestamped log. '''
+
+    if exit:
+        print('\n\n')
+        message = 'ERROR: ' + message.replace('WARNING: ', '')
+
+    if verbose is True and config.get('log-verbose', False) is False:
+        return
+
+    name = dn['name'] if type(dn) is dict else dn
+
+    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
+    if config.get('log-timings') == 'elapsed':
+        timestamp = timestamp[:9] + elapsed(config['start-time']) + ' '
+    if config.get('log-timings', 'omit') == 'omit':
+        timestamp = ''
+    progress = ''
+    if config.get('counter'):
+        count = config['counter'].get()
+        progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
+    entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
+    if config.get('instances'):
+        entry = str(config.get('fork', 0)) + ' ' + entry
+
+    print(entry),
+    sys.stdout.flush()
+
+    if exit:
+        print('\n\n')
+        os._exit(1)
+
+
+def log_env(log, env, message=''):
+    with open(log, "a") as logfile:
+        for key in sorted(env):
+            msg = env[key] if 'PASSWORD' not in key else '(hidden)'
+            logfile.write('%s=%s\n' % (key, msg))
+        logfile.write(message + '\n\n')
+        logfile.flush()

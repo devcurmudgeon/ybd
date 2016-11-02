@@ -15,12 +15,12 @@
 # =*= License: GPL-2 =*=
 
 from ybd import app
-from ybd.app import config, log, chdir
+from ybd.app import config, chdir
 from ybd.cache import get_cache
 import os
 import re
 import yaml
-from ybd.utils import copy_file_list
+from ybd.utils import copy_file_list, log
 
 
 def install_split_artifacts(dn):

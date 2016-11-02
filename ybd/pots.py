@@ -17,9 +17,10 @@
 import os
 import yaml
 from ybd import app
-from ybd.app import config, log
+from ybd.app import config
 from ybd.defaults import Defaults
 from ybd.morphs import Morphs
+from ybd.utils import log
 
 
 # copied from http://stackoverflow.com/questions/21016220

@@ -23,6 +23,7 @@ import shutil
 from subprocess import call
 
 from ybd import utils
+from ybd.utils import log
 from ybd.repos import get_repo_url, get_tree
 import tempfile
 import yaml
@@ -31,13 +32,13 @@ import re
 
 def cache_key(dn):
     if dn is None:
-        app.log(dn, 'No definition found for', dn, exit=True)
+        log(dn, 'No definition found for', dn, exit=True)
 
     if type(dn) is not dict:
         dn = app.defs.get(dn)
 
     if dn.get('cache') == 'calculating':
-        app.log(dn, 'Recursion loop for', dn, exit=True)
+        log(dn, 'Recursion loop for', dn, exit=True)
 
     if dn.get('cache'):
         return dn['cache']
@@ -45,7 +46,7 @@ def cache_key(dn):
     if dn.get('arch', app.config['arch']) != app.config['arch']:
         if 'tried' not in dn:
             dn['tried'] = True
-            app.log(dn, 'No cache_key for arch %s mismatch' % dn['arch'],
+            log(dn, 'No cache_key for arch %s mismatch' % dn['arch'],
                     app.config['arch'])
         return False
 
@@ -74,7 +75,7 @@ def cache_key(dn):
     if dn.get('kind', 'chunk') == 'system':
         app.config['systems'] += 1
 
-    app.log('CACHE-KEYS', '[%s]' % x, dn['cache'])
+    log('CACHE-KEYS', '[%s]' % x, dn['cache'])
     if app.config.get('manifest', False):
         update_manifest(dn, app.config['manifest'])
 
@@ -143,7 +144,7 @@ def hash_factors(dn):
 
 def cache(dn):
     if get_cache(dn):
-        app.log(dn, "Bah! I could have cached", cache_key(dn))
+        log(dn, "Bah! I could have cached", cache_key(dn))
         return
     tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
@@ -196,25 +197,25 @@ def unpack(dn, tmpfile):
         unpackdir = tmpfile + '.unpacked'
         os.makedirs(unpackdir)
         if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-            app.log(dn, 'Problem unpacking', tmpfile, exit=True)
+            log(dn, 'Problem unpacking', tmpfile, exit=True)
     else:
         with open(os.devnull, "w") as fnull:
             if call(['tar', 'tvf', tmpfile], stdout=fnull, stderr=fnull):
-                app.log(dn, 'Problem with tarfile', tmpfile, exit=True)
+                log(dn, 'Problem with tarfile', tmpfile, exit=True)
 
     try:
         path = os.path.join(app.config['artifacts'], cache_key(dn))
         shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
-            app.log(dn, 'Problem creating artifact', path, exit=True)
+            log(dn, 'Problem creating artifact', path, exit=True)
 
         size = os.path.getsize(get_cache(dn))
         size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
         checksum = md5(get_cache(dn))
-        app.log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
+        log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
         return path
     except:
-        app.log(dn, 'Bah! I raced on', cache_key(dn))
+        log(dn, 'Bah! I raced on', cache_key(dn))
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
 
@@ -229,23 +230,23 @@ def upload(dn):
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                app.log(dn, 'Uploaded %s to' % dn['cache'], url)
+                log(dn, 'Uploaded %s to' % dn['cache'], url)
                 return
             if response.status_code == 777:
-                app.log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
+                log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
                 app.config['reproduced'].append([md5(cachefile), dn['cache']])
                 return
             if response.status_code == 405:
                 # server has different md5 for this artifact
                 if dn['kind'] == 'stratum' and app.config['reproduce']:
-                    app.log('BIT-FOR-BIT',
+                    log('BIT-FOR-BIT',
                             'WARNING: reproduction failed for', dn['cache'])
-                app.log(dn, 'Artifact server already has', dn['cache'])
+                log(dn, 'Artifact server already has', dn['cache'])
                 return
-            app.log(dn, 'Artifact server problem:', response.status_code)
+            log(dn, 'Artifact server problem:', response.status_code)
         except:
             pass
-        app.log(dn, 'Failed to upload', dn['cache'])
+        log(dn, 'Failed to upload', dn['cache'])
 
 
 def get_cache(dn):
@@ -263,7 +264,7 @@ def get_cache(dn):
             tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             if call(['tar', 'xf', artifact, '--directory', tmpdir]):
-                app.log(dn, 'Problem unpacking', artifact)
+                log(dn, 'Problem unpacking', artifact)
                 return False
             try:
                 shutil.move(tmpdir, unpackdir)
@@ -288,12 +289,12 @@ def get_remote(dn):
         return False
 
     try:
-        app.log(dn, 'Try downloading', cache_key(dn))
+        log(dn, 'Try downloading', cache_key(dn))
         url = app.config['kbas-url'] + 'get/' + cache_key(dn)
         response = requests.get(url=url, stream=True)
     except:
         app.config.pop('kbas-url')
-        app.log(dn, 'WARNING: remote artifact server is not working')
+        log(dn, 'WARNING: remote artifact server is not working')
         return False
 
     if response.status_code == 200:
@@ -307,7 +308,7 @@ def get_remote(dn):
             return unpack(dn, cachefile)
 
         except:
-            app.log(dn, 'WARNING: failed downloading', cache_key(dn))
+            log(dn, 'WARNING: failed downloading', cache_key(dn))
 
     return False
 
@@ -322,9 +323,9 @@ def cull(artifact_dir):
             stat = os.statvfs(artifact_dir)
             free = stat.f_frsize * stat.f_bavail / 1000000000
             if free >= app.config.get('min-gigabytes', 10):
-                app.log('SETUP', '%sGB is enough free space' % free)
+                log('SETUP', '%sGB is enough free space' % free)
                 if deleted > 0:
-                    app.log('SETUP', 'Culled %s items in' % deleted,
+                    log('SETUP', 'Culled %s items in' % deleted,
                             artifact_dir)
                 return True
             path = os.path.join(artifact_dir, artifact)
@@ -348,7 +349,7 @@ def cull(artifact_dir):
     stat = os.statvfs(artifact_dir)
     free = stat.f_frsize * stat.f_bavail / 1000000000
     if free < app.config.get('min-gigabytes', 10):
-        app.log('SETUP', '%sGB is less than min-gigabytes:' % free,
+        log('SETUP', '%sGB is less than min-gigabytes:' % free,
                 app.config.get('min-gigabytes', 10), exit=True)
 
 
