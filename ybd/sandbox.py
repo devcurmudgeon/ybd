@@ -35,20 +35,20 @@ executor = None
 
 @contextlib.contextmanager
 def setup(dn):
-    tempfile.tempdir = app.config['tmp']
+    tempfile.tempdir = config.config['tmp']
     dn['sandbox'] = tempfile.mkdtemp()
-    os.environ['TMPDIR'] = app.config['tmp']
-    app.config['sandboxes'] += [dn['sandbox']]
+    os.environ['TMPDIR'] = config.config['tmp']
+    config.config['sandboxes'] += [dn['sandbox']]
     dn['checkout'] = os.path.join(dn['sandbox'], dn['name'] + '.build')
     dn['install'] = os.path.join(dn['sandbox'], dn['name'] + '.inst')
     dn['baserockdir'] = os.path.join(dn['install'], 'baserock')
     dn['tmp'] = os.path.join(dn['sandbox'], 'tmp')
     for directory in ['checkout', 'install', 'tmp', 'baserockdir']:
         os.makedirs(dn[directory])
-    dn['log'] = os.path.join(app.config['artifacts'],
+    dn['log'] = os.path.join(config.config['artifacts'],
                              dn['cache'] + '.build-log')
-    if app.config.get('instances'):
-        dn['log'] += '.' + str(app.config.get('fork', 0))
+    if config.config.get('instances'):
+        dn['log'] += '.' + str(config.config.get('fork', 0))
     assembly_dir = dn['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
@@ -112,7 +112,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
     if dn.get('build-mode') == 'bootstrap':
         # bootstrap mode: builds have some access to the host system, so they
         # can use the compilers etc.
-        tmpdir = app.config.get("TMPDIR", "/tmp")
+        tmpdir = config.config.get("TMPDIR", "/tmp")
 
         writable_paths = [dn['checkout'], dn['install'], tmpdir, ]
 
@@ -204,7 +204,7 @@ def run_logged(dn, cmd_list):
 def run_extension(dn, deployment, step, method):
     log(dn, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
-    tempfile.tempdir = app.config['tmp']
+    tempfile.tempdir = config.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
@@ -212,9 +212,9 @@ def run_extension(dn, deployment, step, method):
 
     if 'PYTHONPATH' in os.environ:
         envlist.append('PYTHONPATH=%s:%s' % (os.environ['PYTHONPATH'],
-                                             app.config['extsdir']))
+                                             config.config['extsdir']))
     else:
-        envlist.append('PYTHONPATH=%s' % app.config['extsdir'])
+        envlist.append('PYTHONPATH=%s' % config.config['extsdir'])
 
     for key, value in deployment.items():
         if key.isupper():
@@ -229,7 +229,7 @@ def run_extension(dn, deployment, step, method):
         command.append(deployment.get('location') or
                        deployment.get('upgrade-location'))
 
-    with app.chdir(app.config['defdir']):
+    with app.chdir(config.config['defdir']):
         try:
             with open(cmd_bin, "r") as infh:
                 shutil.copyfileobj(infh, cmd_tmp)
@@ -245,13 +245,13 @@ def run_extension(dn, deployment, step, method):
 
 
 def ccache_mounts(dn, ccache_target):
-    if app.config['no-ccache'] or 'repo' not in dn:
+    if config.config['no-ccache'] or 'repo' not in dn:
         mounts = []
     else:
         name = os.path.basename(get_repo_url(dn['repo']))
         if name.endswith('.git'):
             name = name[:-4]
-        ccache_dir = os.path.join(app.config['ccache_dir'], name)
+        ccache_dir = os.path.join(config.config['ccache_dir'], name)
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
 
@@ -263,7 +263,7 @@ def env_vars_for_build(dn):
     env = {}
     extra_path = []
 
-    if app.config['no-ccache']:
+    if config.config['no-ccache']:
         ccache_path = []
     else:
         ccache_path = ['/usr/lib/ccache']
@@ -272,7 +272,7 @@ def env_vars_for_build(dn):
             f for f in ('/baserock/binutils.meta',
                         '/baserock/eglibc.meta',
                         '/baserock/gcc.meta') if os.path.exists(f))
-        if not app.config.get('no-distcc'):
+        if not config.config.get('no-distcc'):
             env['CCACHE_PREFIX'] = 'distcc'
 
     prefixes = []
@@ -289,15 +289,15 @@ def env_vars_for_build(dn):
     if dn.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
         full_path = [os.path.normpath(dn['sandbox'] + p) for p in rel_path]
-        path = full_path + app.config['base-path']
+        path = full_path + config.config['base-path']
         env['DESTDIR'] = dn.get('install')
     else:
-        path = extra_path + ccache_path + app.config['base-path']
+        path = extra_path + ccache_path + config.config['base-path']
         env['DESTDIR'] = os.path.join('/', os.path.basename(dn.get('install')))
 
     env['PATH'] = ':'.join(path)
     env['PREFIX'] = dn.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or app.config['max-jobs'])
+    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or config.config['max-jobs'])
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
@@ -305,8 +305,8 @@ def env_vars_for_build(dn):
     env['HOME'] = '/tmp'
     env['TZ'] = 'UTC'
 
-    arch = app.config['arch']
-    cpu = app.config['cpu']
+    arch = config.config['arch']
+    cpu = config.config['cpu']
     abi = ''
     if arch.startswith(('armv7', 'armv5')):
         abi = 'eabi'
@@ -315,8 +315,8 @@ def env_vars_for_build(dn):
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
-    env['DEFINITIONS_REF'] = app.config['def-version']
-    env['PROGRAM_REF'] = app.config['my-version']
+    env['DEFINITIONS_REF'] = config.config['def-version']
+    env['PROGRAM_REF'] = config.config['my-version']
     if dn.get('SOURCE_DATE_EPOCH'):
         env['SOURCE_DATE_EPOCH'] = dn['SOURCE_DATE_EPOCH']
 

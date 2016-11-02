@@ -16,6 +16,7 @@
 import ybd.app
 import ybd.assembly
 import ybd.cache
+import ybd.config
 import ybd.defaults
 import ybd.morphs
 import ybd.pots

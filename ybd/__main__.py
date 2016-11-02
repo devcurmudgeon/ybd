@@ -21,8 +21,9 @@ import os
 import sys
 import fcntl
 from ybd import app, cache, sandbox
-from ybd.app import cleanup, config, log, RetryException, setup, spawn, timer
+from ybd.app import cleanup, RetryException, setup, spawn, timer
 from ybd.assembly import compose
+from ybd.config import config
 from ybd.deployment import deploy
 from ybd.pots import Pots
 from ybd.concourse import Pipeline

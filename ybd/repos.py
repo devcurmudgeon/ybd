@@ -38,7 +38,7 @@ else:
 
 def get_repo_url(repo):
     if repo:
-        for alias, url in app.config.get('aliases', {}).items():
+        for alias, url in config.config.get('aliases', {}).items():
             repo = repo.replace(alias, url)
         if repo[:4] == "http" and not repo.endswith('.git'):
             repo = repo + '.git'
@@ -89,7 +89,7 @@ def get_last_tag(gitdir):
 
 def get_tree(dn):
     ref = str(dn['ref'])
-    gitdir = os.path.join(app.config['gits'], get_repo_name(dn['repo']))
+    gitdir = os.path.join(config.config['gits'], get_repo_name(dn['repo']))
     if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
         gitdir = dn['repo'].replace('file://', '')
         if not os.path.isdir(gitdir):
@@ -98,10 +98,10 @@ def get_tree(dn):
     if not os.path.exists(gitdir):
         try:
             params = {'repo': get_repo_url(dn['repo']), 'ref': ref}
-            r = requests.get(url=app.config['tree-server'], params=params)
+            r = requests.get(url=config.config['tree-server'], params=params)
             return r.json()['tree']
         except:
-            if app.config.get('tree-server'):
+            if config.config.get('tree-server'):
                 log(dn, 'WARNING: no tree from tree-server for', ref)
 
         mirror(dn['name'], dn['repo'])
@@ -125,7 +125,7 @@ def get_tree(dn):
 
 
 def mirror(name, repo):
-    tempfile.tempdir = app.config['tmp']
+    tempfile.tempdir = config.config['tmp']
     tmpdir = tempfile.mkdtemp()
     repo_url = get_repo_url(repo)
     try:
@@ -133,7 +133,7 @@ def mirror(name, repo):
         log(name, 'Try fetching tarball %s' % tar_file)
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
-            call(['wget', os.path.join(app.config['tar-url'], tar_file)],
+            call(['wget', os.path.join(config.config['tar-url'], tar_file)],
                  stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stderr=fnull)
             call(['git', 'config', 'gc.autodetach', 'false'], stderr=fnull)
@@ -149,7 +149,7 @@ def mirror(name, repo):
         if call(['git', 'rev-parse']):
             log(name, 'Problem mirroring git repo at', tmpdir, exit=True)
 
-    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
     try:
         shutil.move(tmpdir, gitdir)
         log(name, 'Git repo is mirrored at', gitdir)
@@ -188,7 +188,7 @@ def checkout(dn):
 
 
 def _checkout(name, repo, ref, checkout):
-    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
@@ -224,7 +224,7 @@ def extract_commit(name, repo, ref, target_dir):
     function is much quicker when you don't need to copy the whole repo into
     target_dir.
     '''
-    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):

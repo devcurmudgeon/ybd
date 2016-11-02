@@ -23,7 +23,7 @@ from ybd.utils import log
 
 def deploy(target):
     '''Deploy a cluster definition.'''
-    arch = app.config['arch']
+    arch = config.config['arch']
     for system in target.get('systems', []):
         if app.defs.get(system).get('arch', arch) == arch:
             with app.timer(system, 'deployment'):
