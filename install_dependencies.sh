@@ -86,21 +86,4 @@ if [ $? -ne 0 ]; then
     $SUDO rm get-pip.py
 fi
 
-while read module
-do
-	$SUDO pip install $module
-	if [ $? -ne 0 ]; then
-	    echo "Pip install failed for" $module
-	    exit 1
-	fi
-done <<EOM
-pep8
-fs
-pyyaml
-sandboxlib
-requests
-jsonschema
-bottle
-cherrypy
-riemann-client
-EOM
+$SUDO pip install -r requirements.txt
