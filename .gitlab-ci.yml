@@ -58,3 +58,10 @@ check_build_no_kbas:
     YBD_kbas_url: "false-url"
   script:
   - ./ybd.py definitions/strata/build-essential.morph x86_64
+
+check_deploy:
+  stage: deploy
+  dependencies:
+  - check_build
+  script:
+  - ./ybd.py definitions/clusters/minimal-system-x86_64-chroot-deploy.morph x86_64
