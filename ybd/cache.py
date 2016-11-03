@@ -22,7 +22,7 @@ import os
 import shutil
 from subprocess import call
 
-from ybd import utils
+from ybd import utils, config
 from ybd.utils import log
 from ybd.repos import get_repo_url, get_tree
 import tempfile
@@ -35,7 +35,7 @@ def cache_key(dn):
         log(dn, 'No definition found for', dn, exit=True)
 
     if type(dn) is not dict:
-        dn = app.defs.get(dn)
+        dn = config.defs.get(dn)
 
     if dn.get('cache') == 'calculating':
         log(dn, 'Recursion loop for', dn, exit=True)
@@ -94,7 +94,8 @@ def hash_factors(dn):
         key = list(factor.keys())[0]
         hash_factors[key] = cache_key(key)
 
-    relevant_factors = ['tree', 'submodules'] + app.defs.defaults.build_steps
+    relevant_factors = ['tree', 'submodules'] + \
+        config.defs.defaults.build_steps
     if config.config.get('artifact-version', False) not in range(0, 6):
         relevant_factors += ['devices']
 
@@ -117,20 +118,21 @@ def hash_factors(dn):
             hash_system_recursively(system)
 
     if config.config.get('artifact-version', False):
-        hash_factors['artifact-version'] = config.config.get('artifact-version')
+        hash_factors['artifact-version'] = config.config['artifact-version']
 
         if config.config.get('artifact-version', 0) in range(0, 2):
             # this way, any change to any build-system invalidates all caches
             hash_factors['default-build-systems'] = \
-                app.defs.defaults.build_systems
+                config.defs.defaults.build_systems
         else:
             # this way is better - only affected components get a new key
             hash_factors['default-build-systems'] = \
-                app.defs.defaults.build_systems.get(dn.get('build-system',
-                                                    'manual'))
+                config.defs.defaults.build_systems.get(dn.get('build-system',
+                                                              'manual'))
             if (config.config.get('default-splits', []) != [] and
                     dn.get('kind') == 'system'):
-                hash_factors['default-splits'] = config.config['default-splits']
+                hash_factors['default-splits'] = \
+                    config.config['default-splits']
 
         if config.config.get('artifact-version', 0) not in range(0, 7):
             if dn.get('max-jobs'):
@@ -165,8 +167,9 @@ def cache(dn):
 
     if config.config.get('kbas-password', 'insecure') != 'insecure' and \
             config.config.get('kbas-url') is not None:
-        if dn.get('kind', 'chunk') in config.config.get('kbas-upload', 'chunk'):
-            with app.timer(dn, 'upload'):
+        if dn.get('kind', 'chunk') in \
+                config.config.get('kbas-upload', 'chunk'):
+            with utils.timer(dn, 'upload'):
                 upload(dn)
 
 
@@ -234,13 +237,14 @@ def upload(dn):
                 return
             if response.status_code == 777:
                 log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
-                config.config['reproduced'].append([md5(cachefile), dn['cache']])
+                config.config['reproduced'].append(
+                    [md5(cachefile), dn['cache']])
                 return
             if response.status_code == 405:
                 # server has different md5 for this artifact
                 if dn['kind'] == 'stratum' and config.config['reproduce']:
                     log('BIT-FOR-BIT',
-                            'WARNING: reproduction failed for', dn['cache'])
+                        'WARNING: reproduction failed for', dn['cache'])
                 log(dn, 'Artifact server already has', dn['cache'])
                 return
             log(dn, 'Artifact server problem:', response.status_code)
@@ -285,7 +289,8 @@ def get_remote(dn):
 
     dn['tried'] = True  # let's not keep asking for this artifact
 
-    if dn.get('kind', 'chunk') not in config.config.get('kbas-upload', 'chunk'):
+    if dn.get('kind', 'chunk') not in \
+            config.config.get('kbas-upload', 'chunk'):
         return False
 
     try:
@@ -325,8 +330,7 @@ def cull(artifact_dir):
             if free >= config.config.get('min-gigabytes', 10):
                 log('SETUP', '%sGB is enough free space' % free)
                 if deleted > 0:
-                    log('SETUP', 'Culled %s items in' % deleted,
-                            artifact_dir)
+                    log('SETUP', 'Culled %s items in' % deleted, artifact_dir)
                 return True
             path = os.path.join(artifact_dir, artifact)
             if os.path.exists(os.path.join(path, artifact + '.unpacked')):
@@ -350,7 +354,7 @@ def cull(artifact_dir):
     free = stat.f_frsize * stat.f_bavail / 1000000000
     if free < config.config.get('min-gigabytes', 10):
         log('SETUP', '%sGB is less than min-gigabytes:' % free,
-                config.config.get('min-gigabytes', 10), exit=True)
+            config.config.get('min-gigabytes', 10), exit=True)
 
 
 def check(artifact):

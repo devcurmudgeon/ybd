@@ -20,19 +20,19 @@ import contextlib
 import fcntl
 import errno
 
-from ybd import app, repos, sandbox
-from ybd.app import config, timer
-from ybd.app import log, log_riemann, lockfile, RetryException
+from ybd import app, repos, sandbox, config
+from ybd.app import lockfile, RetryException
 from ybd.cache import cache, cache_key, get_cache, get_remote
 import datetime
 from ybd.splitting import write_metadata, install_split_artifacts
-from ybd.utils import elapsed
+from ybd.utils import log, log_riemann, elapsed, timer
+
 
 def compose(dn):
     '''Work through defs tree, building and assembling until target exists'''
 
     if type(dn) is not dict:
-        dn = app.defs.get(dn)
+        dn = config.defs.get(dn)
 
     # if we can't calculate cache key, we can't create this component
     if cache_key(dn) is False:
@@ -48,14 +48,15 @@ def compose(dn):
     log(dn, "Composing", dn['name'], verbose=True)
 
     # if we have a kbas, look there to see if this component exists
-    if config.get('kbas-url') and not config.get('reproduce'):
+    if config.config.get('kbas-url') and not \
+            config.config.get('reproduce'):
         with claim(dn):
             if get_remote(dn):
-                config['counter'].increment()
+                config.config['counter'].increment()
                 return cache_key(dn)
 
     # we only work with user-specified arch
-    if 'arch' in dn and dn['arch'] != config['arch']:
+    if 'arch' in dn and dn['arch'] != config.config['arch']:
         return None
 
     # Create composite components (strata, systems, clusters)
@@ -63,7 +64,7 @@ def compose(dn):
     shuffle(systems)
     for system in systems:
         for s in system.get('subsystems', []):
-            subsystem = app.defs.get(s['path'])
+            subsystem = config.defs.get(s['path'])
             compose(subsystem)
         compose(system['path'])
 
@@ -84,7 +85,7 @@ def install_contents(dn, contents=None):
 
     shuffle(contents)
     for it in contents:
-        item = app.defs.get(it)
+        item = config.defs.get(it)
         if os.path.exists(os.path.join(dn['sandbox'],
                                        'baserock', item['name'] + '.meta')):
             # content has already been installed
@@ -99,7 +100,7 @@ def install_contents(dn, contents=None):
                 compose(item)
             sandbox.install(dn, item)
 
-    if config.get('log-verbose'):
+    if config.config.get('log-verbose'):
         log(dn, 'Added contents\n', contents)
         sandbox.list_files(dn)
 
@@ -113,7 +114,7 @@ def install_dependencies(dn, dependencies=None):
     log(dn, 'Installing dependencies\n', dependencies, verbose=True)
     shuffle(dependencies)
     for it in dependencies:
-        dependency = app.defs.get(it)
+        dependency = config.defs.get(it)
         if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                        dependency['name'] + '.meta')):
             # dependency has already been installed
@@ -128,7 +129,7 @@ def install_dependencies(dn, dependencies=None):
             if dependency.get('contents'):
                 install_dependencies(dn, dependency['contents'])
             sandbox.install(dn, dependency)
-    if config.get('log-verbose'):
+    if config.config.get('log-verbose'):
         sandbox.list_files(dn)
 
 
@@ -154,12 +155,12 @@ def build(dn):
 
 
 def run_build(dn):
-    ''' This is where we run ./configure, make, make install (for example).
+    ''' This is where we run ./config.configure, make, make install (for example).
     By the time we get here, all dependencies for component have already
     been assembled.
     '''
 
-    if config.get('mode', 'normal') == 'no-build':
+    if config.config.get('mode', 'normal') == 'no-build':
         log(dn, 'SKIPPING BUILD: artifact will be empty')
         return
 
@@ -174,7 +175,7 @@ def run_build(dn):
     env_vars = sandbox.env_vars_for_build(dn)
 
     log(dn, 'Logging build commands to %s' % dn['log'])
-    for build_step in app.defs.defaults.build_steps:
+    for build_step in config.defs.defaults.build_steps:
         if dn.get(build_step):
             log(dn, 'Running', build_step)
         for command in dn.get(build_step, []):
@@ -192,7 +193,7 @@ def run_build(dn):
 
 
 def shuffle(contents):
-    if config.get('instances', 1) > 1:
+    if config.config.get('instances', 1) > 1:
         random.seed(datetime.datetime.now())
         random.shuffle(contents)
 
@@ -241,13 +242,13 @@ def get_build_commands(dn):
         dn['install-commands'] = gather_integration_commands(dn)
         return
 
-    exit = True if config.get('check-definitions') == 'exit' else False
+    exit = True if config.config.get('check-definitions') == 'exit' else False
     if 'build-system' in dn:
         bs = dn['build-system']
         log(dn, 'Defined build system is', bs)
     else:
         files = os.listdir(dn['checkout'])
-        bs = app.defs.defaults.detect_build_system(files)
+        bs = config.defs.defaults.detect_build_system(files)
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':
                 print(dn)
@@ -255,9 +256,10 @@ def get_build_commands(dn):
                     exit=exit)
         log(dn, 'WARNING: Assumed build system is', bs)
 
-    for build_step in app.defs.defaults.build_steps:
+    for build_step in config.defs.defaults.build_steps:
         if dn.get(build_step, None) is None:
-            commands = app.defs.defaults.build_systems[bs].get(build_step, [])
+            commands = config.defs.defaults.build_systems[bs].get(
+                                                               build_step, [])
             dn[build_step] = commands
 
 
@@ -273,7 +275,7 @@ def gather_integration_commands(dn):
                 for name, cmdseq in it.items():
                     commands["%s-%s" % (name, product)] = cmdseq
         for subcomponent in component.get('contents', []):
-            _gather_recursively(app.defs.get(subcomponent), commands)
+            _gather_recursively(config.defs.get(subcomponent), commands)
 
     all_commands = {}
     _gather_recursively(dn, all_commands)

@@ -14,13 +14,12 @@
 #
 # =*= License: GPL-2 =*=
 
-from ybd import app
-from ybd.app import config, chdir
+from ybd import app, config
 from ybd.cache import get_cache
 import os
 import re
 import yaml
-from ybd.utils import copy_file_list, log
+from ybd.utils import chdir, copy_file_list, log
 
 
 def install_split_artifacts(dn):
@@ -31,10 +30,9 @@ def install_split_artifacts(dn):
     sandbox to the dn['install']
 
     '''
-
     for content in dn['contents']:
         key = list(content.keys())[0]
-        stratum = app.defs.get(key)
+        stratum = config.defs.get(key)
         move_required_files(dn, stratum, content[key])
 
 
@@ -68,7 +66,7 @@ def move_required_files(dn, stratum, artifacts):
         yaml.safe_dump(split_stratum_metadata, f, default_flow_style=False)
 
     for path in stratum['contents']:
-        chunk = app.defs.get(path)
+        chunk = config.defs.get(path)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
@@ -80,7 +78,7 @@ def move_required_files(dn, stratum, artifacts):
                 split_metadata = {'ref': metadata.get('ref'),
                                   'repo': metadata.get('repo'),
                                   'products': []}
-                if config.get('artifact-version', 0) not in range(0, 1):
+                if config.config.get('artifact-version', 0) not in range(0, 1):
                     metadata['cache'] = dn.get('cache')
 
                 for product in metadata['products']:
@@ -108,13 +106,13 @@ def move_required_files(dn, stratum, artifacts):
 
 
 def check_overlaps(dn):
-    if set(config['new-overlaps']) <= set(config['overlaps']):
-        config['new-overlaps'] = []
+    if set(config.config['new-overlaps']) <= set(config.config['overlaps']):
+        config.config['new-overlaps'] = []
         return
 
     overlaps_found = False
-    config['new-overlaps'] = list(set(config['new-overlaps']))
-    for path in config['new-overlaps']:
+    config.config['new-overlaps'] = list(set(config.config['new-overlaps']))
+    for path in config.config['new-overlaps']:
         log(dn, 'WARNING: overlapping path', path)
         for filename in os.listdir(dn['baserockdir']):
             with open(os.path.join(dn['baserockdir'], filename)) as f:
@@ -123,10 +121,11 @@ def check_overlaps(dn):
                         log(filename, 'WARNING: overlap at', path[1:])
                         overlaps_found = True
                         break
-        if config.get('check-overlaps') == 'exit':
-            log(dn, 'Overlaps found', config['new-overlaps'], exit=True)
-    config['overlaps'] = list(set(config['new-overlaps'] + config['overlaps']))
-    config['new-overlaps'] = []
+        if config.config.get('check-overlaps') == 'exit':
+            log(dn, 'Overlaps found', config.config['new-overlaps'], exit=True)
+    config.config['overlaps'] = list(set(config.config['new-overlaps'] +
+                                         config.config['overlaps']))
+    config.config['new-overlaps'] = []
 
 
 def get_metadata(dn):
@@ -157,7 +156,8 @@ def compile_rules(dn):
     regexps = []
     splits = {}
     split_rules = dn.get('products', [])
-    default_rules = app.defs.defaults.get_split_rules(dn.get('kind', 'chunk'))
+    default_rules = config.defs.defaults.get_split_rules(
+                        dn.get('kind', 'chunk'))
     for rules in split_rules, default_rules:
         for rule in rules:
             regexp = re.compile('^(?:' + '|'.join(rule.get('include')) + ')$')
@@ -175,7 +175,7 @@ def write_metadata(dn):
         write_chunk_metafile(dn)
     elif dn.get('kind', 'chunk') == 'stratum':
         write_stratum_metafiles(dn)
-    if config.get('check-overlaps', 'ignore') != 'ignore':
+    if config.config.get('check-overlaps', 'ignore') != 'ignore':
         check_overlaps(dn)
 
 
@@ -214,7 +214,7 @@ def write_stratum_metafiles(stratum):
     rules, splits = compile_rules(stratum)
 
     for item in stratum['contents']:
-        chunk = app.defs.get(item)
+        chunk = config.defs.get(item)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
 
@@ -223,10 +223,10 @@ def write_stratum_metafiles(stratum):
                           'repo': metadata.get('repo'),
                           'products': []}
 
-        if config.get('artifact-version', 0) not in range(0, 1):
+        if config.config.get('artifact-version', 0) not in range(0, 1):
             split_metadata['cache'] = metadata.get('cache')
 
-        chunk_artifacts = app.defs.get(chunk).get('artifacts', {})
+        chunk_artifacts = config.defs.get(chunk).get('artifacts', {})
         for artifact, target in chunk_artifacts.items():
             splits[target].append(artifact)
 
@@ -254,11 +254,11 @@ def write_metafile(rules, splits, dn):
         metadata['repo'] = dn.get('repo')
         metadata['ref'] = dn.get('ref')
     else:
-        if config.get('artifact-version', 0) not in range(0, 2):
-            metadata['repo'] = config['defdir']
-            metadata['ref'] = config['def-version']
+        if config.config.get('artifact-version', 0) not in range(0, 2):
+            metadata['repo'] = config.config['defdir']
+            metadata['ref'] = config.config['def-version']
 
-    if config.get('artifact-version', 0) not in range(0, 1):
+    if config.config.get('artifact-version', 0) not in range(0, 1):
         metadata['cache'] = dn.get('cache')
 
     meta = os.path.join(dn['baserockdir'], dn['name'] + '.meta')

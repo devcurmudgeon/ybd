@@ -22,7 +22,7 @@ import string
 from subprocess import call, check_output
 import sys
 import requests
-from ybd import utils
+from ybd import utils, config
 from ybd.utils import log
 import tempfile
 
@@ -63,7 +63,7 @@ def get_repo_name(repo):
 
 def get_version(gitdir, ref='HEAD'):
     try:
-        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
             version = check_output(['git', 'describe', '--tags', '--dirty'],
                                    stderr=fnull)[0:-1]
             tag = check_output(['git', 'describe', '--abbrev=0',
@@ -79,7 +79,7 @@ def get_version(gitdir, ref='HEAD'):
 
 def get_last_tag(gitdir):
     try:
-        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
             tag = check_output(['git', 'describe', '--abbrev=0',
                                 '--tags', 'HEAD'], stderr=fnull)[0:-1]
         return tag
@@ -106,7 +106,7 @@ def get_tree(dn):
 
         mirror(dn['name'], dn['repo'])
 
-    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
                 stderr=fnull):
             # can't resolve ref. is it upstream?
@@ -132,7 +132,7 @@ def mirror(name, repo):
         tar_file = get_repo_name(repo_url) + '.tar'
         log(name, 'Try fetching tarball %s' % tar_file)
         # try tarball first
-        with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
+        with utils.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(config.config['tar-url'], tar_file)],
                  stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stderr=fnull)
@@ -145,7 +145,7 @@ def mirror(name, repo):
             if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
                 log(name, 'Failed to clone', repo, exit=True)
 
-    with app.chdir(tmpdir):
+    with utils.chdir(tmpdir):
         if call(['git', 'rev-parse']):
             log(name, 'Problem mirroring git repo at', tmpdir, exit=True)
 
@@ -158,18 +158,18 @@ def mirror(name, repo):
 
 
 def fetch(repo):
-    with app.chdir(repo), open(os.devnull, "w") as fnull:
+    with utils.chdir(repo), open(os.devnull, "w") as fnull:
         call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
 
 
 def mirror_has_ref(gitdir, ref):
-    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
         out = call(['git', 'cat-file', '-t', ref], stdout=fnull, stderr=fnull)
         return out == 0
 
 
 def update_mirror(name, repo, gitdir):
-    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
         log(name, 'Refreshing mirror for %s' % repo)
         repo_url = get_repo_url(repo)
         if call(['git', 'fetch', repo_url, '+refs/*:refs/*', '--prune'],
@@ -180,7 +180,7 @@ def update_mirror(name, repo, gitdir):
 def checkout(dn):
     _checkout(dn['name'], dn['repo'], dn['ref'], dn['checkout'])
 
-    with app.chdir(dn['checkout']):
+    with utils.chdir(dn['checkout']):
         if os.path.exists('.gitmodules') or dn.get('submodules'):
             checkout_submodules(dn)
 
@@ -204,7 +204,7 @@ def _checkout(name, repo, ref, checkout):
                 stdout=fnull, stderr=fnull):
             log(name, 'Git clone failed for', gitdir, exit=True)
 
-        with app.chdir(checkout):
+        with utils.chdir(checkout):
             if call(['git', 'checkout', '--force', ref], stdout=fnull,
                     stderr=fnull):
                 log(name, 'Git checkout failed for', ref, exit=True)
@@ -214,7 +214,7 @@ def _checkout(name, repo, ref, checkout):
 
 
 def source_date_epoch(checkout):
-    with app.chdir(checkout):
+    with utils.chdir(checkout):
         return check_output(['git', 'log', '-1', '--pretty=%ct'])[:-1]
 
 
