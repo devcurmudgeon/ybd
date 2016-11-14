@@ -1,4 +1,4 @@
-image: python:3.6-onbuild 
+image: python:3.4-onbuild 
 
 before_script:
 - sh ./install_dependencies.sh
