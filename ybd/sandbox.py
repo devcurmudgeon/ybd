@@ -57,11 +57,12 @@ def setup(dn):
         yield
     except app.RetryException as e:
         raise e
-    except:
+    except Exception as e:
         import traceback
         log(dn, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
-        log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
+        log(dn, 'Sandbox debris is at', dn['sandbox'])
+        raise e
     finally:
         pass
 
