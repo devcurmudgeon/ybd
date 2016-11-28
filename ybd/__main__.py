@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (C) 2014-2016  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
@@ -20,25 +20,26 @@
 import os
 import sys
 import fcntl
-import app
-from app import cleanup, config, log, RetryException, setup, spawn, timer
-from assembly import compose
-from deployment import deploy
-from pots import Pots
-from concourse import Pipeline
-import cache
-from release_note import do_release_note
-import sandbox
+from ybd import app, cache, sandbox
+from ybd.app import cleanup, RetryException, setup, spawn
+from ybd.assembly import compose
+from ybd import config
+from ybd.deployment import deploy
+from ybd.pots import Pots
+from ybd.concourse import Pipeline
+from ybd.release_note import do_release_note
+from ybd.utils import log, timer
 import sandboxlib
 import yaml
 
 
 def write_cache_key():
-    with open(config['result-file'], 'w') as f:
+    with open(config.config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
     for kind in ['systems', 'strata', 'chunks']:
-        log('COUNT', '%s has %s %s' % (config['target'], config[kind], kind))
-    log('RESULT', 'Cache-key for target is at', config['result-file'])
+        log('COUNT', '%s has %s %s' % (config.config['target'],
+                                       config.config[kind], kind))
+    log('RESULT', 'Cache-key for target is at', config.config['result-file'])
 
 
 print('')
@@ -52,46 +53,46 @@ if not os.path.exists('./VERSION'):
                 os.chdir(os.path.join(os.getcwd(), '..', 'definitions'))
 
 setup(sys.argv, original_cwd)
-cleanup(config['tmp'])
+cleanup(config.config['tmp'])
 
 with timer('TOTAL'):
-    tmp_lock = open(os.path.join(config['tmp'], 'lock'), 'r')
+    tmp_lock = open(os.path.join(config.config['tmp'], 'lock'), 'r')
     fcntl.flock(tmp_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
 
-    target = os.path.join(config['defdir'], config['target'])
-    log('TARGET', 'Target is %s' % target, config['arch'])
-    with timer('DEFINITIONS', 'parsing %s' % config['def-version']):
-        app.defs = Pots()
+    target = os.path.join(config.config['defdir'], config.config['target'])
+    log('TARGET', 'Target is %s' % target, config.config['arch'])
+    with timer('DEFINITIONS', 'parsing %s' % config.config['def-version']):
+        config.defs = Pots()
 
-    target = app.defs.get(config['target'])
-    if config.get('mode', 'normal') == 'parse-only':
+    target = config.defs.get(config.config['target'])
+    if config.config.get('mode', 'normal') == 'parse-only':
         Pipeline(target)
         os._exit(0)
 
     with timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
 
-    if 'release-note' in config:
-        do_release_note(config['release-note'])
+    if 'release-note' in config.config:
+        do_release_note(config.config['release-note'])
 
-    if config['total'] == 0 or (config['total'] == 1 and
-                                target.get('kind') == 'cluster'):
-        log('ARCH', 'No definitions for', config['arch'], exit=True)
+    if config.config['total'] == 0 or (config.config['total'] == 1 and
+                                       target.get('kind') == 'cluster'):
+        log('ARCH', 'No definitions for', config.config['arch'], exit=True)
 
-    app.defs.save_trees()
-    if config.get('mode', 'normal') == 'keys-only':
+    config.defs.save_trees()
+    if config.config.get('mode', 'normal') == 'keys-only':
         write_cache_key()
         os._exit(0)
 
-    cache.cull(config['artifacts'])
+    cache.cull(config.config['artifacts'])
 
     sandbox.executor = sandboxlib.executor_for_platform()
-    log(config['target'], 'Sandbox using %s' % sandbox.executor)
+    log(config.config['target'], 'Sandbox using %s' % sandbox.executor)
     if sandboxlib.chroot == sandbox.executor:
-        log(config['target'], 'WARNING: using chroot is less safe ' +
+        log(config.config['target'], 'WARNING: using chroot is less safe ' +
             'than using linux-user-chroot')
 
-    if 'instances' in config:
+    if 'instances' in config.config:
         spawn()
 
     while True:
@@ -103,18 +104,18 @@ with timer('TOTAL'):
             os._exit(1)
         except RetryException:
             pass
-        except:
+        except Exception as e:
             import traceback
             traceback.print_exc()
             log(target, 'Exiting: uncaught exception')
-            os._exit(1)
+            raise e
 
-    if config.get('reproduce'):
-        log('REPRODUCED',
-            'Matched %s of' % len(config['reproduced']), config['tasks'])
-        for match in config['reproduced']:
-            print match[0], match[1]
+    if config.config.get('reproduce'):
+        log('REPRODUCED', 'Matched %s of' %
+            len(config.config['reproduced']), config.config['tasks'])
+        for match in config.config['reproduced']:
+            print(match[0], match[1])
 
-    if target.get('kind') == 'cluster' and config.get('fork') is None:
+    if target.get('kind') == 'cluster' and config.config.get('fork') is None:
         with timer(target, 'cluster deployment'):
             deploy(target)

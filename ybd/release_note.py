@@ -17,10 +17,12 @@
 import os
 from subprocess import check_output
 import tempfile
-import app
-from app import chdir, config, log
-from morphs import Morphs
-from repos import explore, get_last_tag, get_repo_name, mirror, mirror_has_ref
+from ybd import app
+from ybd.config import config
+from ybd.morphs import Morphs
+from ybd.repos import explore, get_last_tag, get_repo_name
+from ybd.repos import mirror, mirror_has_ref
+from ybd.utils import log, chdir
 
 
 def do_release_note(release_note):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (C) 2015-2016  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@ These definitions shall be used if no DEFAULTS file is present.
 '''
 
 import os
-import app
+from ybd import app, config
+from ybd.utils import log
 import yaml
 
 
@@ -42,7 +43,7 @@ class Defaults(object):
     def _load_defaults(self, defaults_file='./DEFAULTS'):
         '''Get defaults, either from a DEFAULTS file, or built-in defaults.'''
         ybd_defaults_file = os.path.join(os.path.dirname(__file__),
-                                         app.config['defaults'])
+                                         config.config['defaults'])
         ybd_defaults = self._load(ybd_defaults_file, ignore_errors=True)
 
         defaults = self._load(defaults_file, ignore_errors=True)
@@ -61,7 +62,7 @@ class Defaults(object):
                 contents = yaml.safe_load(f)
         except:
             if ignore_errors:
-                app.log('DEFAULTS', 'WARNING: problem loading', path)
+                log('DEFAULTS', 'WARNING: problem loading', path)
                 return None
             else:
                 raise

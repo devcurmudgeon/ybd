@@ -25,18 +25,11 @@ import yaml
 from multiprocessing import cpu_count, Value, Lock
 from subprocess import call
 from fs.osfs import OSFS  # not used here, but we import it to check install
-from repos import get_version
-from cache import cache_key
-try:
-    from riemann_client.transport import TCPTransport
-    from riemann_client.client import QueuedClient
-    riemann_available = True
-except ImportError:
-    riemann_available = False
-
-
-config = {}
-defs = {}
+from ybd.repos import get_version
+from ybd.cache import cache_key
+from ybd.utils import log
+from ybd.config import config
+from ybd import utils
 
 
 class RetryException(Exception):
@@ -75,48 +68,6 @@ class Counter(object):
 
 def lockfile(dn):
     return os.path.join(config['tmp'], cache_key(dn) + '.lock')
-
-
-def log(dn, message='', data='', verbose=False, exit=False):
-    ''' Print a timestamped log. '''
-
-    if exit:
-        print('\n\n')
-        message = 'ERROR: ' + message.replace('WARNING: ', '')
-
-    if verbose is True and config.get('log-verbose', False) is False:
-        return
-
-    name = dn['name'] if type(dn) is dict else dn
-
-    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
-    if config.get('log-timings') == 'elapsed':
-        timestamp = timestamp[:9] + elapsed(config['start-time']) + ' '
-    if config.get('log-timings', 'omit') == 'omit':
-        timestamp = ''
-    progress = ''
-    if config.get('counter'):
-        count = config['counter'].get()
-        progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
-    entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
-    if config.get('instances'):
-        entry = str(config.get('fork', 0)) + ' ' + entry
-
-    print(entry),
-    sys.stdout.flush()
-
-    if exit:
-        print('\n\n')
-        os._exit(1)
-
-
-def log_env(log, env, message=''):
-    with open(log, "a") as logfile:
-        for key in sorted(env):
-            msg = env[key] if 'PASSWORD' not in key else '(hidden)'
-            logfile.write('%s=%s\n' % (key, msg))
-        logfile.write(message + '\n\n')
-        logfile.flush()
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
@@ -238,7 +189,7 @@ def load_configs(config_files):
             for key, value in yaml.safe_load(text).items():
                 config[key.replace('_', '-')] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
-                print '   %s=%s' % (key.replace('_', '-'), msg)
+                print('   %s=%s' % (key.replace('_', '-'), msg))
         print
 
 
@@ -268,52 +219,6 @@ def remove_dir(tmpdir):
             shutil.rmtree(tmpdir)
         except:
             log('SETUP', 'WARNING: unable to remove', tmpdir)
-
-
-@contextlib.contextmanager
-def chdir(dirname=None):
-    currentdir = os.getcwd()
-    try:
-        if dirname is not None:
-            os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(currentdir)
-
-
-@contextlib.contextmanager
-def timer(dn, message=''):
-    starttime = datetime.datetime.now()
-    log(dn, 'Starting ' + message)
-    if type(dn) is dict:
-        dn['start-time'] = starttime
-    try:
-        yield
-    except:
-        raise
-    text = '' if message == '' else ' for ' + message
-    time_elapsed = elapsed(starttime)
-    log(dn, 'Elapsed time' + text, time_elapsed)
-    log_riemann(dn, 'Timer', text, time_elapsed)
-
-
-def log_riemann(dn, service, text, time_elapsed):
-    if riemann_available and 'riemann-server' in config:
-        time_split = time_elapsed.split(':')
-        time_sec = int(time_split[0]) * 3600 \
-            + int(time_split[1]) * 60 + int(time_split[2])
-        with QueuedClient(TCPTransport(config['riemann-server'],
-                                       config['riemann-port'],
-                                       timeout=30)) as client:
-            client.event(service=service, description=text, metric_f=time_sec)
-            client.flush()
-
-
-def elapsed(starttime):
-    td = datetime.datetime.now() - starttime
-    hours, remainder = divmod(int(td.total_seconds()), 60*60)
-    minutes, seconds = divmod(remainder, 60)
-    return "%02d:%02d:%02d" % (hours, minutes, seconds)
 
 
 def spawn():

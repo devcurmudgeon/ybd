@@ -17,17 +17,16 @@
 import os
 from subprocess import call
 import json
-import app
-import cache
-import sandbox
+from ybd import app, cache, config, sandbox, utils
+from ybd.utils import log
 
 
 def deploy(target):
     '''Deploy a cluster definition.'''
-    arch = app.config['arch']
+    arch = config.config['arch']
     for system in target.get('systems', []):
-        if app.defs.get(system).get('arch', arch) == arch:
-            with app.timer(system, 'deployment'):
+        if config.defs.get(system).get('arch', arch) == arch:
+            with utils.timer(system, 'deployment'):
                 deploy_system(system)
 
 
@@ -41,14 +40,14 @@ def deploy_system(system_spec, parent_location=''):
     the result being used as the location for the deployment extensions.
 
     '''
-    system = app.defs.get(system_spec['path'])
+    system = config.defs.get(system_spec['path'])
     if not cache.get_cache(system):
-        app.log('DEPLOY', 'System is not built, cannot deploy:\n', system,
-                exit=True)
+        log('DEPLOY', 'System is not built, cannot deploy:\n', system,
+            exit=True)
     deploy_defaults = system_spec.get('deploy-defaults')
 
     with sandbox.setup(system):
-        app.log(system, 'Extracting system artifact into', system['sandbox'])
+        log(system, 'Extracting system artifact into', system['sandbox'])
         with open(cache.get_cache(system), 'r') as artifact:
             call(['tar', 'x', '--directory', system['sandbox']],
                  stdin=artifact)
@@ -58,7 +57,7 @@ def deploy_system(system_spec, parent_location=''):
                 subsystem = dict(deploy_defaults.items() + subsystem.items())
             deploy_system(subsystem, parent_location=system['sandbox'])
 
-        for name, deployment in system_spec.get('deploy', {}).iteritems():
+        for name, deployment in system_spec.get('deploy', {}).items():
             method = deployment.get('type') or deployment.get('upgrade-type')
             method = os.path.basename(method)
             if deploy_defaults:
@@ -72,7 +71,7 @@ def deploy_system(system_spec, parent_location=''):
             try:
                 sandbox.run_extension(system, deployment, 'check', method)
             except KeyError:
-                app.log(system, "Couldn't find a check extension for", method)
+                log(system, "Couldn't find a check extension for", method)
 
             for ext in system.get('configuration-extensions', []):
                 sandbox.run_extension(system, deployment, 'configure',
@@ -82,9 +81,9 @@ def deploy_system(system_spec, parent_location=''):
 
 
 def do_deployment_manifest(system, configuration):
-    app.log(system, "Creating deployment manifest in", system['sandbox'])
+    log(system, "Creating deployment manifest in", system['sandbox'])
     data = {'configuration': configuration}
     metafile = os.path.join(system['sandbox'], 'baserock', 'deployment.meta')
-    with app.chdir(system['sandbox']), open(metafile, "w") as f:
-        json.dump(data, f, indent=4, sort_keys=True, encoding='unicode-escape')
+    with utils.chdir(system['sandbox']), open(metafile, "w") as f:
+        json.dump(data, f, indent=4, sort_keys=True)
         f.flush()
