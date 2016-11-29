@@ -22,7 +22,7 @@ import os
 import shutil
 from subprocess import call
 
-from ybd import utils
+from ybd import app, utils
 from ybd.repos import get_repo_url, get_tree
 import tempfile
 import yaml

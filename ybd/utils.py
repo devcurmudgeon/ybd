@@ -23,6 +23,7 @@ import stat
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
+from ybd import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])

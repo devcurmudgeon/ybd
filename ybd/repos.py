@@ -22,7 +22,7 @@ import string
 from subprocess import call, check_output
 import sys
 import requests
-from ybd import utils
+from ybd import app, utils
 import tempfile
 
 
