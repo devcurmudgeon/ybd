@@ -96,7 +96,8 @@ fi
 pip3 --version 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
     wget https://bootstrap.pypa.io/get-pip.py
-    $SUDO python3 get-pip.py
+    chmod +x get-pip.py
+    $SUDO ./get-pip.py
     $SUDO rm get-pip.py
 fi
 
