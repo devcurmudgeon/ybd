@@ -27,7 +27,6 @@ from subprocess import call
 from fs.osfs import OSFS  # not used here, but we import it to check install
 from ybd.repos import get_version
 from ybd.cache import cache_key
-from ybd.utils import log
 try:
     from riemann_client.transport import TCPTransport
     from riemann_client.client import QueuedClient
@@ -76,6 +75,48 @@ class Counter(object):
 
 def lockfile(dn):
     return os.path.join(config['tmp'], cache_key(dn) + '.lock')
+
+
+def log(dn, message='', data='', verbose=False, exit=False):
+    ''' Print a timestamped log. '''
+
+    if exit:
+        print('\n\n')
+        message = 'ERROR: ' + message.replace('WARNING: ', '')
+
+    if verbose is True and config.get('log-verbose', False) is False:
+        return
+
+    name = dn['name'] if type(dn) is dict else dn
+
+    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
+    if config.get('log-timings') == 'elapsed':
+        timestamp = timestamp[:9] + elapsed(config['start-time']) + ' '
+    if config.get('log-timings', 'omit') == 'omit':
+        timestamp = ''
+    progress = ''
+    if config.get('counter'):
+        count = config['counter'].get()
+        progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
+    entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
+    if config.get('instances'):
+        entry = str(config.get('fork', 0)) + ' ' + entry
+
+    print(entry),
+    sys.stdout.flush()
+
+    if exit:
+        print('\n\n')
+        os._exit(1)
+
+
+def log_env(log, env, message=''):
+    with open(log, "a") as logfile:
+        for key in sorted(env):
+            msg = env[key] if 'PASSWORD' not in key else '(hidden)'
+            logfile.write('%s=%s\n' % (key, msg))
+        logfile.write(message + '\n\n')
+        logfile.flush()
 
 
 def warning_handler(message, category, filename, lineno, file=None, line=None):
@@ -251,7 +292,7 @@ def timer(dn, message=''):
     except:
         raise
     text = '' if message == '' else ' for ' + message
-    time_elapsed = utils.elapsed(starttime)
+    time_elapsed = elapsed(starttime)
     log(dn, 'Elapsed time' + text, time_elapsed)
     log_riemann(dn, 'Timer', text, time_elapsed)
 
@@ -266,6 +307,13 @@ def log_riemann(dn, service, text, time_elapsed):
                                        timeout=30)) as client:
             client.event(service=service, description=text, metric_f=time_sec)
             client.flush()
+
+
+def elapsed(starttime):
+    td = datetime.datetime.now() - starttime
+    hours, remainder = divmod(int(td.total_seconds()), 60*60)
+    minutes, seconds = divmod(remainder, 60)
+    return "%02d:%02d:%02d" % (hours, minutes, seconds)
 
 
 def spawn():

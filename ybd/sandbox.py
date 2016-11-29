@@ -26,7 +26,7 @@ from subprocess import call, PIPE
 
 from ybd import app, cache, utils
 from ybd.repos import get_repo_url
-from ybd.utils import log
+
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
 # can be used.
@@ -59,13 +59,13 @@ def setup(dn):
         raise e
     except:
         import traceback
-        log(dn, 'ERROR: surprise exception in sandbox', '')
+        app.log(dn, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
-        log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
+        app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         pass
 
-    log(dn, "Removing sandbox dir", dn['sandbox'], verbose=True)
+    app.log(dn, "Removing sandbox dir", dn['sandbox'], verbose=True)
     app.remove_dir(dn['sandbox'])
 
 
@@ -74,9 +74,9 @@ def install(dn, component):
     if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
-    log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
+    app.log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
     if cache.get_cache(component) is False:
-        log(dn, 'Unable to get cache for', component['name'], exit=True)
+        app.log(dn, 'Unable to get cache for', component['name'], exit=True)
     unpackdir = cache.get_cache(component) + '.unpacked'
     if dn.get('kind') is 'system':
         utils.copy_all_files(unpackdir, dn['sandbox'])
@@ -93,7 +93,7 @@ def ldconfig(dn):
         run_logged(dn, cmd_list)
         os.environ['PATH'] = path
     else:
-        log(dn, 'No %s, not running ldconfig' % conf)
+        app.log(dn, 'No %s, not running ldconfig' % conf)
 
 
 def argv_to_string(argv):
@@ -103,7 +103,7 @@ def argv_to_string(argv):
 def run_sandboxed(dn, command, env=None, allow_parallel=False):
     global executor
 
-    log(dn, 'Running command:\n%s' % command)
+    app.log(dn, 'Running command:\n%s' % command)
     with open(dn['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
 
@@ -177,15 +177,15 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             except:
                 import traceback
                 traceback.print_exc()
-                log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
+                app.log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
                         exit_code)
 
         if exit_code != 0:
-            log(dn, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(argv))
             call(['tail', '-n', '200', dn['log']])
-            log(dn, 'ERROR: log file is at', dn['log'])
-            log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
+            app.log(dn, 'ERROR: log file is at', dn['log'])
+            app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         if cur_makeflags is not None:
             env['MAKEFLAGS'] = cur_makeflags
@@ -195,14 +195,14 @@ def run_logged(dn, cmd_list):
     app.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
     with open(dn['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
-            log(dn, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(cmd_list))
             call(['tail', '-n', '200', dn['log']])
-            log(dn, 'Log file is at', dn['log'], exit=True)
+            app.log(dn, 'Log file is at', dn['log'], exit=True)
 
 
 def run_extension(dn, deployment, step, method):
-    log(dn, 'Running %s extension:' % step, method)
+    app.log(dn, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
     tempfile.tempdir = app.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
@@ -237,7 +237,7 @@ def run_extension(dn, deployment, step, method):
             os.chmod(cmd_tmp.name, 0o700)
 
             if call(command):
-                log(dn, 'ERROR: %s extension failed:' % step, cmd_bin)
+                app.log(dn, 'ERROR: %s extension failed:' % step, cmd_bin)
                 raise SystemExit
         finally:
             os.remove(cmd_tmp.name)
@@ -336,18 +336,18 @@ def create_devices(dn):
             raise IOError('Cannot create device node %s,'
                           'unrecognized device type "%s"'
                           % (destfile, device['type']))
-        log(dn, "Creating device node", destfile)
+        app.log(dn, "Creating device node", destfile)
         os.mknod(destfile, mode, os.makedev(device['major'], device['minor']))
         os.chown(destfile, device['uid'], device['gid'])
 
 
 def list_files(component):
-    log(component, 'Sandbox %s contains\n' % component['sandbox'],
+    app.log(component, 'Sandbox %s contains\n' % component['sandbox'],
             os.listdir(component['sandbox']))
     try:
         files = os.listdir(os.path.join(component['sandbox'], 'baserock'))
-        log(component,
+        app.log(component,
                 'Baserock directory contains %s items\n' % len(files),
                 sorted(files))
     except:
-        log(component, 'No baserock directory in', component['sandbox'])
+        app.log(component, 'No baserock directory in', component['sandbox'])

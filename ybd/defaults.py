@@ -26,7 +26,6 @@ These definitions shall be used if no DEFAULTS file is present.
 
 import os
 from ybd import app
-from ybd.utils import log
 import yaml
 
 
@@ -62,7 +61,7 @@ class Defaults(object):
                 contents = yaml.safe_load(f)
         except:
             if ignore_errors:
-                log('DEFAULTS', 'WARNING: problem loading', path)
+                app.log('DEFAULTS', 'WARNING: problem loading', path)
                 return None
             else:
                 raise

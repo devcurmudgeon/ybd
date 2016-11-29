@@ -21,12 +21,12 @@ import fcntl
 import errno
 
 from ybd import app, repos, sandbox
-from ybd.app import config, timer
+from ybd.app import config, timer, elapsed
 from ybd.app import log, log_riemann, lockfile, RetryException
 from ybd.cache import cache, cache_key, get_cache, get_remote
 import datetime
 from ybd.splitting import write_metadata, install_split_artifacts
-from ybd.utils import elapsed
+
 
 def compose(dn):
     '''Work through defs tree, building and assembling until target exists'''

@@ -18,7 +18,6 @@ import os
 from subprocess import call
 import json
 from ybd import app, cache, sandbox
-from ybd.utils import log
 
 
 def deploy(target):
@@ -42,12 +41,12 @@ def deploy_system(system_spec, parent_location=''):
     '''
     system = app.defs.get(system_spec['path'])
     if not cache.get_cache(system):
-        log('DEPLOY', 'System is not built, cannot deploy:\n', system,
+        app.log('DEPLOY', 'System is not built, cannot deploy:\n', system,
                 exit=True)
     deploy_defaults = system_spec.get('deploy-defaults')
 
     with sandbox.setup(system):
-        log(system, 'Extracting system artifact into', system['sandbox'])
+        app.log(system, 'Extracting system artifact into', system['sandbox'])
         with open(cache.get_cache(system), 'r') as artifact:
             call(['tar', 'x', '--directory', system['sandbox']],
                  stdin=artifact)
@@ -71,7 +70,7 @@ def deploy_system(system_spec, parent_location=''):
             try:
                 sandbox.run_extension(system, deployment, 'check', method)
             except KeyError:
-                log(system, "Couldn't find a check extension for", method)
+                app.log(system, "Couldn't find a check extension for", method)
 
             for ext in system.get('configuration-extensions', []):
                 sandbox.run_extension(system, deployment, 'configure',
@@ -81,7 +80,7 @@ def deploy_system(system_spec, parent_location=''):
 
 
 def do_deployment_manifest(system, configuration):
-    log(system, "Creating deployment manifest in", system['sandbox'])
+    app.log(system, "Creating deployment manifest in", system['sandbox'])
     data = {'configuration': configuration}
     metafile = os.path.join(system['sandbox'], 'baserock', 'deployment.meta')
     with app.chdir(system['sandbox']), open(metafile, "w") as f:
