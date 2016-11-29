@@ -104,11 +104,11 @@ with timer('TOTAL'):
             os._exit(1)
         except RetryException:
             pass
-        except Exception as e:
+        except:
             import traceback
             traceback.print_exc()
             log(target, 'Exiting: uncaught exception')
-            raise e
+            os._exit(1)
 
     if config.config.get('reproduce'):
         log('REPRODUCED', 'Matched %s of' %
