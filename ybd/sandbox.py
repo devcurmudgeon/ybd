@@ -24,8 +24,10 @@ import stat
 import tempfile
 from subprocess import call, PIPE
 
-from ybd import app, cache, utils
-from ybd.repos import get_repo_url
+import app
+import cache
+import utils
+from repos import get_repo_url
 
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
@@ -152,7 +154,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
     # the child process in a chroot, the required string-escape
     # python module is already in memory and no attempt to
     # lazy load it in the chroot is made.
-    unused = "Some Text".encode('unicode-escape')
+    unused = "Some Text".encode('string-escape')
 
     argv = ['sh', '-c', '-e', command]
 
@@ -216,7 +218,7 @@ def run_extension(dn, deployment, step, method):
     else:
         envlist.append('PYTHONPATH=%s' % app.config['extsdir'])
 
-    for key, value in deployment.items():
+    for key, value in deployment.iteritems():
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
 

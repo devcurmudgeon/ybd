@@ -22,7 +22,8 @@ import string
 from subprocess import call, check_output
 import sys
 import requests
-from ybd import app, utils
+import app
+import utils
 import tempfile
 
 

@@ -17,8 +17,8 @@
 import yaml
 import glob
 import os
-from ybd.app import chdir, config, log
-from ybd.defaults import Defaults
+from app import chdir, config, log
+from defaults import Defaults
 
 
 class Morphs(object):
@@ -58,7 +58,7 @@ class Morphs(object):
             with open(path) as f:
                 text = f.read()
             contents = yaml.safe_load(text)
-        except yaml.YAMLError as exc:
+        except yaml.YAMLError, exc:
             log('DEFINITIONS', 'Could not parse %s' % path, exc, exit=True)
 
         if type(contents) is not dict:

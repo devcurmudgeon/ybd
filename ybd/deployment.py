@@ -17,7 +17,9 @@
 import os
 from subprocess import call
 import json
-from ybd import app, cache, sandbox
+import app
+import cache
+import sandbox
 
 
 def deploy(target):
@@ -56,7 +58,7 @@ def deploy_system(system_spec, parent_location=''):
                 subsystem = dict(deploy_defaults.items() + subsystem.items())
             deploy_system(subsystem, parent_location=system['sandbox'])
 
-        for name, deployment in system_spec.get('deploy', {}).items():
+        for name, deployment in system_spec.get('deploy', {}).iteritems():
             method = deployment.get('type') or deployment.get('upgrade-type')
             method = os.path.basename(method)
             if deploy_defaults:

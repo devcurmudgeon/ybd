@@ -25,7 +25,7 @@ These definitions shall be used if no DEFAULTS file is present.
 '''
 
 import os
-from ybd import app
+import app
 import yaml
 
 

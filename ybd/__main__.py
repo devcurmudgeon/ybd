@@ -20,13 +20,15 @@
 import os
 import sys
 import fcntl
-from ybd import app, cache, sandbox
-from ybd.app import cleanup, config, log, RetryException, setup, spawn, timer
-from ybd.assembly import compose
-from ybd.deployment import deploy
-from ybd.pots import Pots
-from ybd.concourse import Pipeline
-from ybd.release_note import do_release_note
+import app
+from app import cleanup, config, log, RetryException, setup, spawn, timer
+from assembly import compose
+from deployment import deploy
+from pots import Pots
+from concourse import Pipeline
+import cache
+from release_note import do_release_note
+import sandbox
 import sandboxlib
 import yaml
 
@@ -111,7 +113,7 @@ with timer('TOTAL'):
         log('REPRODUCED',
             'Matched %s of' % len(config['reproduced']), config['tasks'])
         for match in config['reproduced']:
-            print(match[0], match[1])
+            print match[0], match[1]
 
     if target.get('kind') == 'cluster' and config.get('fork') is None:
         with timer(target, 'cluster deployment'):

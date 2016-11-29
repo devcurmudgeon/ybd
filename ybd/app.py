@@ -25,8 +25,8 @@ import yaml
 from multiprocessing import cpu_count, Value, Lock
 from subprocess import call
 from fs.osfs import OSFS  # not used here, but we import it to check install
-from ybd.repos import get_version
-from ybd.cache import cache_key
+from repos import get_version
+from cache import cache_key
 try:
     from riemann_client.transport import TCPTransport
     from riemann_client.client import QueuedClient
@@ -238,7 +238,7 @@ def load_configs(config_files):
             for key, value in yaml.safe_load(text).items():
                 config[key.replace('_', '-')] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
-                print('   %s=%s' % (key.replace('_', '-'), msg))
+                print '   %s=%s' % (key.replace('_', '-'), msg)
         print
 
 

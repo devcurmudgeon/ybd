@@ -20,12 +20,14 @@ import contextlib
 import fcntl
 import errno
 
-from ybd import app, repos, sandbox
-from ybd.app import config, timer, elapsed
-from ybd.app import log, log_riemann, lockfile, RetryException
-from ybd.cache import cache, cache_key, get_cache, get_remote
+import app
+from app import config, timer, elapsed
+from app import log, log_riemann, lockfile, RetryException
+from cache import cache, cache_key, get_cache, get_remote
+import repos
+import sandbox
 import datetime
-from ybd.splitting import write_metadata, install_split_artifacts
+from splitting import write_metadata, install_split_artifacts
 
 
 def compose(dn):
@@ -250,7 +252,7 @@ def get_build_commands(dn):
         bs = app.defs.defaults.detect_build_system(files)
         if bs == 'manual' and 'install-commands' not in dn:
             if dn.get('kind', 'chunk') == 'chunk':
-                print(dn)
+                print dn
                 log(dn, 'WARNING: No install-commands, manual build-system',
                     exit=exit)
         log(dn, 'WARNING: Assumed build system is', bs)
@@ -269,8 +271,8 @@ def gather_integration_commands(dn):
 
     def _gather_recursively(component, commands):
         if 'system-integration' in component:
-            for product, it in component['system-integration'].items():
-                for name, cmdseq in it.items():
+            for product, it in component['system-integration'].iteritems():
+                for name, cmdseq in it.iteritems():
                     commands["%s-%s" % (name, product)] = cmdseq
         for subcomponent in component.get('contents', []):
             _gather_recursively(app.defs.get(subcomponent), commands)
@@ -278,6 +280,6 @@ def gather_integration_commands(dn):
     all_commands = {}
     _gather_recursively(dn, all_commands)
     result = []
-    for key in sorted(list(all_commands.keys())):
+    for key in sorted(all_commands.keys()):
         result.extend(all_commands[key])
     return result
