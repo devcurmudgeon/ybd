@@ -1,4 +1,4 @@
-image: python:3.6-onbuild 
+image: devcurmudgeon/foo
 
 before_script:
 - sh ./install_dependencies.sh
@@ -24,10 +24,11 @@ cache_keys_v1:
     YBD_artifact_version: "1"
     YBD_mode: "keys-only"
   script:
+  - cd ..
   - git clone git://git.baserock.org/baserock/baserock/definitions
   - cd definitions
   - git checkout baserock-14.40
-  - python3 ../ybd.py ci x86_64
+  - ../ybd/ybd.py ci x86_64
   - echo ci.b9de86669ce182e60e3f9445e6394b478b67a2c73b4c0764491c158c5f2569e9 > expected.result
   - diff expected.result ybd.result
 
@@ -51,7 +52,7 @@ check_build:
     YBD_check_definitions: "exit"
   script:
   - git clone git://git.baserock.org/baserock/baserock/definitions
-  - python3 ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
 
 check_build_no_kbas:
   stage: build
@@ -60,4 +61,4 @@ check_build_no_kbas:
     YBD_kbas_url: "false-url"
   script:
   - git clone git://git.baserock.org/baserock/baserock/definitions
-  - python3 ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+  - ./ybd.py definitions/strata/build-essential.morph x86_64
