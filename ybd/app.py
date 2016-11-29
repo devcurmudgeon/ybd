@@ -28,7 +28,6 @@ from fs.osfs import OSFS  # not used here, but we import it to check install
 from ybd.repos import get_version
 from ybd.cache import cache_key
 from ybd.utils import log
-from ybd.config import config
 try:
     from riemann_client.transport import TCPTransport
     from riemann_client.client import QueuedClient
@@ -37,6 +36,7 @@ except ImportError:
     riemann_available = False
 
 
+config = {}
 defs = {}
 
 

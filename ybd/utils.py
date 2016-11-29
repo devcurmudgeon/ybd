@@ -25,7 +25,6 @@ import sys
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
-from ybd.config import config
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
@@ -179,7 +178,7 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             import re
             path = re.search('/.*$', re.search('tmp[^/]+/.*$',
                              destpath).group(0)).group(0)
-            config.config['new-overlaps'] += [path]
+            app.config['new-overlaps'] += [path]
             try:
                 os.unlink(destpath)
             except:
@@ -393,7 +392,7 @@ def _find_extensions(paths):
 def find_extensions():
     '''Scan definitions for extensions.'''
 
-    paths = [config.config['extsdir']]
+    paths = [app.config['extsdir']]
 
     return _find_extensions(paths)
 

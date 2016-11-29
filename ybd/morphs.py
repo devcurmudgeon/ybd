@@ -17,7 +17,7 @@
 import yaml
 import glob
 import os
-from ybd.app import chdir
+from ybd.app import chdir, donfig
 from ybd.config import config
 from ybd.defaults import Defaults
 from ybd.utils import log

@@ -18,8 +18,7 @@ import os
 from subprocess import check_output
 import tempfile
 from ybd import app
-from ybd.app import chdir
-from ybd.config import config
+from ybd.app import chdir, config
 from ybd.morphs import Morphs
 from ybd.repos import explore, get_last_tag, get_repo_name
 from ybd.repos import mirror, mirror_has_ref

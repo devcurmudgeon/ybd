@@ -40,9 +40,9 @@ class KeyedBinaryArtifactServer(object):
         app.load_configs([
             os.path.join(os.getcwd(), 'kbas.conf'),
             os.path.join(os.path.dirname(__file__), 'config', 'kbas.conf')])
-        config.config['start-time'] = datetime.now()
-        config.config['last-upload'] = datetime.now()
-        config.config['downloads'] = 0
+        app.config['start-time'] = datetime.now()
+        app.config['last-upload'] = datetime.now()
+        app.config['downloads'] = 0
 
         try:
             import cherrypy
@@ -51,12 +51,12 @@ class KeyedBinaryArtifactServer(object):
             server = 'wsgiref'
 
         # for development:
-        if config.config.get('mode') == 'development':
-            bottle.run(server=server, host=config.config['host'],
-                       port=config.config['port'], debug=True, reloader=True)
+        if app.config.get('mode') == 'development':
+            bottle.run(server=server, host=app.config['host'],
+                       port=app.config['port'], debug=True, reloader=True)
         else:
-            bottle.run(server=server, host=config.config['host'],
-                       port=config.config['port'], reloader=True)
+            bottle.run(server=server, host=app.config['host'],
+                       port=app.config['port'], reloader=True)
 
     @bottle.get('/static/<filename>')
     def send_static(filename):
@@ -67,7 +67,7 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/<name>')
     @bottle.get('/artifacts/<name>')
     def list(name=""):
-        names = glob.glob(os.path.join(config.config['artifact-dir'],
+        names = glob.glob(os.path.join(app.config['artifact-dir'],
                           '*' + name + '*'))
         try:
             content = [[strftime('%y-%m-%d', gmtime(os.stat(x).st_atime)),
@@ -86,28 +86,28 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
         f = request.query.filename
-        return static_file(f, root=config.config['artifact-dir'], download=True)
+        return static_file(f, root=app.config['artifact-dir'], download=True)
 
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
-        config.config['downloads'] += 1
-        return static_file(f, root=config.config['artifact-dir'], download=True,
+        app.config['downloads'] += 1
+        return static_file(f, root=app.config['artifact-dir'], download=True,
                            mimetype='application/x-tar')
 
     @bottle.get('/')
     @bottle.get('/status')
     def status():
-        stat = os.statvfs(config.config['artifact-dir'])
+        stat = os.statvfs(app.config['artifact-dir'])
         free = stat.f_frsize * stat.f_bavail / 1000000000
-        artifacts = len(os.listdir(config.config['artifact-dir']))
-        started = config.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
-        downloads = config.config['downloads']
-        last_upload = config.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
+        artifacts = len(os.listdir(app.config['artifact-dir']))
+        started = app.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
+        downloads = app.config['downloads']
+        last_upload = app.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
         content = [['Started:', started, None]]
         content += [['Last upload:', last_upload, None]]
-        if config.config.get('last-reject'):
-            content += [['Last reject:', config.config['last-reject'], None]]
+        if app.config.get('last-reject'):
+            content += [['Last reject:', app.config['last-reject'], None]]
         content += [['Space:', str(free) + 'GB', None]]
         content += [['Artifacts:', str(artifacts), None]]
         content += [['Downloads:', downloads, None]]
@@ -118,10 +118,10 @@ class KeyedBinaryArtifactServer(object):
 
     @bottle.post('/upload')
     def post_artifact():
-        if config.config['password'] is 'insecure' or \
-                request.forms.get('password') != config.config['password']:
+        if app.config['password'] is 'insecure' or \
+                request.forms.get('password') != app.config['password']:
             print 'Upload attempt: password fail'
-            config.config['last-reject'] = \
+            app.config['last-reject'] = \
                 datetime.now().strftime('%y-%m-%d %H:%M:%S')
             response.status = 401  # unauthorized
             return
@@ -131,14 +131,14 @@ class KeyedBinaryArtifactServer(object):
             response.status = 400  # bad request, cache_id contains bad things
             return
 
-        if os.path.isdir(os.path.join(config.config['artifact-dir'], cache_id)):
+        if os.path.isdir(os.path.join(app.config['artifact-dir'], cache_id)):
             if cache.check(cache_id) == request.forms.get('checksum', 'XYZ'):
                 response.status = 777  # this is the same binary we have
                 return
             response.status = 405  # not allowed, this artifact exists
             return
 
-        tempfile.tempdir = config.config['artifact-dir']
+        tempfile.tempdir = app.config['artifact-dir']
         tmpdir = tempfile.mkdtemp()
         try:
             upload = request.files.get('file')
@@ -158,10 +158,10 @@ class KeyedBinaryArtifactServer(object):
             checksum = cache.md5(artifact)
             with open(artifact + '.md5', "a") as f:
                 f.write(checksum)
-            shutil.move(tmpdir, os.path.join(config.config['artifact-dir'],
+            shutil.move(tmpdir, os.path.join(app.config['artifact-dir'],
                                              cache_id))
             response.status = 201  # success!
-            config.config['last-upload'] = datetime.now()
+            app.config['last-upload'] = datetime.now()
             return
         except:
             # something went wrong, clean up
