@@ -90,8 +90,7 @@ def hash_factors(dn):
         hash_factors[factor] = cache_key(factor)
 
     for factor in dn.get('contents', []):
-        key = list(factor.keys())[0]
-        hash_factors[key] = cache_key(key)
+        hash_factors[list(factor.keys())[0]] = cache_key(list(factor.keys())[0])
 
     relevant_factors = ['tree', 'submodules'] + app.defs.defaults.build_steps
     if app.config.get('artifact-version', False) not in range(0, 6):

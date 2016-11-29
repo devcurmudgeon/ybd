@@ -210,9 +210,9 @@ def copy_file_list(srcpath, destpath, filelist):
     '''
 
     def _copyfun(inpath, outpath):
-        with open(inpath, "r", encoding='utf-8', errors='ignore') as inf:
-            with open(outpath, "w", encoding='utf-8', errors='ignore') as outf:
-                shutil.copyfileobj(inf, outf, 1024*1024*4)
+        with open(inpath, "r", encoding='utf-8', errors='ignore') as infh:
+            with open(outpath, "w", encoding='utf-8', errors='ignore') as outfh:
+                shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 
     _process_list(srcpath, destpath, filelist, _copyfun)
