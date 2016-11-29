@@ -266,23 +266,29 @@ def checkout_submodules(dn):
             url = parser.get(section, 'url')
             log(dn, 'WARNING: fallback to submodule %s from' % path, url)
 
-        # list objects in the parent repo tree to find the commit
-        # object that corresponds to the submodule
-        commit = check_output(['git', 'ls-tree', dn['ref'], path]).split()
+        try:
+            # list objects in the parent repo tree to find the commit
+            # object that corresponds to the submodule
+            commit = check_output(['git', 'ls-tree', dn['ref'], path])
 
-        # read the commit hash from the output
-        fields = list(map(lambda x: x.decode('unicode-escape'), commit))
-        if len(fields) >= 2 and fields[1] == 'commit':
-            submodule_commit = fields[2]
+            # read the commit hash from the output
+            fields = commit.split()
+            if len(fields) >= 2 and fields[1] == 'commit':
+                submodule_commit = commit.split()[2]
 
-            # fail if the commit hash is invalid
-            if len(submodule_commit) != 40:
-                raise Exception
+                # fail if the commit hash is invalid
+                if len(submodule_commit) != 40:
+                    raise Exception
 
-            fulldir = os.path.join(os.getcwd(), path)
-            _checkout(dn['name'], url, submodule_commit, fulldir)
-        else:
-            app.log(dn, 'Skipping submodule %s, not a commit:' % path, fields)
+                fulldir = os.path.join(os.getcwd(), path)
+                _checkout(dn['name'], url, submodule_commit, fulldir)
+
+            else:
+                log(dn, 'Skipping submodule %s, not a commit:' % path,
+                        fields)
+
+        except:
+            log(dn, "Git submodules problem", exit=True)
 
 
 @contextlib.contextmanager
