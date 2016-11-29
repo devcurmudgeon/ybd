@@ -25,14 +25,7 @@ import sys
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
-from ybd import config
-
-try:
-    from riemann_client.transport import TCPTransport
-    from riemann_client.client import QueuedClient
-    riemann_available = True
-except ImportError:
-    riemann_available = False
+from ybd.config import config
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
@@ -372,7 +365,7 @@ def make_deterministic_tar_archive(base_name, root):
 
     '''
 
-    with chdir(root), open(base_name + '.tar', 'wb') as f:
+    with app.chdir(root), open(base_name + '.tar', 'wb') as f:
         with tarfile.TarFile(mode='w', fileobj=f) as f_tar:
             directories = [d[0] for d in os.walk('.')]
             for d in sorted(directories):
@@ -387,10 +380,8 @@ def _find_extensions(paths):
     the return dict.'''
 
     extension_kinds = ['check', 'configure', 'write']
-    tfs = OSFS(paths[0])
     efs = MultiFS()
-    for x in paths:
-        efs.addfs(x, OSFS(x))
+    map(lambda x: efs.addfs(x, OSFS(x)), paths)
 
     def get_extensions(kind):
         return {os.path.splitext(x)[0]: efs.getsyspath(x)
@@ -437,24 +428,23 @@ def log(dn, message='', data='', verbose=False, exit=False):
         print('\n\n')
         message = 'ERROR: ' + message.replace('WARNING: ', '')
 
-    if verbose is True and config.config.get('log-verbose', False) is False:
+    if verbose is True and config.get('log-verbose', False) is False:
         return
 
     name = dn['name'] if type(dn) is dict else dn
 
     timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
-    if config.config.get('log-timings') == 'elapsed':
-        timestamp = timestamp[:9] + elapsed(config.config['start-time']) + ' '
-    if config.config.get('log-timings', 'omit') == 'omit':
+    if config.get('log-timings') == 'elapsed':
+        timestamp = timestamp[:9] + elapsed(config['start-time']) + ' '
+    if config.get('log-timings', 'omit') == 'omit':
         timestamp = ''
     progress = ''
-    if config.config.get('counter'):
-        count = config.config['counter'].get()
-        progress = '[%s/%s/%s] ' % \
-            (count, config.config['tasks'], config.config['total'])
+    if config.get('counter'):
+        count = config['counter'].get()
+        progress = '[%s/%s/%s] ' % (count, config['tasks'], config['total'])
     entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
-    if config.config.get('instances'):
-        entry = str(config.config.get('fork', 0)) + ' ' + entry
+    if config.get('instances'):
+        entry = str(config.get('fork', 0)) + ' ' + entry
 
     print(entry),
     sys.stdout.flush()
@@ -471,42 +461,3 @@ def log_env(log, env, message=''):
             logfile.write('%s=%s\n' % (key, msg))
         logfile.write(message + '\n\n')
         logfile.flush()
-
-
-@contextlib.contextmanager
-def chdir(dirname=None):
-    currentdir = os.getcwd()
-    try:
-        if dirname is not None:
-            os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(currentdir)
-
-
-@contextlib.contextmanager
-def timer(dn, message=''):
-    starttime = datetime.datetime.now()
-    log(dn, 'Starting ' + message)
-    if type(dn) is dict:
-        dn['start-time'] = starttime
-    try:
-        yield
-    except:
-        raise
-    text = '' if message == '' else ' for ' + message
-    time_elapsed = elapsed(starttime)
-    log(dn, 'Elapsed time' + text, time_elapsed)
-    log_riemann(dn, 'Timer', text, time_elapsed)
-
-
-def log_riemann(dn, service, text, time_elapsed):
-    if riemann_available and 'riemann-server' in config.config:
-        time_split = time_elapsed.split(':')
-        time_sec = int(time_split[0]) * 3600 \
-            + int(time_split[1]) * 60 + int(time_split[2])
-        with QueuedClient(TCPTransport(config.config['riemann-server'],
-                                       config.config['riemann-port'],
-                                       timeout=30)) as client:
-            client.event(service=service, description=text, metric_f=time_sec)
-            client.flush()

@@ -24,7 +24,7 @@ import stat
 import tempfile
 from subprocess import call, PIPE
 
-from ybd import app, cache, utils, config
+from ybd import app, cache, utils
 from ybd.repos import get_repo_url
 from ybd.utils import log
 
@@ -116,7 +116,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
 
         writable_paths = [dn['checkout'], dn['install'], tmpdir, ]
 
-        cfg = dict(
+        config = dict(
             cwd=dn['checkout'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
@@ -137,7 +137,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             writable_paths = [dn['name'] + '.build', dn['name'] + '.inst',
                               '/dev', '/proc', '/tmp', ]
 
-        cfg = dict(
+        config = dict(
             cwd=dn['name'] + '.build',
             filesystem_root=dn['sandbox'],
             filesystem_writable_paths=writable_paths,
@@ -160,25 +160,25 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
 
     # Adjust config for what the backend is capable of. The user will be warned
     # about any changes made.
-    cfg = executor.degrade_config_for_capabilities(cfg, warn=False)
+    config = executor.degrade_config_for_capabilities(config, warn=False)
 
     try:
         if not allow_parallel:
             env.pop("MAKEFLAGS", None)
 
-        utils.log_env(dn['log'], env, argv_to_string(argv))
+        app.log_env(dn['log'], env, argv_to_string(argv))
 
         with open(dn['log'], "a") as logfile:
             exit_code = 99
             try:
                 exit_code = executor.run_sandbox_with_redirection(
                     argv, stdout=logfile, stderr=sandboxlib.STDOUT,
-                    env=env, **cfg)
+                    env=env, **config)
             except:
                 import traceback
                 traceback.print_exc()
                 log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
-                    exit_code)
+                        exit_code)
 
         if exit_code != 0:
             log(dn, 'ERROR: command failed in directory %s:\n\n' %
@@ -192,7 +192,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
 
 
 def run_logged(dn, cmd_list):
-    utils.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
+    app.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
     with open(dn['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
             log(dn, 'ERROR: command failed in directory %s:\n\n' %
@@ -229,11 +229,10 @@ def run_extension(dn, deployment, step, method):
         command.append(deployment.get('location') or
                        deployment.get('upgrade-location'))
 
-    with utils.chdir(config.config['defdir']):
+    with app.chdir(config.config['defdir']):
         try:
             with open(cmd_bin, "r") as infh:
-                with open(cmd_tmp.name, "w") as outfh:
-                    shutil.copyfileobj(infh, outfh)
+                shutil.copyfileobj(infh, cmd_tmp)
             cmd_tmp.close()
             os.chmod(cmd_tmp.name, 0o700)
 
@@ -279,7 +278,7 @@ def env_vars_for_build(dn):
     prefixes = []
 
     for name in dn.get('build-depends', []):
-        dependency = config.defs.get(name)
+        dependency = app.defs.get(name)
         prefixes.append(dependency.get('prefix', '/usr'))
     prefixes = set(prefixes)
     for prefix in prefixes:
@@ -298,8 +297,7 @@ def env_vars_for_build(dn):
 
     env['PATH'] = ':'.join(path)
     env['PREFIX'] = dn.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or
-                                 config.config['max-jobs'])
+    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or config.config['max-jobs'])
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
@@ -345,11 +343,11 @@ def create_devices(dn):
 
 def list_files(component):
     log(component, 'Sandbox %s contains\n' % component['sandbox'],
-        os.listdir(component['sandbox']))
+            os.listdir(component['sandbox']))
     try:
         files = os.listdir(os.path.join(component['sandbox'], 'baserock'))
         log(component,
-            'Baserock directory contains %s items\n' % len(files),
-            sorted(files))
+                'Baserock directory contains %s items\n' % len(files),
+                sorted(files))
     except:
         log(component, 'No baserock directory in', component['sandbox'])

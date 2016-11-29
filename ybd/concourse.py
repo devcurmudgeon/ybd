@@ -16,7 +16,7 @@
 
 import yaml
 import ybd.app
-from ybd.utils import log, timer
+from ybd.app import log, timer, defs
 
 # Concourse data model:
 # a 'resource' is an input line into a box
@@ -35,18 +35,18 @@ class Pipeline(object):
                        'image': 'docker:///devcurmudgeon/foo'}
 
         self.write_pipeline(dn)
-        output = config.defs.get(dn)['name'] + '.yml'
+        output = app.defs.get(dn)['name'] + '.yml'
         with open(output, 'w') as f:
             pipeline = {'resources': self.resources, 'jobs': self.jobs}
             f.write(yaml.dump(pipeline, default_flow_style=False))
         log('CONCOURSE', 'pipeline is at', output)
 
     def write_pipeline(self, dn):
-        dn = config.defs.get(dn)
+        dn = app.defs.get(dn)
         self.add_resource(dn)
         aggregate = []
         for it in dn.get('build-depends', []) + dn.get('contents', []):
-            component = config.defs.get(it)
+            component = app.defs.get(it)
             self.add_resource(component)
             if component.get('kind', 'chunk') == 'chunk':
                 aggregate += [{'get': component['name']}]

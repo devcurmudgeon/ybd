@@ -86,15 +86,14 @@ class KeyedBinaryArtifactServer(object):
     @bottle.get('/1.0/artifacts')
     def get_morph_artifact():
         f = request.query.filename
-        return static_file(f, root=config.config['artifact-dir'],
-                           download=True)
+        return static_file(f, root=config.config['artifact-dir'], download=True)
 
     @bottle.get('/get/<cache_id>')
     def get_artifact(cache_id):
         f = os.path.join(cache_id, cache_id)
         config.config['downloads'] += 1
-        return static_file(f, root=config.config['artifact-dir'],
-                           download=True, mimetype='application/x-tar')
+        return static_file(f, root=config.config['artifact-dir'], download=True,
+                           mimetype='application/x-tar')
 
     @bottle.get('/')
     @bottle.get('/status')
@@ -104,8 +103,7 @@ class KeyedBinaryArtifactServer(object):
         artifacts = len(os.listdir(config.config['artifact-dir']))
         started = config.config['start-time'].strftime('%y-%m-%d %H:%M:%S')
         downloads = config.config['downloads']
-        last_upload = config.config['last-upload'].strftime(
-            '%y-%m-%d %H:%M:%S')
+        last_upload = config.config['last-upload'].strftime('%y-%m-%d %H:%M:%S')
         content = [['Started:', started, None]]
         content += [['Last upload:', last_upload, None]]
         if config.config.get('last-reject'):
@@ -133,8 +131,7 @@ class KeyedBinaryArtifactServer(object):
             response.status = 400  # bad request, cache_id contains bad things
             return
 
-        if os.path.isdir(os.path.join(config.config['artifact-dir'],
-                                      cache_id)):
+        if os.path.isdir(os.path.join(config.config['artifact-dir'], cache_id)):
             if cache.check(cache_id) == request.forms.get('checksum', 'XYZ'):
                 response.status = 777  # this is the same binary we have
                 return

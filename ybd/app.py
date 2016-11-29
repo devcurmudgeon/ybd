@@ -29,7 +29,15 @@ from ybd.repos import get_version
 from ybd.cache import cache_key
 from ybd.utils import log
 from ybd.config import config
-from ybd import utils
+try:
+    from riemann_client.transport import TCPTransport
+    from riemann_client.client import QueuedClient
+    riemann_available = True
+except ImportError:
+    riemann_available = False
+
+
+defs = {}
 
 
 class RetryException(Exception):
@@ -219,6 +227,45 @@ def remove_dir(tmpdir):
             shutil.rmtree(tmpdir)
         except:
             log('SETUP', 'WARNING: unable to remove', tmpdir)
+
+
+@contextlib.contextmanager
+def chdir(dirname=None):
+    currentdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+        yield
+    finally:
+        os.chdir(currentdir)
+
+
+@contextlib.contextmanager
+def timer(dn, message=''):
+    starttime = datetime.datetime.now()
+    log(dn, 'Starting ' + message)
+    if type(dn) is dict:
+        dn['start-time'] = starttime
+    try:
+        yield
+    except:
+        raise
+    text = '' if message == '' else ' for ' + message
+    time_elapsed = utils.elapsed(starttime)
+    log(dn, 'Elapsed time' + text, time_elapsed)
+    log_riemann(dn, 'Timer', text, time_elapsed)
+
+
+def log_riemann(dn, service, text, time_elapsed):
+    if riemann_available and 'riemann-server' in config:
+        time_split = time_elapsed.split(':')
+        time_sec = int(time_split[0]) * 3600 \
+            + int(time_split[1]) * 60 + int(time_split[2])
+        with QueuedClient(TCPTransport(config['riemann-server'],
+                                       config['riemann-port'],
+                                       timeout=30)) as client:
+            client.event(service=service, description=text, metric_f=time_sec)
+            client.flush()
 
 
 def spawn():
