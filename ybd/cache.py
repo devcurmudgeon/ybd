@@ -22,9 +22,9 @@ import os
 import shutil
 from subprocess import call
 
-from ybd import utils, config
-from ybd.utils import log
-from ybd.repos import get_repo_url, get_tree
+import app
+from repos import get_repo_url, get_tree
+import utils
 import tempfile
 import yaml
 import re
@@ -32,28 +32,28 @@ import re
 
 def cache_key(dn):
     if dn is None:
-        log(dn, 'No definition found for', dn, exit=True)
+        app.log(dn, 'No definition found for', dn, exit=True)
 
     if type(dn) is not dict:
-        dn = config.defs.get(dn)
+        dn = app.defs.get(dn)
 
     if dn.get('cache') == 'calculating':
-        log(dn, 'Recursion loop for', dn, exit=True)
+        app.log(dn, 'Recursion loop for', dn, exit=True)
 
     if dn.get('cache'):
         return dn['cache']
 
-    if dn.get('arch', config.config['arch']) != config.config['arch']:
+    if dn.get('arch', app.config['arch']) != app.config['arch']:
         if 'tried' not in dn:
             dn['tried'] = True
-            log(dn, 'No cache_key for arch %s mismatch' % dn['arch'],
-                    config.config['arch'])
+            app.log(dn, 'No cache_key for arch %s mismatch' % dn['arch'],
+                    app.config['arch'])
         return False
 
     dn['cache'] = 'calculating'
 
     key = 'no-build'
-    if config.config.get('mode', 'normal') in ['keys-only', 'normal']:
+    if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
         if dn.get('repo') and not dn.get('tree'):
             dn['tree'] = get_tree(dn)
         factors = hash_factors(dn)
@@ -62,41 +62,39 @@ def cache_key(dn):
 
     dn['cache'] = dn['name'] + "." + key
 
-    config.config['total'] += 1
+    app.config['total'] += 1
     x = 'x'
     if not get_cache(dn):
         x = ' '
-        config.config['tasks'] += 1
+        app.config['tasks'] += 1
 
     if dn.get('kind', 'chunk') == 'chunk':
-        config.config['chunks'] += 1
+        app.config['chunks'] += 1
     if dn.get('kind', 'chunk') == 'stratum':
-        config.config['strata'] += 1
+        app.config['strata'] += 1
     if dn.get('kind', 'chunk') == 'system':
-        config.config['systems'] += 1
+        app.config['systems'] += 1
 
-    log('CACHE-KEYS', '[%s]' % x, dn['cache'])
-    if config.config.get('manifest', False):
-        update_manifest(dn, config.config['manifest'])
+    app.log('CACHE-KEYS', '[%s]' % x, dn['cache'])
+    if app.config.get('manifest', False):
+        update_manifest(dn, app.config['manifest'])
 
-    if 'keys' in config.config:
-        config.config['keys'] += [dn['cache']]
+    if 'keys' in app.config:
+        app.config['keys'] += [dn['cache']]
     return dn['cache']
 
 
 def hash_factors(dn):
-    hash_factors = {'arch': config.config['arch']}
+    hash_factors = {'arch': app.config['arch']}
 
     for factor in dn.get('build-depends', []):
         hash_factors[factor] = cache_key(factor)
 
     for factor in dn.get('contents', []):
-        key = list(factor.keys())[0]
-        hash_factors[key] = cache_key(key)
+        hash_factors[factor.keys()[0]] = cache_key(factor.keys()[0])
 
-    relevant_factors = ['tree', 'submodules'] + \
-        config.defs.defaults.build_steps
-    if config.config.get('artifact-version', False) not in range(0, 6):
+    relevant_factors = ['tree', 'submodules'] + app.defs.defaults.build_steps
+    if app.config.get('artifact-version', False) not in range(0, 6):
         relevant_factors += ['devices']
 
     for factor in relevant_factors:
@@ -104,8 +102,8 @@ def hash_factors(dn):
             hash_factors[factor] = dn[factor]
 
     if dn.get('kind') == 'system':
-        if config.config.get('default-splits', []) != []:
-            hash_factors['splits'] = config.config.get('default-splits')
+        if app.config.get('default-splits', []) != []:
+            hash_factors['splits'] = app.config.get('default-splits')
 
     def hash_system_recursively(system):
         factor = system.get('path', 'BROKEN')
@@ -117,24 +115,23 @@ def hash_factors(dn):
         for system in dn.get('systems', []):
             hash_system_recursively(system)
 
-    if config.config.get('artifact-version', False):
-        hash_factors['artifact-version'] = config.config['artifact-version']
+    if app.config.get('artifact-version', False):
+        hash_factors['artifact-version'] = app.config.get('artifact-version')
 
-        if config.config.get('artifact-version', 0) in range(0, 2):
+        if app.config.get('artifact-version', 0) in range(0, 2):
             # this way, any change to any build-system invalidates all caches
             hash_factors['default-build-systems'] = \
-                config.defs.defaults.build_systems
+                app.defs.defaults.build_systems
         else:
             # this way is better - only affected components get a new key
             hash_factors['default-build-systems'] = \
-                config.defs.defaults.build_systems.get(dn.get('build-system',
-                                                              'manual'))
-            if (config.config.get('default-splits', []) != [] and
+                app.defs.defaults.build_systems.get(dn.get('build-system',
+                                                    'manual'))
+            if (app.config.get('default-splits', []) != [] and
                     dn.get('kind') == 'system'):
-                hash_factors['default-splits'] = \
-                    config.config['default-splits']
+                hash_factors['default-splits'] = app.config['default-splits']
 
-        if config.config.get('artifact-version', 0) not in range(0, 7):
+        if app.config.get('artifact-version', 0) not in range(0, 7):
             if dn.get('max-jobs'):
                 if dn['max-jobs'] == 1:
                     hash_factors['max-jobs'] = 'single'
@@ -146,9 +143,9 @@ def hash_factors(dn):
 
 def cache(dn):
     if get_cache(dn):
-        log(dn, "Bah! I could have cached", cache_key(dn))
+        app.log(dn, "Bah! I could have cached", cache_key(dn))
         return
-    tempfile.tempdir = config.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
     cachefile = os.path.join(tmpdir, cache_key(dn))
     if dn.get('kind') == "system":
@@ -163,13 +160,12 @@ def cache(dn):
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     unpack(dn, cachefile)
-    config.config['counter'].increment()
+    app.config['counter'].increment()
 
-    if config.config.get('kbas-password', 'insecure') != 'insecure' and \
-            config.config.get('kbas-url') is not None:
-        if dn.get('kind', 'chunk') in \
-                config.config.get('kbas-upload', 'chunk'):
-            with utils.timer(dn, 'upload'):
+    if app.config.get('kbas-password', 'insecure') != 'insecure' and \
+            app.config.get('kbas-url') is not None:
+        if dn.get('kind', 'chunk') in app.config.get('kbas-upload', 'chunk'):
+            with app.timer(dn, 'upload'):
                 upload(dn)
 
 
@@ -200,57 +196,56 @@ def unpack(dn, tmpfile):
         unpackdir = tmpfile + '.unpacked'
         os.makedirs(unpackdir)
         if call(['tar', 'xf', tmpfile, '--directory', unpackdir]):
-            log(dn, 'Problem unpacking', tmpfile, exit=True)
+            app.log(dn, 'Problem unpacking', tmpfile, exit=True)
     else:
         with open(os.devnull, "w") as fnull:
             if call(['tar', 'tvf', tmpfile], stdout=fnull, stderr=fnull):
-                log(dn, 'Problem with tarfile', tmpfile, exit=True)
+                app.log(dn, 'Problem with tarfile', tmpfile, exit=True)
 
     try:
-        path = os.path.join(config.config['artifacts'], cache_key(dn))
+        path = os.path.join(app.config['artifacts'], cache_key(dn))
         shutil.move(os.path.dirname(tmpfile), path)
         if not os.path.isdir(path):
-            log(dn, 'Problem creating artifact', path, exit=True)
+            app.log(dn, 'Problem creating artifact', path, exit=True)
 
         size = os.path.getsize(get_cache(dn))
         size = re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%d" % size)
         checksum = md5(get_cache(dn))
-        log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
+        app.log(dn, 'Cached %s bytes %s as' % (size, checksum), cache_key(dn))
         return path
     except:
-        log(dn, 'Bah! I raced on', cache_key(dn))
+        app.log(dn, 'Bah! I raced on', cache_key(dn))
         shutil.rmtree(os.path.dirname(tmpfile))
         return False
 
 
 def upload(dn):
     cachefile = get_cache(dn)
-    url = config.config['kbas-url'] + 'upload'
+    url = app.config['kbas-url'] + 'upload'
     params = {"filename": dn['cache'],
-              "password": config.config['kbas-password'],
+              "password": app.config['kbas-password'],
               "checksum": md5(cachefile)}
     with open(cachefile, 'rb') as f:
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                log(dn, 'Uploaded %s to' % dn['cache'], url)
+                app.log(dn, 'Uploaded %s to' % dn['cache'], url)
                 return
             if response.status_code == 777:
-                log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
-                config.config['reproduced'].append(
-                    [md5(cachefile), dn['cache']])
+                app.log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
+                app.config['reproduced'].append([md5(cachefile), dn['cache']])
                 return
             if response.status_code == 405:
                 # server has different md5 for this artifact
-                if dn['kind'] == 'stratum' and config.config['reproduce']:
-                    log('BIT-FOR-BIT',
-                        'WARNING: reproduction failed for', dn['cache'])
-                log(dn, 'Artifact server already has', dn['cache'])
+                if dn['kind'] == 'stratum' and app.config['reproduce']:
+                    app.log('BIT-FOR-BIT',
+                            'WARNING: reproduction failed for', dn['cache'])
+                app.log(dn, 'Artifact server already has', dn['cache'])
                 return
-            log(dn, 'Artifact server problem:', response.status_code)
+            app.log(dn, 'Artifact server problem:', response.status_code)
         except:
             pass
-        log(dn, 'Failed to upload', dn['cache'])
+        app.log(dn, 'Failed to upload', dn['cache'])
 
 
 def get_cache(dn):
@@ -259,16 +254,16 @@ def get_cache(dn):
     if cache_key(dn) is False:
         return False
 
-    cachedir = os.path.join(config.config['artifacts'], cache_key(dn))
+    cachedir = os.path.join(app.config['artifacts'], cache_key(dn))
     if os.path.isdir(cachedir):
         call(['touch', cachedir])
         artifact = os.path.join(cachedir, cache_key(dn))
         unpackdir = artifact + '.unpacked'
         if not os.path.isdir(unpackdir) and dn.get('kind') != 'system':
-            tempfile.tempdir = config.config['tmp']
+            tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             if call(['tar', 'xf', artifact, '--directory', tmpdir]):
-                log(dn, 'Problem unpacking', artifact)
+                app.log(dn, 'Problem unpacking', artifact)
                 return False
             try:
                 shutil.move(tmpdir, unpackdir)
@@ -284,27 +279,26 @@ def get_cache(dn):
 
 def get_remote(dn):
     ''' If a remote cached artifact exists for d, retrieve it '''
-    if config.config.get('last-retry-component') == dn or dn.get('tried'):
+    if app.config.get('last-retry-component') == dn or dn.get('tried'):
         return False
 
     dn['tried'] = True  # let's not keep asking for this artifact
 
-    if dn.get('kind', 'chunk') not in \
-            config.config.get('kbas-upload', 'chunk'):
+    if dn.get('kind', 'chunk') not in app.config.get('kbas-upload', 'chunk'):
         return False
 
     try:
-        log(dn, 'Try downloading', cache_key(dn))
-        url = config.config['kbas-url'] + 'get/' + cache_key(dn)
+        app.log(dn, 'Try downloading', cache_key(dn))
+        url = app.config['kbas-url'] + 'get/' + cache_key(dn)
         response = requests.get(url=url, stream=True)
     except:
-        config.config.pop('kbas-url')
-        log(dn, 'WARNING: remote artifact server is not working')
+        app.config.pop('kbas-url')
+        app.log(dn, 'WARNING: remote artifact server is not working')
         return False
 
     if response.status_code == 200:
         try:
-            tempfile.tempdir = config.config['tmp']
+            tempfile.tempdir = app.config['tmp']
             tmpdir = tempfile.mkdtemp()
             cachefile = os.path.join(tmpdir, cache_key(dn))
             with open(cachefile, 'wb') as f:
@@ -313,13 +307,13 @@ def get_remote(dn):
             return unpack(dn, cachefile)
 
         except:
-            log(dn, 'WARNING: failed downloading', cache_key(dn))
+            app.log(dn, 'WARNING: failed downloading', cache_key(dn))
 
     return False
 
 
 def cull(artifact_dir):
-    tempfile.tempdir = config.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     deleted = 0
 
     def clear(deleted, artifact_dir):
@@ -327,15 +321,16 @@ def cull(artifact_dir):
         for artifact in artifacts:
             stat = os.statvfs(artifact_dir)
             free = stat.f_frsize * stat.f_bavail / 1000000000
-            if free >= config.config.get('min-gigabytes', 10):
-                log('SETUP', '%sGB is enough free space' % free)
+            if free >= app.config.get('min-gigabytes', 10):
+                app.log('SETUP', '%sGB is enough free space' % free)
                 if deleted > 0:
-                    log('SETUP', 'Culled %s items in' % deleted, artifact_dir)
+                    app.log('SETUP', 'Culled %s items in' % deleted,
+                            artifact_dir)
                 return True
             path = os.path.join(artifact_dir, artifact)
             if os.path.exists(os.path.join(path, artifact + '.unpacked')):
                 path = os.path.join(path, artifact + '.unpacked')
-            if os.path.exists(path) and artifact not in config.config['keys']:
+            if os.path.exists(path) and artifact not in app.config['keys']:
                 tmpdir = tempfile.mkdtemp()
                 shutil.move(path, os.path.join(tmpdir, 'to-delete'))
                 app.remove_dir(tmpdir)
@@ -352,14 +347,14 @@ def cull(artifact_dir):
 
     stat = os.statvfs(artifact_dir)
     free = stat.f_frsize * stat.f_bavail / 1000000000
-    if free < config.config.get('min-gigabytes', 10):
-        log('SETUP', '%sGB is less than min-gigabytes:' % free,
-            config.config.get('min-gigabytes', 10), exit=True)
+    if free < app.config.get('min-gigabytes', 10):
+        app.log('SETUP', '%sGB is less than min-gigabytes:' % free,
+                app.config.get('min-gigabytes', 10), exit=True)
 
 
 def check(artifact):
     try:
-        artifact = os.path.join(config.config['artifact-dir'], artifact,
+        artifact = os.path.join(app.config['artifact-dir'], artifact,
                                 artifact)
         checkfile = artifact + '.md5'
         if not os.path.exists(checkfile):

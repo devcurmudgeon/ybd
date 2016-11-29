@@ -14,25 +14,16 @@
 #
 # =*= License: GPL-2 =*=
 
-import datetime
 import gzip
 import tarfile
 import contextlib
 import os
 import shutil
 import stat
-import sys
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
-from ybd import config
-
-try:
-    from riemann_client.transport import TCPTransport
-    from riemann_client.client import QueuedClient
-    riemann_available = True
-except ImportError:
-    riemann_available = False
+import app
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
@@ -142,16 +133,9 @@ def hardlink_all_files(srcpath, destpath):
     _process_tree(destpath, srcpath, destpath, os.link)
 
 
-def elapsed(starttime):
-    td = datetime.datetime.now() - starttime
-    hours, remainder = divmod(int(td.total_seconds()), 60*60)
-    minutes, seconds = divmod(remainder, 60)
-    return "%02d:%02d:%02d" % (hours, minutes, seconds)
-
-
 def _process_tree(root, srcpath, destpath, actionfunc):
     if os.path.lexists(destpath):
-        log('OVERLAPS', 'WARNING: overlap at', destpath, verbose=True)
+        app.log('OVERLAPS', 'WARNING: overlap at', destpath, verbose=True)
 
     file_stat = os.lstat(srcpath)
     mode = file_stat.st_mode
@@ -166,10 +150,10 @@ def _process_tree(root, srcpath, destpath, actionfunc):
         except:
             import traceback
             traceback.print_exc()
-            print('destpath is', destpath)
-            print('realpath is', realpath)
+            print 'destpath is', destpath
+            print 'realpath is', realpath
 
-            log('UTILS', 'ERROR: file operation failed', exit=True)
+            app.log('UTILS', 'ERROR: file operation failed', exit=True)
 
         if not stat.S_ISDIR(dest_stat.st_mode):
             raise IOError('Destination not a directory: source has %s'
@@ -186,7 +170,7 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             import re
             path = re.search('/.*$', re.search('tmp[^/]+/.*$',
                              destpath).group(0)).group(0)
-            config.config['new-overlaps'] += [path]
+            app.config['new-overlaps'] += [path]
             try:
                 os.unlink(destpath)
             except:
@@ -226,9 +210,9 @@ def copy_file_list(srcpath, destpath, filelist):
     '''
 
     def _copyfun(inpath, outpath):
-        with open(inpath, "r", encoding='utf-8', errors='ignore') as inf:
-            with open(outpath, "w", encoding='utf-8', errors='ignore') as outf:
-                shutil.copyfileobj(inf, outf, 1024*1024*4)
+        with open(inpath, "r") as infh:
+            with open(outpath, "w") as outfh:
+                shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 
     _process_list(srcpath, destpath, filelist, _copyfun)
@@ -279,8 +263,8 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
             file_stat = os.lstat(srcpath)
             mode = file_stat.st_mode
         except UnicodeEncodeError as ue:
-            log("UnicodeErr",
-                "Couldn't get lstat info for '%s'." % srcpath)
+            app.log("UnicodeErr",
+                    "Couldn't get lstat info for '%s'." % srcpath)
             raise ue
 
         if stat.S_ISDIR(mode):
@@ -372,7 +356,7 @@ def make_deterministic_tar_archive(base_name, root):
 
     '''
 
-    with chdir(root), open(base_name + '.tar', 'wb') as f:
+    with app.chdir(root), open(base_name + '.tar', 'wb') as f:
         with tarfile.TarFile(mode='w', fileobj=f) as f_tar:
             directories = [d[0] for d in os.walk('.')]
             for d in sorted(directories):
@@ -387,10 +371,8 @@ def _find_extensions(paths):
     the return dict.'''
 
     extension_kinds = ['check', 'configure', 'write']
-    tfs = OSFS(paths[0])
     efs = MultiFS()
-    for x in paths:
-        efs.addfs(x, OSFS(x))
+    map(lambda x: efs.addfs(x, OSFS(x)), paths)
 
     def get_extensions(kind):
         return {os.path.splitext(x)[0]: efs.getsyspath(x)
@@ -402,7 +384,7 @@ def _find_extensions(paths):
 def find_extensions():
     '''Scan definitions for extensions.'''
 
-    paths = [config.config['extsdir']]
+    paths = [app.config['extsdir']]
 
     return _find_extensions(paths)
 
@@ -428,85 +410,3 @@ def monkeypatch(obj, attr, new_value):
     setattr(obj, attr, new_value)
     yield
     setattr(obj, attr, old_value)
-
-
-def log(dn, message='', data='', verbose=False, exit=False):
-    ''' Print a timestamped log. '''
-
-    if exit:
-        print('\n\n')
-        message = 'ERROR: ' + message.replace('WARNING: ', '')
-
-    if verbose is True and config.config.get('log-verbose', False) is False:
-        return
-
-    name = dn['name'] if type(dn) is dict else dn
-
-    timestamp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S ')
-    if config.config.get('log-timings') == 'elapsed':
-        timestamp = timestamp[:9] + elapsed(config.config['start-time']) + ' '
-    if config.config.get('log-timings', 'omit') == 'omit':
-        timestamp = ''
-    progress = ''
-    if config.config.get('counter'):
-        count = config.config['counter'].get()
-        progress = '[%s/%s/%s] ' % \
-            (count, config.config['tasks'], config.config['total'])
-    entry = '%s%s[%s] %s %s\n' % (timestamp, progress, name, message, data)
-    if config.config.get('instances'):
-        entry = str(config.config.get('fork', 0)) + ' ' + entry
-
-    print(entry),
-    sys.stdout.flush()
-
-    if exit:
-        print('\n\n')
-        os._exit(1)
-
-
-def log_env(log, env, message=''):
-    with open(log, "a") as logfile:
-        for key in sorted(env):
-            msg = env[key] if 'PASSWORD' not in key else '(hidden)'
-            logfile.write('%s=%s\n' % (key, msg))
-        logfile.write(message + '\n\n')
-        logfile.flush()
-
-
-@contextlib.contextmanager
-def chdir(dirname=None):
-    currentdir = os.getcwd()
-    try:
-        if dirname is not None:
-            os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(currentdir)
-
-
-@contextlib.contextmanager
-def timer(dn, message=''):
-    starttime = datetime.datetime.now()
-    log(dn, 'Starting ' + message)
-    if type(dn) is dict:
-        dn['start-time'] = starttime
-    try:
-        yield
-    except:
-        raise
-    text = '' if message == '' else ' for ' + message
-    time_elapsed = elapsed(starttime)
-    log(dn, 'Elapsed time' + text, time_elapsed)
-    log_riemann(dn, 'Timer', text, time_elapsed)
-
-
-def log_riemann(dn, service, text, time_elapsed):
-    if riemann_available and 'riemann-server' in config.config:
-        time_split = time_elapsed.split(':')
-        time_sec = int(time_split[0]) * 3600 \
-            + int(time_split[1]) * 60 + int(time_split[2])
-        with QueuedClient(TCPTransport(config.config['riemann-server'],
-                                       config.config['riemann-port'],
-                                       timeout=30)) as client:
-            client.event(service=service, description=text, metric_f=time_sec)
-            client.flush()

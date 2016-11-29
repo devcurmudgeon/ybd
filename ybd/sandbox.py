@@ -24,9 +24,11 @@ import stat
 import tempfile
 from subprocess import call, PIPE
 
-from ybd import app, cache, utils, config
-from ybd.repos import get_repo_url
-from ybd.utils import log
+import app
+import cache
+import utils
+from repos import get_repo_url
+
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
 # can be used.
@@ -35,20 +37,20 @@ executor = None
 
 @contextlib.contextmanager
 def setup(dn):
-    tempfile.tempdir = config.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     dn['sandbox'] = tempfile.mkdtemp()
-    os.environ['TMPDIR'] = config.config['tmp']
-    config.config['sandboxes'] += [dn['sandbox']]
+    os.environ['TMPDIR'] = app.config['tmp']
+    app.config['sandboxes'] += [dn['sandbox']]
     dn['checkout'] = os.path.join(dn['sandbox'], dn['name'] + '.build')
     dn['install'] = os.path.join(dn['sandbox'], dn['name'] + '.inst')
     dn['baserockdir'] = os.path.join(dn['install'], 'baserock')
     dn['tmp'] = os.path.join(dn['sandbox'], 'tmp')
     for directory in ['checkout', 'install', 'tmp', 'baserockdir']:
         os.makedirs(dn[directory])
-    dn['log'] = os.path.join(config.config['artifacts'],
+    dn['log'] = os.path.join(app.config['artifacts'],
                              dn['cache'] + '.build-log')
-    if config.config.get('instances'):
-        dn['log'] += '.' + str(config.config.get('fork', 0))
+    if app.config.get('instances'):
+        dn['log'] += '.' + str(app.config.get('fork', 0))
     assembly_dir = dn['sandbox']
     for directory in ['dev', 'tmp']:
         call(['mkdir', '-p', os.path.join(assembly_dir, directory)])
@@ -57,16 +59,15 @@ def setup(dn):
         yield
     except app.RetryException as e:
         raise e
-    except Exception as e:
+    except:
         import traceback
-        log(dn, 'ERROR: surprise exception in sandbox', '')
+        app.log(dn, 'ERROR: surprise exception in sandbox', '')
         traceback.print_exc()
-        log(dn, 'Sandbox debris is at', dn['sandbox'])
-        raise e
+        app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         pass
 
-    log(dn, "Removing sandbox dir", dn['sandbox'], verbose=True)
+    app.log(dn, "Removing sandbox dir", dn['sandbox'], verbose=True)
     app.remove_dir(dn['sandbox'])
 
 
@@ -75,9 +76,9 @@ def install(dn, component):
     if os.path.exists(os.path.join(dn['sandbox'], 'baserock',
                                    component['name'] + '.meta')):
         return
-    log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
+    app.log(dn, 'Sandbox: installing %s' % component['cache'], verbose=True)
     if cache.get_cache(component) is False:
-        log(dn, 'Unable to get cache for', component['name'], exit=True)
+        app.log(dn, 'Unable to get cache for', component['name'], exit=True)
     unpackdir = cache.get_cache(component) + '.unpacked'
     if dn.get('kind') is 'system':
         utils.copy_all_files(unpackdir, dn['sandbox'])
@@ -94,7 +95,7 @@ def ldconfig(dn):
         run_logged(dn, cmd_list)
         os.environ['PATH'] = path
     else:
-        log(dn, 'No %s, not running ldconfig' % conf)
+        app.log(dn, 'No %s, not running ldconfig' % conf)
 
 
 def argv_to_string(argv):
@@ -104,7 +105,7 @@ def argv_to_string(argv):
 def run_sandboxed(dn, command, env=None, allow_parallel=False):
     global executor
 
-    log(dn, 'Running command:\n%s' % command)
+    app.log(dn, 'Running command:\n%s' % command)
     with open(dn['log'], "a") as logfile:
         logfile.write("# # %s\n" % command)
 
@@ -113,11 +114,11 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
     if dn.get('build-mode') == 'bootstrap':
         # bootstrap mode: builds have some access to the host system, so they
         # can use the compilers etc.
-        tmpdir = config.config.get("TMPDIR", "/tmp")
+        tmpdir = app.config.get("TMPDIR", "/tmp")
 
         writable_paths = [dn['checkout'], dn['install'], tmpdir, ]
 
-        cfg = dict(
+        config = dict(
             cwd=dn['checkout'],
             filesystem_root='/',
             filesystem_writable_paths=writable_paths,
@@ -138,7 +139,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
             writable_paths = [dn['name'] + '.build', dn['name'] + '.inst',
                               '/dev', '/proc', '/tmp', ]
 
-        cfg = dict(
+        config = dict(
             cwd=dn['name'] + '.build',
             filesystem_root=dn['sandbox'],
             filesystem_writable_paths=writable_paths,
@@ -153,7 +154,7 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
     # the child process in a chroot, the required string-escape
     # python module is already in memory and no attempt to
     # lazy load it in the chroot is made.
-    unused = "Some Text".encode('unicode-escape')
+    unused = "Some Text".encode('string-escape')
 
     argv = ['sh', '-c', '-e', command]
 
@@ -161,51 +162,51 @@ def run_sandboxed(dn, command, env=None, allow_parallel=False):
 
     # Adjust config for what the backend is capable of. The user will be warned
     # about any changes made.
-    cfg = executor.degrade_config_for_capabilities(cfg, warn=False)
+    config = executor.degrade_config_for_capabilities(config, warn=False)
 
     try:
         if not allow_parallel:
             env.pop("MAKEFLAGS", None)
 
-        utils.log_env(dn['log'], env, argv_to_string(argv))
+        app.log_env(dn['log'], env, argv_to_string(argv))
 
         with open(dn['log'], "a") as logfile:
             exit_code = 99
             try:
                 exit_code = executor.run_sandbox_with_redirection(
                     argv, stdout=logfile, stderr=sandboxlib.STDOUT,
-                    env=env, **cfg)
+                    env=env, **config)
             except:
                 import traceback
                 traceback.print_exc()
-                log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
-                    exit_code)
+                app.log('SANDBOX', 'ERROR: in run_sandbox_with_redirection',
+                        exit_code)
 
         if exit_code != 0:
-            log(dn, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(argv))
             call(['tail', '-n', '200', dn['log']])
-            log(dn, 'ERROR: log file is at', dn['log'])
-            log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
+            app.log(dn, 'ERROR: log file is at', dn['log'])
+            app.log(dn, 'Sandbox debris is at', dn['sandbox'], exit=True)
     finally:
         if cur_makeflags is not None:
             env['MAKEFLAGS'] = cur_makeflags
 
 
 def run_logged(dn, cmd_list):
-    utils.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
+    app.log_env(dn['log'], os.environ, argv_to_string(cmd_list))
     with open(dn['log'], "a") as logfile:
         if call(cmd_list, stdin=PIPE, stdout=logfile, stderr=logfile):
-            log(dn, 'ERROR: command failed in directory %s:\n\n' %
+            app.log(dn, 'ERROR: command failed in directory %s:\n\n' %
                     os.getcwd(), argv_to_string(cmd_list))
             call(['tail', '-n', '200', dn['log']])
-            log(dn, 'Log file is at', dn['log'], exit=True)
+            app.log(dn, 'Log file is at', dn['log'], exit=True)
 
 
 def run_extension(dn, deployment, step, method):
-    log(dn, 'Running %s extension:' % step, method)
+    app.log(dn, 'Running %s extension:' % step, method)
     extensions = utils.find_extensions()
-    tempfile.tempdir = config.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     cmd_tmp = tempfile.NamedTemporaryFile(delete=False)
     cmd_bin = extensions[step][method]
 
@@ -213,11 +214,11 @@ def run_extension(dn, deployment, step, method):
 
     if 'PYTHONPATH' in os.environ:
         envlist.append('PYTHONPATH=%s:%s' % (os.environ['PYTHONPATH'],
-                                             config.config['extsdir']))
+                                             app.config['extsdir']))
     else:
-        envlist.append('PYTHONPATH=%s' % config.config['extsdir'])
+        envlist.append('PYTHONPATH=%s' % app.config['extsdir'])
 
-    for key, value in deployment.items():
+    for key, value in deployment.iteritems():
         if key.isupper():
             envlist.append("%s=%s" % (key, value))
 
@@ -230,16 +231,15 @@ def run_extension(dn, deployment, step, method):
         command.append(deployment.get('location') or
                        deployment.get('upgrade-location'))
 
-    with utils.chdir(config.config['defdir']):
+    with app.chdir(app.config['defdir']):
         try:
             with open(cmd_bin, "r") as infh:
-                with open(cmd_tmp.name, "w") as outfh:
-                    shutil.copyfileobj(infh, outfh)
+                shutil.copyfileobj(infh, cmd_tmp)
             cmd_tmp.close()
             os.chmod(cmd_tmp.name, 0o700)
 
             if call(command):
-                log(dn, 'ERROR: %s extension failed:' % step, cmd_bin)
+                app.log(dn, 'ERROR: %s extension failed:' % step, cmd_bin)
                 raise SystemExit
         finally:
             os.remove(cmd_tmp.name)
@@ -247,13 +247,13 @@ def run_extension(dn, deployment, step, method):
 
 
 def ccache_mounts(dn, ccache_target):
-    if config.config['no-ccache'] or 'repo' not in dn:
+    if app.config['no-ccache'] or 'repo' not in dn:
         mounts = []
     else:
         name = os.path.basename(get_repo_url(dn['repo']))
         if name.endswith('.git'):
             name = name[:-4]
-        ccache_dir = os.path.join(config.config['ccache_dir'], name)
+        ccache_dir = os.path.join(app.config['ccache_dir'], name)
         if not os.path.isdir(ccache_dir):
             os.mkdir(ccache_dir)
 
@@ -265,7 +265,7 @@ def env_vars_for_build(dn):
     env = {}
     extra_path = []
 
-    if config.config['no-ccache']:
+    if app.config['no-ccache']:
         ccache_path = []
     else:
         ccache_path = ['/usr/lib/ccache']
@@ -274,13 +274,13 @@ def env_vars_for_build(dn):
             f for f in ('/baserock/binutils.meta',
                         '/baserock/eglibc.meta',
                         '/baserock/gcc.meta') if os.path.exists(f))
-        if not config.config.get('no-distcc'):
+        if not app.config.get('no-distcc'):
             env['CCACHE_PREFIX'] = 'distcc'
 
     prefixes = []
 
     for name in dn.get('build-depends', []):
-        dependency = config.defs.get(name)
+        dependency = app.defs.get(name)
         prefixes.append(dependency.get('prefix', '/usr'))
     prefixes = set(prefixes)
     for prefix in prefixes:
@@ -291,16 +291,15 @@ def env_vars_for_build(dn):
     if dn.get('build-mode') == 'bootstrap':
         rel_path = extra_path + ccache_path
         full_path = [os.path.normpath(dn['sandbox'] + p) for p in rel_path]
-        path = full_path + config.config['base-path']
+        path = full_path + app.config['base-path']
         env['DESTDIR'] = dn.get('install')
     else:
-        path = extra_path + ccache_path + config.config['base-path']
+        path = extra_path + ccache_path + app.config['base-path']
         env['DESTDIR'] = os.path.join('/', os.path.basename(dn.get('install')))
 
     env['PATH'] = ':'.join(path)
     env['PREFIX'] = dn.get('prefix') or '/usr'
-    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or
-                                 config.config['max-jobs'])
+    env['MAKEFLAGS'] = '-j%s' % (dn.get('max-jobs') or app.config['max-jobs'])
     env['TERM'] = 'dumb'
     env['SHELL'] = '/bin/sh'
     env['USER'] = env['USERNAME'] = env['LOGNAME'] = 'tomjon'
@@ -308,8 +307,8 @@ def env_vars_for_build(dn):
     env['HOME'] = '/tmp'
     env['TZ'] = 'UTC'
 
-    arch = config.config['arch']
-    cpu = config.config['cpu']
+    arch = app.config['arch']
+    cpu = app.config['cpu']
     abi = ''
     if arch.startswith(('armv7', 'armv5')):
         abi = 'eabi'
@@ -318,8 +317,8 @@ def env_vars_for_build(dn):
     env['TARGET'] = cpu + '-baserock-linux-gnu' + abi
     env['TARGET_STAGE1'] = cpu + '-bootstrap-linux-gnu' + abi
     env['MORPH_ARCH'] = arch
-    env['DEFINITIONS_REF'] = config.config['def-version']
-    env['PROGRAM_REF'] = config.config['my-version']
+    env['DEFINITIONS_REF'] = app.config['def-version']
+    env['PROGRAM_REF'] = app.config['my-version']
     if dn.get('SOURCE_DATE_EPOCH'):
         env['SOURCE_DATE_EPOCH'] = dn['SOURCE_DATE_EPOCH']
 
@@ -339,18 +338,18 @@ def create_devices(dn):
             raise IOError('Cannot create device node %s,'
                           'unrecognized device type "%s"'
                           % (destfile, device['type']))
-        log(dn, "Creating device node", destfile)
+        app.log(dn, "Creating device node", destfile)
         os.mknod(destfile, mode, os.makedev(device['major'], device['minor']))
         os.chown(destfile, device['uid'], device['gid'])
 
 
 def list_files(component):
-    log(component, 'Sandbox %s contains\n' % component['sandbox'],
-        os.listdir(component['sandbox']))
+    app.log(component, 'Sandbox %s contains\n' % component['sandbox'],
+            os.listdir(component['sandbox']))
     try:
         files = os.listdir(os.path.join(component['sandbox'], 'baserock'))
-        log(component,
-            'Baserock directory contains %s items\n' % len(files),
-            sorted(files))
+        app.log(component,
+                'Baserock directory contains %s items\n' % len(files),
+                sorted(files))
     except:
-        log(component, 'No baserock directory in', component['sandbox'])
+        app.log(component, 'No baserock directory in', component['sandbox'])

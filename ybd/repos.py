@@ -22,8 +22,8 @@ import string
 from subprocess import call, check_output
 import sys
 import requests
-from ybd import utils, config
-from ybd.utils import log
+import app
+import utils
 import tempfile
 
 
@@ -38,7 +38,7 @@ else:
 
 def get_repo_url(repo):
     if repo:
-        for alias, url in config.config.get('aliases', {}).items():
+        for alias, url in app.config.get('aliases', {}).items():
             repo = repo.replace(alias, url)
         if repo[:4] == "http" and not repo.endswith('.git'):
             repo = repo + '.git'
@@ -63,7 +63,7 @@ def get_repo_name(repo):
 
 def get_version(gitdir, ref='HEAD'):
     try:
-        with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
+        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             version = check_output(['git', 'describe', '--tags', '--dirty'],
                                    stderr=fnull)[0:-1]
             tag = check_output(['git', 'describe', '--abbrev=0',
@@ -79,7 +79,7 @@ def get_version(gitdir, ref='HEAD'):
 
 def get_last_tag(gitdir):
     try:
-        with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
+        with app.chdir(gitdir), open(os.devnull, "w") as fnull:
             tag = check_output(['git', 'describe', '--abbrev=0',
                                 '--tags', 'HEAD'], stderr=fnull)[0:-1]
         return tag
@@ -89,28 +89,28 @@ def get_last_tag(gitdir):
 
 def get_tree(dn):
     ref = str(dn['ref'])
-    gitdir = os.path.join(config.config['gits'], get_repo_name(dn['repo']))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(dn['repo']))
     if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
         gitdir = dn['repo'].replace('file://', '')
         if not os.path.isdir(gitdir):
-            log(dn, 'Git repo not found:', dn['repo'], exit=True)
+            app.log(dn, 'Git repo not found:', dn['repo'], exit=True)
 
     if not os.path.exists(gitdir):
         try:
             params = {'repo': get_repo_url(dn['repo']), 'ref': ref}
-            r = requests.get(url=config.config['tree-server'], params=params)
+            r = requests.get(url=app.config['tree-server'], params=params)
             return r.json()['tree']
         except:
-            if config.config.get('tree-server'):
-                log(dn, 'WARNING: no tree from tree-server for', ref)
+            if app.config.get('tree-server'):
+                app.log(dn, 'WARNING: no tree from tree-server for', ref)
 
         mirror(dn['name'], dn['repo'])
 
-    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         if call(['git', 'rev-parse', ref + '^{object}'], stdout=fnull,
                 stderr=fnull):
             # can't resolve ref. is it upstream?
-            log(dn, 'Fetching from upstream to resolve %s' % ref)
+            app.log(dn, 'Fetching from upstream to resolve %s' % ref)
             update_mirror(dn['name'], dn['repo'], gitdir)
 
         try:
@@ -121,66 +121,66 @@ def get_tree(dn):
         except:
             # either we don't have a git dir, or ref is not unique
             # or ref does not exist
-            log(dn, 'No tree for ref', (ref, gitdir), exit=True)
+            app.log(dn, 'No tree for ref', (ref, gitdir), exit=True)
 
 
 def mirror(name, repo):
-    tempfile.tempdir = config.config['tmp']
+    tempfile.tempdir = app.config['tmp']
     tmpdir = tempfile.mkdtemp()
     repo_url = get_repo_url(repo)
     try:
         tar_file = get_repo_name(repo_url) + '.tar'
-        log(name, 'Try fetching tarball %s' % tar_file)
+        app.log(name, 'Try fetching tarball %s' % tar_file)
         # try tarball first
-        with utils.chdir(tmpdir), open(os.devnull, "w") as fnull:
-            call(['wget', os.path.join(config.config['tar-url'], tar_file)],
+        with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
+            call(['wget', os.path.join(app.config['tar-url'], tar_file)],
                  stdout=fnull, stderr=fnull)
             call(['tar', 'xf', tar_file], stderr=fnull)
             call(['git', 'config', 'gc.autodetach', 'false'], stderr=fnull)
             os.remove(tar_file)
             update_mirror(name, repo, tmpdir)
     except:
-        log(name, 'Try git clone from', repo_url)
+        app.log(name, 'Try git clone from', repo_url)
         with open(os.devnull, "w") as fnull:
             if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
-                log(name, 'Failed to clone', repo, exit=True)
+                app.log(name, 'Failed to clone', repo, exit=True)
 
-    with utils.chdir(tmpdir):
+    with app.chdir(tmpdir):
         if call(['git', 'rev-parse']):
-            log(name, 'Problem mirroring git repo at', tmpdir, exit=True)
+            app.log(name, 'Problem mirroring git repo at', tmpdir, exit=True)
 
-    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     try:
         shutil.move(tmpdir, gitdir)
-        log(name, 'Git repo is mirrored at', gitdir)
+        app.log(name, 'Git repo is mirrored at', gitdir)
     except:
         pass
 
 
 def fetch(repo):
-    with utils.chdir(repo), open(os.devnull, "w") as fnull:
+    with app.chdir(repo), open(os.devnull, "w") as fnull:
         call(['git', 'fetch', 'origin'], stdout=fnull, stderr=fnull)
 
 
 def mirror_has_ref(gitdir, ref):
-    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
         out = call(['git', 'cat-file', '-t', ref], stdout=fnull, stderr=fnull)
         return out == 0
 
 
 def update_mirror(name, repo, gitdir):
-    with utils.chdir(gitdir), open(os.devnull, "w") as fnull:
-        log(name, 'Refreshing mirror for %s' % repo)
+    with app.chdir(gitdir), open(os.devnull, "w") as fnull:
+        app.log(name, 'Refreshing mirror for %s' % repo)
         repo_url = get_repo_url(repo)
         if call(['git', 'fetch', repo_url, '+refs/*:refs/*', '--prune'],
                 stdout=fnull, stderr=fnull):
-            log(name, 'Git update mirror failed', repo, exit=True)
+            app.log(name, 'Git update mirror failed', repo, exit=True)
 
 
 def checkout(dn):
     _checkout(dn['name'], dn['repo'], dn['ref'], dn['checkout'])
 
-    with utils.chdir(dn['checkout']):
+    with app.chdir(dn['checkout']):
         if os.path.exists('.gitmodules') or dn.get('submodules'):
             checkout_submodules(dn)
 
@@ -188,7 +188,7 @@ def checkout(dn):
 
 
 def _checkout(name, repo, ref, checkout):
-    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
@@ -202,19 +202,19 @@ def _checkout(name, repo, ref, checkout):
         # removed --no-hardlinks, though.
         if call(['git', 'clone', '--no-hardlinks', gitdir, checkout],
                 stdout=fnull, stderr=fnull):
-            log(name, 'Git clone failed for', gitdir, exit=True)
+            app.log(name, 'Git clone failed for', gitdir, exit=True)
 
-        with utils.chdir(checkout):
+        with app.chdir(checkout):
             if call(['git', 'checkout', '--force', ref], stdout=fnull,
                     stderr=fnull):
-                log(name, 'Git checkout failed for', ref, exit=True)
+                app.log(name, 'Git checkout failed for', ref, exit=True)
 
-            log(name, 'Git checkout %s in %s' % (repo, checkout))
-            log(name, 'Upstream version %s' % get_version(checkout, ref))
+            app.log(name, 'Git checkout %s in %s' % (repo, checkout))
+            app.log(name, 'Upstream version %s' % get_version(checkout, ref))
 
 
 def source_date_epoch(checkout):
-    with utils.chdir(checkout):
+    with app.chdir(checkout):
         return check_output(['git', 'log', '-1', '--pretty=%ct'])[:-1]
 
 
@@ -224,7 +224,7 @@ def extract_commit(name, repo, ref, target_dir):
     function is much quicker when you don't need to copy the whole repo into
     target_dir.
     '''
-    gitdir = os.path.join(config.config['gits'], get_repo_name(repo))
+    gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
         mirror(name, repo)
     elif not mirror_has_ref(gitdir, ref):
@@ -235,19 +235,19 @@ def extract_commit(name, repo, ref, target_dir):
         git_env['GIT_INDEX_FILE'] = git_index_file.name
         git_env['GIT_WORK_TREE'] = target_dir
 
-        log(name, 'Extracting commit', ref)
+        app.log(name, 'Extracting commit', ref)
         if call(['git', 'read-tree', ref], env=git_env, cwd=gitdir):
-            log(name, 'git read-tree failed for', ref, exit=True)
-        log(name, 'Then checkout index', ref)
+            app.log(name, 'git read-tree failed for', ref, exit=True)
+        app.log(name, 'Then checkout index', ref)
         if call(['git', 'checkout-index', '--all'], env=git_env, cwd=gitdir):
-            log(name, 'Git checkout-index failed for', ref, exit=True)
-        log(name, 'Done', ref)
+            app.log(name, 'Git checkout-index failed for', ref, exit=True)
+        app.log(name, 'Done', ref)
 
     utils.set_mtime_recursively(target_dir)
 
 
 def checkout_submodules(dn):
-    log(dn, 'Checking git submodules')
+    app.log(dn, 'Checking git submodules')
     with open('.gitmodules', "r") as gitfile:
         # drop indentation in sections, as RawConfigParser cannot handle it
         content = '\n'.join([l.strip() for l in gitfile.read().splitlines()])
@@ -261,28 +261,34 @@ def checkout_submodules(dn):
         path = parser.get(section, 'path')
         try:
             url = dn['submodules'][path]['url']
-            log(dn, 'Processing submodule %s from' % path, url)
+            app.log(dn, 'Processing submodule %s from' % path, url)
         except:
             url = parser.get(section, 'url')
-            log(dn, 'WARNING: fallback to submodule %s from' % path, url)
+            app.log(dn, 'WARNING: fallback to submodule %s from' % path, url)
 
-        # list objects in the parent repo tree to find the commit
-        # object that corresponds to the submodule
-        commit = check_output(['git', 'ls-tree', dn['ref'], path]).split()
+        try:
+            # list objects in the parent repo tree to find the commit
+            # object that corresponds to the submodule
+            commit = check_output(['git', 'ls-tree', dn['ref'], path])
 
-        # read the commit hash from the output
-        fields = list(map(lambda x: x.decode('unicode-escape'), commit))
-        if len(fields) >= 2 and fields[1] == 'commit':
-            submodule_commit = fields[2]
+            # read the commit hash from the output
+            fields = commit.split()
+            if len(fields) >= 2 and fields[1] == 'commit':
+                submodule_commit = commit.split()[2]
 
-            # fail if the commit hash is invalid
-            if len(submodule_commit) != 40:
-                raise Exception
+                # fail if the commit hash is invalid
+                if len(submodule_commit) != 40:
+                    raise Exception
 
-            fulldir = os.path.join(os.getcwd(), path)
-            _checkout(dn['name'], url, submodule_commit, fulldir)
-        else:
-            app.log(dn, 'Skipping submodule %s, not a commit:' % path, fields)
+                fulldir = os.path.join(os.getcwd(), path)
+                _checkout(dn['name'], url, submodule_commit, fulldir)
+
+            else:
+                app.log(dn, 'Skipping submodule %s, not a commit:' % path,
+                        fields)
+
+        except:
+            app.log(dn, "Git submodules problem", exit=True)
 
 
 @contextlib.contextmanager
