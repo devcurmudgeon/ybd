@@ -2,6 +2,8 @@ image: devcurmudgeon/foo
 
 before_script:
 - sh ./install_dependencies.sh
+- apt-get update -qq && apt-get install -y -qq git
+- git clone git://git.baserock.org/baserock/baserock/definitions ../definitions
 
 cache:
   paths:
@@ -24,9 +26,7 @@ cache_keys_v1:
     YBD_artifact_version: "1"
     YBD_mode: "keys-only"
   script:
-  - cd ..
-  - git clone git://git.baserock.org/baserock/baserock/definitions
-  - cd definitions
+  - cd ../definitions
   - git checkout baserock-14.40
   - ../ybd/ybd.py ci x86_64
   - echo ci.b9de86669ce182e60e3f9445e6394b478b67a2c73b4c0764491c158c5f2569e9 > expected.result
@@ -38,9 +38,7 @@ cache_keys_v6:
     YBD_artifact_version: "6"
     YBD_mode: "keys-only"
   script:
-  - cd ..
-  - git clone git://git.baserock.org/baserock/baserock/definitions
-  - cd definitions
+  - cd ../definitions
   - git checkout GENIVI-M1.0
   - ../ybd/ybd.py ci x86_64
   - echo ci.d9dec300a7cb2bc273dc6846e69a11b7f3ad304462f3a4c6ce8c5ab6ead11647 > expected.result
@@ -51,7 +49,6 @@ check_build:
   variables:
     YBD_check_definitions: "exit"
   script:
-  - git clone git://git.baserock.org/baserock/baserock/definitions
   - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
 
 check_build_no_kbas:
@@ -60,5 +57,4 @@ check_build_no_kbas:
     YBD_check_definitions: "exit"
     YBD_kbas_url: "false-url"
   script:
-  - git clone git://git.baserock.org/baserock/baserock/definitions
   - ./ybd.py definitions/strata/build-essential.morph x86_64
