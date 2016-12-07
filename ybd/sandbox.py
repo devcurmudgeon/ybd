@@ -261,6 +261,27 @@ def ccache_mounts(dn, ccache_target):
     return mounts
 
 
+def list_prefixes(dn):
+    """List all the prefixes in a given definition's dependencies"""
+    prefix = dn.get('prefix')
+    if prefix:
+        yield prefix
+
+    dependencies = dn.get('build-depends', [])
+    for dep in dependencies:
+
+        dependency = app.defs.get(dep)
+        for prefix in list_prefixes(dependency):
+            yield prefix
+
+        contents = dependency.get('contents', [])
+        for ct in contents:
+            content = app.defs.get(ct)
+            prefix = content.get('prefix')
+            if prefix:
+                yield prefix
+
+
 def env_vars_for_build(dn):
     env = {}
     extra_path = []
@@ -277,12 +298,7 @@ def env_vars_for_build(dn):
         if not app.config.get('no-distcc'):
             env['CCACHE_PREFIX'] = 'distcc'
 
-    prefixes = []
-
-    for name in dn.get('build-depends', []):
-        dependency = app.defs.get(name)
-        prefixes.append(dependency.get('prefix', '/usr'))
-    prefixes = set(prefixes)
+    prefixes = set(list_prefixes(dn))
     for prefix in prefixes:
         if prefix:
             bin_path = os.path.join(prefix, 'bin')
