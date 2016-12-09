@@ -1,6 +1,5 @@
 GitLab: [![build status](https://gitlab.com/baserock/ybd/badges/master/build.svg)](https://gitlab.com/baserock/ybd/commits/master)
 
-Github: [![Build Status](https://travis-ci.org/devcurmudgeon/ybd.svg?branch=master)](https://travis-ci.org/devcurmudgeon/ybd)
 
 # ybd
 
