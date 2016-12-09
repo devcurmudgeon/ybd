@@ -372,11 +372,11 @@ def _find_extensions(paths):
 
     extension_kinds = ['check', 'configure', 'write']
     efs = MultiFS()
-    map(lambda x: efs.addfs(x, OSFS(x)), paths)
+    map(lambda x: efs.add_fs(x, OSFS(x)), paths)
 
     def get_extensions(kind):
         return {os.path.splitext(x)[0]: efs.getsyspath(x)
-                for x in efs.walkfiles('.', '*.%s' % kind)}
+                for x in efs.walk.files(filter=['*.%s' % kind])}
 
     return {e: get_extensions(e) for e in extension_kinds}
 
