@@ -28,6 +28,7 @@ import app
 import cache
 import utils
 from repos import get_repo_url
+from fs.copy import copy_fs
 
 
 # This must be set to a sandboxlib backend before the run_sandboxed() function
@@ -81,7 +82,7 @@ def install(dn, component):
         app.log(dn, 'Unable to get cache for', component['name'], exit=True)
     unpackdir = cache.get_cache(component) + '.unpacked'
     if dn.get('kind') is 'system':
-        utils.copy_all_files(unpackdir, dn['sandbox'])
+        copy_fs(unpackdir, dn['sandbox'])
     else:
         utils.hardlink_all_files(unpackdir, dn['sandbox'])
 
