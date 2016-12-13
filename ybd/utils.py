@@ -108,22 +108,6 @@ def relative_symlink_target(root, symlink, target):
         return target
 
 
-def copy_all_files(srcpath, destpath):
-    '''Copy every file in the source path to the destination.
-
-    If an exception is raised, the staging-area is indeterminate.
-
-    '''
-
-    def _copyfun(inpath, outpath):
-        with open(inpath, "r") as infh:
-            with open(outpath, "w") as outfh:
-                shutil.copyfileobj(infh, outfh, 1024*1024*4)
-        shutil.copystat(inpath, outpath)
-
-    _process_tree(destpath, srcpath, destpath, _copyfun)
-
-
 def hardlink_all_files(srcpath, destpath):
     '''Hardlink every file in the path to the staging-area
 
