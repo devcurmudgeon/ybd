@@ -78,7 +78,7 @@ def log_changes(dn, tmpdir, old_defs, ref):
                             f.write(repr(x))
                 f.write('\n\n')
 
-        if dn.get('kind', 'chunk') == 'chunk' and config['release-command']:
+        if dn.get('kind', 'chunk') == 'chunk' and config.get('release-cmd'):
             log(dn, 'Logging git change history', tmpdir)
             try:
                 gitdir = os.path.join(config['gits'],
