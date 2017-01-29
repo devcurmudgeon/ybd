@@ -201,9 +201,9 @@ def shuffle(contents):
 
 @contextlib.contextmanager
 def claim(dn):
-    with open(lockfile(dn), 'a') as l:
+    with open(lockfile(dn), 'a') as L:
         try:
-            fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(L, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except Exception as e:
             if e.errno in (errno.EACCES, errno.EAGAIN):
                 # flock() will report EACCESS or EAGAIN when the lock fails.
