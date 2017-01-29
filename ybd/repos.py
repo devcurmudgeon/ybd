@@ -126,11 +126,11 @@ def get_tree(dn):
 
 def mirror(name, repo):
     tempfile.tempdir = app.config['tmp']
-    tmpdir = tempfile.mkdtemp()
     repo_url = get_repo_url(repo)
     try:
         tar_file = get_repo_name(repo_url) + '.tar'
         app.log(name, 'Try fetching tarball %s' % tar_file)
+        tmpdir = tempfile.mkdtemp()
         # try tarball first
         with app.chdir(tmpdir), open(os.devnull, "w") as fnull:
             call(['wget', os.path.join(app.config['tar-url'], tar_file)],
@@ -141,6 +141,7 @@ def mirror(name, repo):
             update_mirror(name, repo, tmpdir)
     except:
         app.log(name, 'Try git clone from', repo_url)
+        tmpdir = tempfile.mkdtemp()
         with open(os.devnull, "w") as fnull:
             if call(['git', 'clone', '--mirror', '-n', repo_url, tmpdir]):
                 app.log(name, 'Failed to clone', repo, exit=True)
