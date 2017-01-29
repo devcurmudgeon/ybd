@@ -43,7 +43,40 @@ cache_keys_v6:
   - echo ci.d9dec300a7cb2bc273dc6846e69a11b7f3ad304462f3a4c6ce8c5ab6ead11647 > expected.result
   - diff expected.result ybd.result
 
-check_build:
+check_build_debian_jessie:
+  image: debian:jessie
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+  script:
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+
+check_build_debian_stretch:
+  image: debian:stretch
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+  script:
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+
+check_build_ubuntu_16.04:
+  image: ubuntu:16.04
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+  script:
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+
+check_build_ubuntu_16.10:
+  image: ubuntu:16.10
+  stage: build
+  variables:
+    YBD_check_definitions: "exit"
+  script:
+  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
+
+check_build_centos_7:
+  image: centos:7
   stage: build
   variables:
     YBD_check_definitions: "exit"
@@ -60,7 +93,5 @@ check_build_no_kbas:
 
 check_deploy:
   stage: deploy
-  dependencies:
-  - check_build
   script:
   - ./ybd.py definitions/clusters/minimal-system-x86_64-chroot-deploy.morph x86_64
