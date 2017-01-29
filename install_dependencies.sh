@@ -86,4 +86,6 @@ if [ $? -ne 0 ]; then
     $SUDO rm get-pip.py
 fi
 
+$SUDO pip install -U pip
+
 $SUDO pip install -r requirements.freeze.txt
