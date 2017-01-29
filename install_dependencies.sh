@@ -32,7 +32,7 @@ installed=false
 command -v apt-get >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     $SUDO apt-get -qq update
-    $SUDO apt-get -qq install build-essential gawk git m4 wget python python-pip git
+    $SUDO apt-get -qq install build-essential gawk git m4 wget python python-dev python-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -43,7 +43,7 @@ fi
 # install for fedora
 command -v dnf >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git redhat-rpm-config
+    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel python-pip git redhat-rpm-config
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -54,7 +54,7 @@ fi
 # install for aws
 command -v yum >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git
+    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel python-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
