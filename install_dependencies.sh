@@ -32,7 +32,7 @@ installed=false
 which apt-get 2>&1 > /dev/null
 if [ $? -eq 0 ]; then
     $SUDO apt-get -qq update
-    $SUDO apt-get -qq install build-essential gawk git m4 wget python-pip
+    $SUDO apt-get -qq install build-essential gawk git m4 wget python python-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -43,7 +43,7 @@ fi
 # install for fedora
 which dnf 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip
+    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -54,7 +54,7 @@ fi
 # install for aws
 which yum 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip
+    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -65,7 +65,7 @@ fi
 # install for Arch
 which pacman 2>&1 > /dev/null
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO pacman -S --noconfirm which make automake gcc gawk git m4 wget python2 python2-pip
+    $SUDO pacman -S --noconfirm which make automake gcc gawk git m4 wget python2 python2-pip git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1

@@ -2,7 +2,6 @@ image: python:2.7-slim
 
 before_script:
 - sh ./install_dependencies.sh
-- apt-get update -qq && apt-get install -y -qq git
 - git clone git://git.baserock.org/baserock/baserock/definitions ../definitions
 
 cache:
