@@ -32,7 +32,7 @@ installed=false
 command -v apt-get >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     $SUDO apt-get -qq update
-    $SUDO apt-get -qq install build-essential gawk git m4 wget python python-dev python-pip git
+    $SUDO apt-get -qq install build-essential gawk git m4 wget python python-dev git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -43,7 +43,7 @@ fi
 # install for fedora
 command -v dnf >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel python-pip git redhat-rpm-config
+    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel git redhat-rpm-config
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -54,7 +54,7 @@ fi
 # install for aws
 command -v yum >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel python-pip git
+    $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -65,7 +65,7 @@ fi
 # install for Arch
 command -v pacman >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO pacman -S --noconfirm which make automake gcc gawk git m4 wget python2 python2-pip git
+    $SUDO pacman -S --noconfirm which make automake gcc gawk git m4 wget python2 git
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
@@ -78,6 +78,12 @@ if [ $installed = false ]; then
     exit 1
 fi
 
-pip install -U pip
+pip --version 2>&1 > /dev/null
+if [ $? -ne 0 ]; then
+    wget https://bootstrap.pypa.io/get-pip.py
+    chmod +x get-pip.py
+    $SUDO ./get-pip.py
+    $SUDO rm get-pip.py
+fi
 
 $SUDO pip install -r requirements.freeze.txt
