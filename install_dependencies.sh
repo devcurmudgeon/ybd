@@ -43,7 +43,7 @@ fi
 # install for fedora
 command -v dnf >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
-    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git
+    $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-pip git redhat-rpm-config
     if [ $? -ne 0 ]; then
         echo "Install failed"
         exit 1
