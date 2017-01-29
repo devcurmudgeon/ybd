@@ -37,7 +37,7 @@ def write_cache_key():
     with open(config['result-file'], 'w') as f:
         f.write(target['cache'] + '\n')
     for kind in ['systems', 'strata', 'chunks']:
-        log('COUNT', '%s has %s %s' % (config['target'], config[kind], kind))
+        log('CHECK', '%s has %s %s' % (config['target'], config[kind], kind))
     log('RESULT', 'Cache-key for target is at', config['result-file'])
 
 
@@ -71,6 +71,7 @@ with timer('TOTAL'):
     with timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
 
+    app.defs.prune()
     app.defs.save('./definitions.yml')
 
     if 'release-note' in config:

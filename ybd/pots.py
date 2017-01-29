@@ -57,7 +57,7 @@ class Pots(object):
         with open(filename, 'w') as f:
             f.write(yaml.dump(self._data, default_flow_style=False,
                               Dumper=ExplicitDumper))
-        log('RESULT', 'Saved yaml definitions at', filename)
+        log('CHECK', 'Saved yaml definitions at', filename)
 
     def _load_pots(self, filename):
         with open(filename) as f:
@@ -95,3 +95,11 @@ class Pots(object):
                                      self._data[name].get('cache')]
         with open(os.path.join(config['artifacts'], '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))
+
+    def prune(self):
+        ''' Removes all elements not required for the target build/deploy '''
+        log('CHECK', 'Total definitions', len(self._data))
+        for key in list(self._data):
+            if not self._data[key].get('cache'):
+                del self._data[key]
+        log('CHECK', 'Pruned to', len(self._data))
