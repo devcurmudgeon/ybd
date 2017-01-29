@@ -46,9 +46,9 @@ class RetryException(Exception):
         if config.get('last-retry-time'):
             wait = datetime.datetime.now() - config.get('last-retry-time')
             if wait.seconds < 1:
-                with open(lockfile(dn), 'r') as l:
+                with open(lockfile(dn), 'r') as L:
                     call(['flock', '--shared', '--timeout',
-                          config.get('timeout', '60'), str(l.fileno())])
+                          config.get('timeout', '60'), str(L.fileno())])
                 log(dn, 'Finished wait loop', verbose=True)
         config['last-retry-time'] = datetime.datetime.now()
         config['last-retry-dn'] = dn

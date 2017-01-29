@@ -18,7 +18,7 @@ stages:
 
 check_pep8:
   stage: pep8
-  script: "pep8"
+  script: "pycodestyle --show-source --show-pep8"
 
 cache_keys_v1:
   stage: cache_keys
