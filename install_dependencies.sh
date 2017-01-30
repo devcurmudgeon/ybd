@@ -91,4 +91,4 @@ fi
 
 $SUDO pip install -U pip
 
-$SUDO pip install -r requirements.freeze.txt
+$SUDO pip install -U -r requirements.freeze.txt
