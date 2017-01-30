@@ -18,6 +18,7 @@ import contextlib
 import datetime
 import os
 import fcntl
+import re
 import shutil
 import sys
 import warnings
@@ -114,6 +115,8 @@ def log_env(log, env, message=''):
     with open(log, "a") as logfile:
         for key in sorted(env):
             msg = env[key] if 'PASSWORD' not in key else '(hidden)'
+            if 'URL' in key.upper():
+                msg = re.sub(r'(https://)[^@]*@', '\\1', env[key])
             logfile.write('%s=%s\n' % (key, msg))
         logfile.write(message + '\n\n')
         logfile.flush()
@@ -238,6 +241,8 @@ def load_configs(config_files):
             for key, value in yaml.safe_load(text).items():
                 config[key.replace('_', '-')] = value
                 msg = value if 'PASSWORD' not in key.upper() else '(hidden)'
+                if 'URL' in key.upper():
+                    msg = re.sub(r'(https://)[^@]*@', '\\1', value)
                 print '   %s=%s' % (key.replace('_', '-'), msg)
         print
 

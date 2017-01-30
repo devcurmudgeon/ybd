@@ -229,7 +229,7 @@ def upload(dn):
         try:
             response = requests.post(url=url, data=params, files={"file": f})
             if response.status_code == 201:
-                app.log(dn, 'Uploaded %s to' % dn['cache'], url)
+                app.log(dn, 'Uploaded %s to kbas' % dn['cache'])
                 return
             if response.status_code == 777:
                 app.log(dn, 'Reproduced %s at' % md5(cachefile), dn['cache'])
