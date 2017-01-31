@@ -1,4 +1,4 @@
-image: python:2.7-slim 
+image: debian:jessie
 
 before_script:
 - sh ./install_dependencies.sh
