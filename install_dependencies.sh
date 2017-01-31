@@ -32,6 +32,7 @@ installed=false
 command -v apt-get >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     $SUDO apt-get -qq update
+    $SUDE apt-get -qq remove python-pip
     $SUDO apt-get -qq install build-essential gawk git m4 wget python python-dev git
     if [ $? -ne 0 ]; then
         echo "Install failed"
@@ -43,6 +44,7 @@ fi
 # install for fedora
 command -v dnf >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
+    $SUDO dnf remove -y python-pip
     $SUDO dnf install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel git redhat-rpm-config
     if [ $? -ne 0 ]; then
         echo "Install failed"
@@ -54,6 +56,7 @@ fi
 # install for aws
 command -v yum >/dev/null 2>&1
 if [ $? -eq 0 ] && [ $installed = false ]; then
+    $SUDO yum remove -y python-pip
     $SUDO yum install -y which make automake gcc gcc-c++ gawk git m4 wget python python-devel git
     if [ $? -ne 0 ]; then
         echo "Install failed"
@@ -88,4 +91,4 @@ fi
 
 $SUDO pip install -U pip
 
-$SUDO pip install -r requirements.freeze.txt
+$SUDO pip install -U -r requirements.freeze.txt
