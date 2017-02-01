@@ -34,10 +34,17 @@ class ExplicitDumper(yaml.SafeDumper):
 class Pots(object):
 
     def __init__(self, directory='.'):
-        self._data = Morphs()._data
+        if config['arg'].endswith('yml'):
+            log('DEFINITIONS', 'Loading all definitions from', config['arg'])
+            self._data = self._load_pots(config['arg'])
+        else:
+            log('DEFINITIONS', 'Loading definitions from morph files')
+            self._data = Morphs()._data
+
         self._trees = {}
         self._set_trees()
         self.defaults = Defaults()
+        config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
 
     def get(self, dn):
         ''' Return a definition from the dictionary.
@@ -60,6 +67,8 @@ class Pots(object):
         log('CHECK', 'Saved yaml definitions at', filename)
 
     def _load_pots(self, filename):
+        with open(filename) as f:
+            config['target'] = f.readline().strip().strip(':')
         with open(filename) as f:
             text = f.read()
         return yaml.safe_load(text)
@@ -98,8 +107,10 @@ class Pots(object):
 
     def prune(self):
         ''' Removes all elements not required for the target build/deploy '''
-        log('CHECK', 'Total definitions', len(self._data))
+        log('CHECK', 'Total definitions:', len(self._data))
         for key in list(self._data):
             if not self._data[key].get('cache'):
                 del self._data[key]
-        log('CHECK', 'Pruned to', len(self._data))
+        if config['total'] != len(self._data):
+            config['total'] = len(self._data)
+        log('CHECK', 'Pruned to:', config['total'])

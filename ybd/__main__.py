@@ -72,7 +72,7 @@ with timer('TOTAL'):
         cache.cache_key(target)
 
     app.defs.prune()
-    app.defs.save('./definitions.yml')
+    app.defs.save(os.path.basename(config['target']) + '.yml')
 
     if 'release-note' in config:
         do_release_note(config['release-note'])

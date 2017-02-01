@@ -139,6 +139,7 @@ def setup(args, original_cwd=""):
         sys.exit(1)
 
     log('SETUP', 'Running %s in' % args[0], os.getcwd())
+    config['arg'] = args[1]
     config['target'] = os.path.basename(os.path.splitext(args[1])[0])
     config['arch'] = args[2]
     config['sandboxes'] = []
