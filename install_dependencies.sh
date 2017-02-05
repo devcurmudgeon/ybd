@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright (C) 2016  Codethink Limited
 #
 # This program is free software; you can redistribute it and/or modify
@@ -32,7 +33,7 @@ installed=false
 command -v apt-get >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     $SUDO apt-get -qq update
-    $SUDE apt-get -qq remove python-pip
+    $SUDO apt-get -qq remove python-pip
     $SUDO apt-get -qq install build-essential gawk git m4 wget python python-dev git
     if [ $? -ne 0 ]; then
         echo "Install failed"
