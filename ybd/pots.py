@@ -38,7 +38,6 @@ class Pots(object):
         self._trees = {}
         self._set_trees()
         self.defaults = Defaults()
-        self._save_pots('./definitions.yml')
 
     def get(self, dn):
         ''' Return a definition from the dictionary.
@@ -54,7 +53,7 @@ class Pots(object):
 
         return self._data.get(dn.get('path', dn.keys()[0]))
 
-    def _save_pots(self, filename):
+    def save(self, filename):
         with open(filename, 'w') as f:
             f.write(yaml.dump(self._data, default_flow_style=False,
                               Dumper=ExplicitDumper))
@@ -76,6 +75,7 @@ class Pots(object):
                 dn = self._data[path]
                 if dn.get('ref') and self._trees.get(path):
                     if dn['ref'] == self._trees.get(path)[0]:
+                        dn['sha'] = self._trees.get(path)[0]
                         dn['tree'] = self._trees.get(path)[1]
                         count += 1
             log('DEFINITIONS', 'Re-used %s entries from .trees file' % count)
@@ -90,10 +90,8 @@ class Pots(object):
         '''
         for name in self._data:
             if self._data[name].get('tree') is not None:
-                if len(self._data[name]['ref']) == 40:
-                    # only save tree entry for full SHA
-                    self._trees[name] = [self._data[name]['ref'],
-                                         self._data[name]['tree'],
-                                         self._data[name].get('cache')]
+                self._trees[name] = [self._data[name]['sha'],
+                                     self._data[name]['tree'],
+                                     self._data[name].get('cache')]
         with open(os.path.join(config['artifacts'], '.trees'), 'w') as f:
             f.write(yaml.safe_dump(self._trees, default_flow_style=False))

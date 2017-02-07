@@ -71,6 +71,8 @@ with timer('TOTAL'):
     with timer('CACHE-KEYS', 'cache-key calculations'):
         cache.cache_key(target)
 
+    app.defs.save('./definitions.yml')
+
     if 'release-note' in config:
         do_release_note(config['release-note'])
 
