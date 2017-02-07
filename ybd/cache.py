@@ -55,7 +55,7 @@ def cache_key(dn):
     key = 'no-build'
     if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
         if dn.get('repo') and not dn.get('tree'):
-            dn['tree'] = get_tree(dn)
+            dn['tree'], dn['sha'] = get_tree(dn)
         factors = hash_factors(dn)
         factors = json.dumps(factors, sort_keys=True).encode('utf-8')
         key = hashlib.sha256(factors).hexdigest()
@@ -184,7 +184,7 @@ def update_manifest(dn, manifest):
         text = {'name': dn['name'],
                 'summary': {'artifact': dn['cache'],
                             'repo': get_repo_url(dn.get('repo', None)),
-                            'sha': dn.get('ref', None),
+                            'sha': dn.get('sha', None),
                             'ref': dn.get('unpetrify-ref', None),
                             'md5': md5(get_cache(dn))}}
         m.write(yaml.dump(text, default_flow_style=True))

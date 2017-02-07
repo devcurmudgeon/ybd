@@ -89,6 +89,11 @@ def get_last_tag(gitdir):
 
 def get_tree(dn):
     ref = str(dn['ref'])
+    track = app.config.get('track-branches')
+    if dn.get('unpetrify-ref') and track:
+        if track is True or dn['path'] in track:
+            ref = str(dn['unpetrify-ref'])
+
     gitdir = os.path.join(app.config['gits'], get_repo_name(dn['repo']))
     if dn['repo'].startswith('file://') or dn['repo'].startswith('/'):
         gitdir = dn['repo'].replace('file://', '')
@@ -99,7 +104,7 @@ def get_tree(dn):
         try:
             params = {'repo': get_repo_url(dn['repo']), 'ref': ref}
             r = requests.get(url=app.config['tree-server'], params=params)
-            return r.json()['tree']
+            return r.json()['tree'], r.json()['sha1']
         except:
             if app.config.get('tree-server'):
                 app.log(dn, 'WARNING: no tree from tree-server for', ref)
@@ -116,7 +121,9 @@ def get_tree(dn):
         try:
             tree = check_output(['git', 'rev-parse', ref + '^{tree}'],
                                 universal_newlines=True)[0:-1]
-            return tree
+            sha = check_output(['git', 'rev-parse', ref],
+                               universal_newlines=True)[0:-1]
+            return [tree, sha]
 
         except:
             # either we don't have a git dir, or ref is not unique

@@ -15,7 +15,7 @@
 # =*= License: GPL-2 =*=
 
 import os
-from subprocess import check_output
+from subprocess import check_output, call
 import tempfile
 import app
 from app import chdir, config, log
@@ -26,6 +26,10 @@ from repos import explore, get_last_tag, get_repo_name, mirror, mirror_has_ref
 def do_release_note(release_note):
     tempfile.tempdir = config['tmp']
     tmpdir = tempfile.mkdtemp()
+    if call(['git', 'config', 'user.name']):
+        call(['git', 'config', 'user.name', 'ybd'])
+    if call(['git', 'config', 'user.email']):
+        call(['git', 'config', 'user.email', 'ybd@baserock.org'])
 
     if 'release-since' in config:
         ref = config['release-since']
@@ -78,7 +82,7 @@ def log_changes(dn, tmpdir, old_defs, ref):
                             f.write(repr(x))
                 f.write('\n\n')
 
-        if dn.get('kind', 'chunk') == 'chunk' and config['release-command']:
+        if dn.get('kind', 'chunk') == 'chunk' and config.get('release-cmd'):
             log(dn, 'Logging git change history', tmpdir)
             try:
                 gitdir = os.path.join(config['gits'],

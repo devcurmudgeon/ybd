@@ -28,7 +28,6 @@ class Morphs(object):
         self._data = {}
         self.defaults = Defaults()
         self.fields = self.defaults.build_steps + self.defaults.fields
-        config['cpu'] = self.defaults.cpus.get(config['arch'], config['arch'])
 
         directories = [d[0] for d in os.walk(directory) if '/.' not in d[0]]
         for d in sorted(directories):
