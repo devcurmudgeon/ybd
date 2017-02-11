@@ -54,8 +54,11 @@ def cache_key(dn):
 
     key = 'no-build'
     if app.config.get('mode', 'normal') in ['keys-only', 'normal']:
-        if dn.get('repo') and not dn.get('tree'):
-            dn['tree'], dn['sha'] = get_tree(dn)
+        if dn.get('repo'):
+            if not dn.get('tree'):
+                dn['tree'], dn['sha'] = get_tree(dn)
+            if not dn.get('repourl'):
+                dn['repourl'] = get_repo_url(dn.get('repo'))
         factors = hash_factors(dn)
         factors = json.dumps(factors, sort_keys=True).encode('utf-8')
         key = hashlib.sha256(factors).hexdigest()
