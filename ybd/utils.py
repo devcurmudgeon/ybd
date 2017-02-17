@@ -20,6 +20,7 @@ import contextlib
 import os
 import shutil
 import stat
+import errno
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
@@ -155,13 +156,23 @@ def _process_tree(root, srcpath, destpath, actionfunc):
             path = re.search('/.*$', re.search('tmp[^/]+/.*$',
                              destpath).group(0)).group(0)
             app.config['new-overlaps'] += [path]
+
+            # Try to remove anything that is in the way, but issue
+            # a warning instead if it removes a non empty directory
             try:
                 os.unlink(destpath)
-            except:
+            except OSError as e:
+                if e.errno != errno.EISDIR:
+                    raise
+
                 try:
-                    os.remove(destpath)
-                except:
-                    shutil.rmtree(destpath)
+                    os.rmdir(destpath)
+                except OSError as e:
+                    if e.errno == errno.ENOTEMPTY:
+                        app.log('UTILS',
+                                'WARNING: Ignoring symlink "' + destpath +
+                                '" which purges non-empty directory')
+                        return
 
         # Ensure that the symlink target is a relative path
         target = os.readlink(srcpath)
