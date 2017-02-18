@@ -67,7 +67,10 @@ def move_required_files(dn, stratum, artifacts):
     with open(split_stratum_metafile, "w") as f:
         yaml.safe_dump(split_stratum_metadata, f, default_flow_style=False)
 
-    for path in stratum['contents']:
+    if not stratum.get('contents'):
+        log(dn, 'WARNING: Stratum "%s" has no contents !!!' % stratum['name'])
+
+    for path in stratum.get('contents', []):
         chunk = app.defs.get(path)
         if chunk.get('build-mode', 'staging') == 'bootstrap':
             continue
