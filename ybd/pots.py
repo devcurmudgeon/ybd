@@ -34,9 +34,10 @@ class ExplicitDumper(yaml.SafeDumper):
 class Pots(object):
 
     def __init__(self, directory='.'):
-        if config['arg'].endswith('yml'):
-            log('DEFINITIONS', 'Loading all definitions from', config['arg'])
-            self._data = self._load_pots(config['arg'])
+        if config['filename'].endswith('yml'):
+            log('DEFINITIONS', 'Loading all definitions from',
+                config['filename'])
+            self._data = self._load_pots(config['filename'])
         else:
             log('DEFINITIONS', 'Loading definitions from morph files')
             self._data = Morphs()._data
