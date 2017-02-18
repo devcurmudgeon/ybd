@@ -128,20 +128,17 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
     return 'WARNING: %s\n' % (message)
 
 
-def setup(args, original_cwd=""):
+def setup(program, target, arch, mode, original_cwd=""):
     os.environ['LANG'] = 'en_US.UTF-8'
     config['start-time'] = datetime.datetime.now()
-    config['program'] = os.path.basename(args[0])
+    config['program'] = os.path.basename(program)
     config['my-version'] = get_version(os.path.dirname(__file__))
     log('SETUP', '%s version is' % config['program'], config['my-version'])
-    if len(args) != 3:
-        sys.stdout.write("\nUsage: %s DEFINITION_FILE ARCH\n\n" % sys.argv[0])
-        sys.exit(1)
 
-    log('SETUP', 'Running %s in' % args[0], os.getcwd())
-    config['arg'] = args[1]
-    config['target'] = os.path.basename(os.path.splitext(args[1])[0])
-    config['arch'] = args[2]
+    log('SETUP', 'Running %s in' % program, os.getcwd())
+    config['filename'] = os.path.basename(target)
+    config['target'] = os.path.basename(os.path.splitext(target)[0])
+    config['arch'] = arch
     config['sandboxes'] = []
     config['overlaps'] = []
     config['new-overlaps'] = []
@@ -164,8 +161,13 @@ def setup(args, original_cwd=""):
         os.path.join(os.path.dirname(__file__), '..', 'ybd.conf'),
         os.path.join(os.path.dirname(__file__), 'config', 'ybd.conf')])
 
+    # After loading configuration, override the 'mode' configuration only
+    # if it was specified on the command line
+    if mode is not None:
+        config['mode'] = mode
+
     if not os.geteuid() == 0 and config.get('mode') == 'normal':
-        log('SETUP', '%s needs root permissions' % sys.argv[0], exit=True)
+        log('SETUP', '%s needs root permissions' % program, exit=True)
 
     if config.get('kbas-url', 'http://foo.bar/') == 'http://foo.bar/':
         config.pop('kbas-url')

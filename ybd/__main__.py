@@ -30,6 +30,7 @@ import cache
 from release_note import do_release_note
 import sandbox
 import sandboxlib
+import argparse
 import yaml
 
 
@@ -51,7 +52,16 @@ if not os.path.exists('./VERSION'):
             if os.path.isdir(os.path.join(os.getcwd(), '..', 'definitions')):
                 os.chdir(os.path.join(os.getcwd(), '..', 'definitions'))
 
-setup(sys.argv, original_cwd)
+description = 'Build and manipulate YAML build definitions'
+parser = argparse.ArgumentParser(description=description)
+parser.add_argument('-m', '--mode', type=str, default=None,
+                    choices=['parse-only', 'keys-only', 'no-build', 'normal'],
+                    help='Operation mode')
+parser.add_argument('target', help='The target definition')
+parser.add_argument('arch', help='The target architecture')
+args = parser.parse_args()
+
+setup(sys.argv[0], args.target, args.arch, args.mode, original_cwd)
 cleanup(config['tmp'])
 
 with timer('TOTAL'):
