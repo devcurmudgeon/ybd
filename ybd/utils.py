@@ -287,6 +287,15 @@ def _process_list(srcdir, destdir, filelist, actionfunc):
         # symlink boundaries
         _ensure_real_directory(destdir, os.path.dirname(destpath))
 
+        if not os.path.lexists(srcpath):
+            app.log('UTILS',
+                    'WARNING: Ignoring missing source file while moving '
+                    'split artifacts: %s\n\n' % srcpath +
+                    '  Hint: This file is probably a broken symlink in\n' +
+                    '        the artifact, if it is a library symlink\n' +
+                    '        then it would have been removed by ldconfig\n')
+            continue
+
         try:
             file_stat = os.lstat(srcpath)
             mode = file_stat.st_mode
