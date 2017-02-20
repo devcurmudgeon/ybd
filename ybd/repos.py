@@ -88,7 +88,7 @@ def get_last_tag(gitdir):
 
 
 def get_tree(dn):
-    ref = str(dn['ref'])
+    ref = str(dn.get('ref', str(dn.get('sha'))))
     track = app.config.get('track-branches')
     if dn.get('unpetrify-ref') and track:
         if track is True or dn['path'] in track:

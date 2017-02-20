@@ -187,12 +187,20 @@ class Morphs(object):
         and the new definition both contain a 'ref'. If any keys are
         duplicated in the existing definition, output a warning.
 
+        If `new_def` contains a sha: field (which needs to be 40 chars),
+        this overrides ref:  field
+
         '''
 
         exit = (config.get('check-definitions') == 'exit')
 
         dn = self._data.get(new_def['path'])
         if dn:
+            if dn.get('sha'):
+                if len(dn['sha']) != 40:
+                    log(new_def, 'ERROR: invalid sha:', dn['sha'], exit=True)
+                dn['ref'] = dn['sha']
+
             if (dn.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
                     if key is not 'name':
