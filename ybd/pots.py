@@ -16,6 +16,7 @@
 
 import os
 import yaml
+import copy
 from app import config, log
 from defaults import Defaults
 from morphs import Morphs
@@ -62,8 +63,17 @@ class Pots(object):
         return self._data.get(dn.get('path', dn.keys()[0]))
 
     def save(self, filename):
+
+        # Make a copy, restore any refs which may have been overridden
+        # with the sha field while building.
+        data = copy.deepcopy(self._data)
+        for key, value in data.items():
+            if value.get('orig_ref') is not None:
+                value['ref'] = value['orig_ref']
+                del value['orig_ref']
+
         with open(filename, 'w') as f:
-            f.write(yaml.dump(self._data, default_flow_style=False,
+            f.write(yaml.dump(data, default_flow_style=False,
                               Dumper=ExplicitDumper))
         log('CHECK', 'Saved yaml definitions at', filename)
 

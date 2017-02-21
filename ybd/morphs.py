@@ -196,15 +196,18 @@ class Morphs(object):
 
         dn = self._data.get(new_def['path'])
         if dn:
-            if dn.get('sha'):
-                if len(dn['sha']) != 40:
-                    log(new_def, 'ERROR: invalid sha:', dn['sha'], exit=True)
-                dn['ref'] = dn['sha']
-
             if (dn.get('ref') is None or new_def.get('ref') is None):
                 for key in new_def:
                     if key is not 'name':
                         dn[key] = new_def[key]
+
+            # If a sha was specified, we want to build it instead of the ref
+            # but preserve the ref in the output <target>.yml file.
+            if dn.get('sha'):
+                if len(dn['sha']) != 40:
+                    log(new_def, 'ERROR: invalid sha:', dn['sha'], exit=True)
+                dn['orig_ref'] = dn['ref']
+                dn['ref'] = dn['sha']
 
             if dn['name'] != new_def['name']:
                 log(new_def, 'WARNING: %s also named as' % new_def['name'],
