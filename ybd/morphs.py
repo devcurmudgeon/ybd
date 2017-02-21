@@ -187,6 +187,9 @@ class Morphs(object):
         and the new definition both contain a 'ref'. If any keys are
         duplicated in the existing definition, output a warning.
 
+        If `new_def` contains a sha: field (which needs to be 40 chars),
+        this overrides ref:  field
+
         '''
 
         exit = (config.get('check-definitions') == 'exit')
@@ -197,6 +200,14 @@ class Morphs(object):
                 for key in new_def:
                     if key is not 'name':
                         dn[key] = new_def[key]
+
+            # If a sha was specified, we want to build it instead of the ref
+            # but preserve the ref in the output <target>.yml file.
+            if dn.get('sha'):
+                if len(dn['sha']) != 40:
+                    log(new_def, 'ERROR: invalid sha:', dn['sha'], exit=True)
+                dn['orig_ref'] = dn['ref']
+                dn['ref'] = dn['sha']
 
             if dn['name'] != new_def['name']:
                 log(new_def, 'WARNING: %s also named as' % new_def['name'],
