@@ -124,6 +124,9 @@ def warning_handler(message, category, filename, lineno, file=None, line=None):
 
 def setup(program, target, arch, mode, original_cwd=""):
     os.environ['LANG'] = 'en_US.UTF-8'
+    # Installation of git-lfs on a system can pollute /etc/gitconfig. Setting
+    # GIT_CONFIG_NOSYSTEM so ybd will ignore the system config.
+    os.environ['GIT_CONFIG_NOSYSTEM'] = "1"
     config['start-time'] = datetime.datetime.now()
     config['program'] = os.path.basename(program)
     config['my-version'] = get_version(os.path.dirname(__file__))

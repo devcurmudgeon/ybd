@@ -17,6 +17,7 @@
 import contextlib
 import os
 import re
+import errno
 import shutil
 import string
 from subprocess import call, check_output
@@ -195,6 +196,26 @@ def checkout(dn):
     utils.set_mtime_recursively(dn['checkout'])
 
 
+def fetch_lfs_binaries(name, checkout):
+    app.log(name, "Checking out lfs binaries")
+    try:
+        with open(os.devnull, 'w') as fnull:
+            call(['git-lfs', 'version'], stdout=fnull, stderr=fnull)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            app.log(name,
+                    'git-lfs is required to fetch LFS repos', exit=True)
+
+    with app.chdir(checkout), open(os.devnull, 'w') as fnull:
+        if call(['git', 'lfs', 'install', '--local'],
+                stdout=fnull, stderr=fnull):
+            app.log(name, 'lfs install failed for', checkout, exit=True)
+        if call(['git', 'lfs', 'fetch'], stdout=fnull, stderr=fnull):
+            app.log(name, 'lfs fetch failed for', checkout, exit=True)
+        if call(['git', 'lfs', 'checkout'], stdout=fnull, stderr=fnull):
+            app.log(name, 'lfs checkout failed for', checkout, exit=True)
+
+
 def _checkout(name, repo, ref, checkout):
     gitdir = os.path.join(app.config['gits'], get_repo_name(repo))
     if not os.path.exists(gitdir):
@@ -203,6 +224,10 @@ def _checkout(name, repo, ref, checkout):
         update_mirror(name, repo, gitdir)
     # checkout the required version from git
     with open(os.devnull, "w") as fnull:
+        # Ensure lfs filters are not set in .gitconfig: cloning with lfs
+        # from a local path will error.
+        call(['git', 'config', '--global', '--remove-section', 'filter.lfs'],
+             stdout=fnull, stderr=fnull)
         # We need to pass '--no-hardlinks' because right now there's nothing to
         # stop the build from overwriting the files in the .git directory
         # inside the sandbox. If they were hardlinks, it'd be possible for a
@@ -219,6 +244,10 @@ def _checkout(name, repo, ref, checkout):
 
             app.log(name, 'Git checkout %s in %s' % (repo, checkout))
             app.log(name, 'Upstream version %s' % get_version(checkout, ref))
+            is_lfs = utils.ref_expects_lfs(gitdir, ref)
+            if is_lfs:
+                utils.set_origin_url(gitdir, checkout)
+                fetch_lfs_binaries(name, checkout)
 
 
 def source_date_epoch(checkout):

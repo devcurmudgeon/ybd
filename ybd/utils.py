@@ -14,6 +14,7 @@
 #
 # =*= License: GPL-2 =*=
 
+import re
 import gzip
 import tarfile
 import contextlib
@@ -25,6 +26,7 @@ from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
 import app
+from subprocess import check_call, check_output
 
 # The magic number for timestamps: 2011-11-11 11:11:11
 default_magic_timestamp = calendar.timegm([2011, 11, 11, 11, 11, 11])
@@ -447,3 +449,33 @@ def monkeypatch(obj, attr, new_value):
     setattr(obj, attr, new_value)
     yield
     setattr(obj, attr, old_value)
+
+
+def set_origin_url(gitdir, checkout):
+    '''Sets the origin url of a checkout to that of its gitdir.
+
+    git-lfs requires a remote server in order to fetch binaries, so we set the
+    origin url to that of the mirror for lfs enabled checkouts.
+    '''
+    try:
+        with open(os.devnull, 'w') as fnull, app.chdir(gitdir):
+            origin_url = check_output(
+                ['git', 'config', '--get', 'remote.origin.url'], stderr=fnull)
+        with open(os.devnull, 'w') as fnull, app.chdir(checkout):
+            check_call(['git', 'config', 'remote.origin.url', origin_url],
+                       stderr=fnull)
+    except:
+        app.log('UTILS', 'Setting origin url failed for', checkout, exit=True)
+        raise
+
+
+def ref_expects_lfs(gitdir, ref):
+    '''Parses .gitattributes at a ref to determine if git-lfs is required.'''
+    with open(os.devnull, 'w') as fnull, app.chdir(gitdir):
+        blob = check_output(
+            ['git', 'ls-tree', ref, '.gitattributes'], stderr=fnull)
+        if blob:
+            attributes = check_output(
+                ['git', 'cat-file', 'blob', blob.split()[2]], stderr=fnull)
+            return bool(re.search('filter=lfs.*-text', attributes))
+    return False
