@@ -22,7 +22,7 @@ import errno
 
 import app
 from app import config, timer, elapsed
-from app import log, log_riemann, lockfile, RetryException
+from app import log, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
 import repos
 import sandbox
@@ -190,7 +190,6 @@ def run_build(dn):
     with open(dn['log'], "a") as logfile:
         time_elapsed = elapsed(dn['start-time'])
         logfile.write('Elapsed_time: %s\n' % time_elapsed)
-        log_riemann(dn, 'Artifact_Timer', dn['name'], time_elapsed)
 
 
 def shuffle(contents):

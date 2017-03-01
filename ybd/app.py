@@ -28,12 +28,6 @@ from subprocess import call
 from fs.osfs import OSFS  # not used here, but we import it to check install
 from repos import get_version
 from cache import cache_key
-try:
-    from riemann_client.transport import TCPTransport
-    from riemann_client.client import QueuedClient
-    riemann_available = True
-except ImportError:
-    riemann_available = False
 
 
 config = {}
@@ -302,19 +296,6 @@ def timer(dn, message=''):
     text = '' if message == '' else ' for ' + message
     time_elapsed = elapsed(starttime)
     log(dn, 'Elapsed time' + text, time_elapsed)
-    log_riemann(dn, 'Timer', text, time_elapsed)
-
-
-def log_riemann(dn, service, text, time_elapsed):
-    if riemann_available and 'riemann-server' in config:
-        time_split = time_elapsed.split(':')
-        time_sec = int(time_split[0]) * 3600 \
-            + int(time_split[1]) * 60 + int(time_split[2])
-        with QueuedClient(TCPTransport(config['riemann-server'],
-                                       config['riemann-port'],
-                                       timeout=30)) as client:
-            client.event(service=service, description=text, metric_f=time_sec)
-            client.flush()
 
 
 def elapsed(starttime):

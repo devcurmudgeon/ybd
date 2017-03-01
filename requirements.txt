@@ -5,5 +5,4 @@ pycodestyle
 jsonschema
 bottle
 cherrypy
-riemann-client
 fs

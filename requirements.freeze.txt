@@ -5,6 +5,4 @@ pycodestyle==2.2.0
 jsonschema==2.5.1
 bottle==0.12.1
 cherrypy==8.1.2
-riemann-client==6.3.0
 fs==2.0.0
-protobuf==3.0.0
