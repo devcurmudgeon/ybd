@@ -51,24 +51,8 @@ check_build_debian_jessie:
   script:
   - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
 
-check_build_debian_stretch:
-  image: debian:stretch
-  stage: build
-  variables:
-    YBD_check_definitions: "exit"
-  script:
-  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
-
 check_build_ubuntu_16.04:
   image: ubuntu:16.04
-  stage: build
-  variables:
-    YBD_check_definitions: "exit"
-  script:
-  - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
-
-check_build_ubuntu_16.10:
-  image: ubuntu:16.10
   stage: build
   variables:
     YBD_check_definitions: "exit"
@@ -82,6 +66,7 @@ check_build_centos_7:
     YBD_check_definitions: "exit"
   script:
   - ./ybd.py definitions/systems/minimal-system-x86_64-chroot.morph x86_64
+
 
 check_build_no_kbas:
   stage: build
