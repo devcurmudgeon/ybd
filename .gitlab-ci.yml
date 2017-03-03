@@ -61,15 +61,6 @@ check_build_ubuntu_16.04:
   script:
   - ./ybd.py definitions/systems/minimal-system-x86_64-generic.morph x86_64
 
-check_build_centos_7:
-  image: centos:7
-  stage: build
-  variables:
-    YBD_kbas_url: "false-url"
-    YBD_check_definitions: "exit"
-  script:
-  - ./ybd.py definitions/systems/minimal-system-x86_64-chroot.morph x86_64
-
 check_build_kbas:
   stage: build
   variables:
