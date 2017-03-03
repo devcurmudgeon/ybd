@@ -180,6 +180,13 @@ Config for kbas follows the same approach as ybd, defaulting to config in
 NOTE: the default password is 'insecure' and the uploading is disabled unless
 you change it.
 
+### Git LFS Support
+
+ybd supports repositories that manage their binaries via
+[Git LFS](https://github.com/git-lfs/git-lfs).  Installation of the git-lfs
+binary is required in order to make use of this feature, otherwise ybd will exit
+with an error.
+
 ### Concourse Pipelines
 
 [WORK IN PROGRESS] ybd can generate concourse pipelines - see the code at
