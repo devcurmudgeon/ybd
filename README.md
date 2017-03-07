@@ -197,12 +197,14 @@ To start a local concourse instance:
     # in your definitions directory
     vagrant init concourse/lite
     vagrant up
-    # generate pipeline, run concourse.py (same arguments as ybd.py)
-    python ../ybd/ybd/concourse.py <target> <arch>
+    # generate pipeline
+    echo "mode: parse-only" >> ./ybd.conf
+    python ../ybd/ybd.py <target> <arch>
     fly -t local login -c http://192.168.100.4:8080
     fly -t local set-pipeline -p <target> -c <target>.yml
 
-You can view the local pipelines at <http://192.168.100.4:8080>.
+You can view the local pipelines at <http://192.168.100.4:8080>. Note ybd's
+concourse pipelines are for visualisation only so far - they don't build.
 
 ## TODO
 
