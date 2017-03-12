@@ -20,16 +20,7 @@ import copy
 from app import config, log
 from defaults import Defaults
 from morphs import Morphs
-
-
-# copied from http://stackoverflow.com/questions/21016220
-class ExplicitDumper(yaml.SafeDumper):
-    """
-    A dumper that will never emit aliases.
-    """
-
-    def ignore_aliases(self, data):
-        return True
+from morphdumper import morph_dump
 
 
 class Pots(object):
@@ -73,8 +64,7 @@ class Pots(object):
                 del value['orig_ref']
 
         with open(filename, 'w') as f:
-            f.write(yaml.dump(data, default_flow_style=False,
-                              Dumper=ExplicitDumper))
+            f.write(morph_dump(data, self.defaults))
         log('CHECK', 'Saved yaml definitions at', filename)
 
     def _load_pots(self, filename):
